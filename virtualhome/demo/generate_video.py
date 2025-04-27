@@ -9,6 +9,7 @@ script = ['<char0> [Walk] <tv> (1)', '<char0> [switchon] <tv> (1)', '<char0> [Wa
 
 print('Starting Unity...')
 comm = UnityCommunication()
+comm.timeout_wait = 300 
 
 print('Starting scene...')
 comm.reset()
