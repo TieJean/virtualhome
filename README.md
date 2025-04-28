@@ -26,11 +26,12 @@ mkdir -p unity_output
 mkdir -p unity_vol
 podman build -t virtualhome .
 podman run --name virtualhome_container --device /dev/nvidia0 --device /dev/nvidiactl --device /dev/nvidia-uvm --device /dev/nvidia-uvm-tools --mount type=bind,source="$(pwd)"/unity_vol,target=/unity_vol/ --mount type=bind,source="$(pwd)"/unity_output,target=/Output/ -p 8080:8080 -it virtualhome 
+podman stop virtualhome_container && podman rm virtualhome_container
 ```
 
 Helper scripts:
 ```bash
-python virtualhome/helper_scripts/generate_video.py --image_dir unity_output/script/0 --output_video outputs/test.mp4 --end-frame 200
+python virtualhome/helper_scripts/generate_video.py --image_dir unity_output/script/0 --output_video outputs/test.mp4 --end-frame 100
 ```
 ______________________________________________________________________
 
