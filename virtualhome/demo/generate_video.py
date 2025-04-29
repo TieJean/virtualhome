@@ -18,14 +18,24 @@ comm.reset()
 # Example node: {'id': 11, 'category': 'Rooms', 'class_name': 'bathroom', 'prefab_name': 'PRE_ROO_Bathroom_00', 'obj_transform': {'position': [-6.385, -0.003, -0.527], 'rotation': [0.0, 0.0, 0.0, 1.0], 'scale': [1.0, 1.0, 1.0]}, 'bounding_box': {'center': [-5.135, 1.247, 0.723], 'size': [8.0, 3.0, 5.5]}, 'properties': [], 'states': []}
 
 comm.add_character('Chars/Female1', initial_room="kitchen")
-comm.add_character_camera(position=[0.5, 0, 0.0], rotation=[0, 0, 0], field_view=60, name="observer_camera")
-
+comm.add_character_camera(position=[1.5, 1.0, 0.0], rotation=[0, -60, 0], field_view=60, name="observer_camera")
 print('Generating video...')
 comm.render_script(script, 
                    random_seed=100,
                    recording=True, 
                    find_solution=True, 
-                   file_name_prefix='test',
+                   save_pose_data=True,
+                   file_name_prefix='observer_camera',
+                   camera_mode=["observer_camera"])
+
+comm.reset()
+print('Generating video...')
+comm.render_script(script, 
+                   random_seed=100,
+                   recording=True, 
+                   find_solution=True, 
+                   save_pose_data=True,
+                   file_name_prefix='FIRST_PERSON',
                    camera_mode=["FIRST_PERSON"])
 
 print('Generated.')
