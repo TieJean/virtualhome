@@ -150,9 +150,45 @@ def analyze_prefabs_by_class(node_df, show_prefab_list=False):
 
     return table, unambiguous_classes, ambiguous_classes
 
+def analyze_object_properties(node_df):
+    """
+    For graspable (manipulable) objects, split into:
+    - unambiguous: class_name maps to a single prefab_name
+    - ambiguous: class_name maps to multiple prefab_names
+    """
+    # Filter for graspable objects
+    furniture_df = node_df[node_df['category'].apply(lambda props: 'Furniture' in (props or []))]
+    furniture_df = furniture_df[
+        furniture_df['properties'].apply(lambda props: not any(p in (props or []) for p in ['HANGABLE', 'CLOTHES']))
+    ]
+    
+    # SURFACES
+    surfaces_df = furniture_df[
+        furniture_df['properties'].apply(lambda props: 'SURFACES' in (props or []))
+    ]
+
+    # CONTAINERS
+    containers_df = furniture_df[
+        furniture_df['properties'].apply(lambda props: 'CONTAINERS' in (props or []))
+    ]
+    
+    print("\n=== Unique Surface Class Names ===")
+    print(sorted(surfaces_df['class_name'].unique().tolist()))
+    # bathroomcounter, bed, bookshelf, chair, desk, kitchencounter, kitchentable, sofa, towelrack
+
+    print("\n=== Unique Container Class Names ===")
+    print(sorted(containers_df['class_name'].unique().tolist()))
+    # bathroomcabinet, cabinet, kitchencabinet
+    
+    return surfaces_df, containers_df
+
 if __name__ == "__main__":
+    scene_id = 4
+    
     comm = UnityCommunication(port="8080")
     comm.timeout_wait = 300 
+    
+    comm.reset(scene_id)
     success, graph = comm.environment_graph()
     if success:
         node_df, edge_df, node_summary, edge_summary = generate_scene_graph_pandas(graph)
@@ -162,4 +198,5 @@ if __name__ == "__main__":
         
     analyze_on_inside_relationships(edge_df, node_df)
     analyze_prefabs_by_class(node_df)
+    analyze_object_properties(node_df)
     # analyze_on_inside_relationships_instance_level(edge_df, node_df)
