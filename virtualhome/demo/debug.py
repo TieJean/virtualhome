@@ -3,6 +3,7 @@ import sys
 sys.path.append('../simulation')
 from unity_simulator.comm_unity import UnityCommunication
 from utils_demo import add_node, add_edge
+import copy
 
 if __name__ == "__main__":
     comm = UnityCommunication(port="8080")
@@ -14,23 +15,34 @@ if __name__ == "__main__":
     if not success:
         raise RuntimeError("Failed to get initial environment graph.")
 
-    target_id = 85
+    target_id = 235
 
     # === Save a copy of the node and its edges ===
-    original_node = next((n for n in graph['nodes'] if n['id'] == target_id), None)
+    original_node = copy.deepcopy(next((n for n in graph['nodes'] if n['id'] == target_id), None))
     if original_node is None:
         raise ValueError(f"Node with ID {target_id} not found.")
 
-    related_edges = [e for e in graph['edges'] if e['from_id'] == target_id or e['to_id'] == target_id]
+    related_edges = [copy.deepcopy(e) for e in graph['edges'] if e['from_id'] == target_id or e['to_id'] == target_id]
+
+    original_graph = copy.deepcopy(graph)
+    success, message = comm.expand_scene(original_graph)
+    if not success:
+        import pdb; pdb.set_trace()
+        print("Attempt1: ❌ Scene expansion failed after restoring node.")
 
     # === Remove node and its edges ===
     graph['nodes'] = [n for n in graph['nodes'] if n['id'] != target_id]
     graph['edges'] = [e for e in graph['edges'] if e['from_id'] != target_id and e['to_id'] != target_id]
+    
+    success, message = comm.expand_scene(original_graph)
+    if not success:
+        import pdb; pdb.set_trace()
+        print("Attempt3: ❌ Scene expansion failed after restoring node.")
 
     success, message = comm.expand_scene(graph)
     if not success:
         import pdb; pdb.set_trace()
-        raise RuntimeError("❌ Scene expansion failed after removing node.")
+        raise RuntimeError("Attempt4: ❌ Scene expansion failed after removing node.")
 
     # === Restore node and its edges ===
     graph['nodes'].append(original_node)
@@ -40,11 +52,20 @@ if __name__ == "__main__":
     # add_node(graph, original_node)
     # for edge in related_edges:
     #     add_edge(graph, edge['from_id'], edge['relation_type'], edge['to_id'])
+    
+    success, message = comm.expand_scene(original_graph)
+    if not success:
+        import pdb; pdb.set_trace()
+        print("Attempt5: ❌ Scene expansion failed after restoring node.")
 
     success, message = comm.expand_scene(graph)
     if not success:
-        import pdb; pdb.set_trace()
-        raise RuntimeError("❌ Scene expansion failed after restoring node.")
-
+        print("Attempt6: ❌ Scene expansion failed after restoring node.")
+        success, message = comm.expand_scene(original_graph)
+        if not success:
+            print("Attempt7: ❌ Scene expansion failed after restoring original graph.")
+            import pdb; pdb.set_trace()
+            exit(1)
+        
     print("✅ Node and edges restored successfully.")
     exit(0)

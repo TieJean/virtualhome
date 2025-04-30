@@ -9,15 +9,16 @@ from graph_utils import *
 
 # TODO move to config
 surfaces = ["bathroomcounter", "bed", "bookshelf", "chair", "desk", "kitchencounter", "kitchentable", "sofa", "towelrack", "wallshelf", "coffeetable", "dinningtable", "kitchentable"]
-ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "towel", "folder"]
+# ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "towel", "folder"]
+ambiguous_manipulable_objects = ["book", "folder"]
 
-def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int = 5):
+def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int = 10):
     random.seed(seed)
     relationships = load_relationships("config/relationships.txt")
     ambiguous_manipulable_df = get_ambiguous_manipulable_metadata(ambiguous_manipulable_objects, sample=True, seed=seed)
-
-    success, graph = comm.environment_graph()
     
+    success, graph = comm.environment_graph()
+
     if not success:
         raise RuntimeError("Failed to get initial environment graph.")
     
@@ -142,14 +143,7 @@ if __name__ == "__main__":
         # success, message = comm.render_script(script=script, processing_time_limit=120, find_solution=False, image_width=640, image_height=480, skip_animation=False, recording=True, save_pose_data=True, camera_mode=["observer_camera"], file_name_prefix=prefix)
         # import pdb; pdb.set_trace()
         
-        
-        success, graph = comm.environment_graph()
         augment_graph(comm, verbose=True)
-        
-        # augmented_graph = augment_graph(graph, verbose=False)
-        # success, message = comm.expand_scene(augmented_graph)
-        import pdb; pdb.set_trace()
-        
         success, graph = comm.environment_graph()
             
         if viz:
@@ -158,11 +152,10 @@ if __name__ == "__main__":
             view_pil.save(os.path.join(debug_dir, f"scene_{scene_id}.png"))
         
         comm.add_character('chars/Female2', initial_room='bathroom')
-        comm.add_character_camera(position=[1.5, 1.0, 0.0], rotation=[0, -60, 0], field_view=90, name="observer_camera")
+        # comm.add_character_camera(position=[1.5, 1.0, 0.0], rotation=[0, -60, 0], field_view=90, name="observer_camera")
         
         script = generate_walk_find_script(graph, ambiguous_manipulable_objects)
         print(script)
-        script = ['<char0> [Walk] <wallshelf> (140)', '<char0> [Find] <book> (1001)']
         
         import pdb; pdb.set_trace()
         # script = script[5:10]
@@ -180,7 +173,8 @@ if __name__ == "__main__":
                                             skip_animation=False,
                                             recording=True,
                                             save_pose_data=True,
-                                            camera_mode=["observer_camera"],
+                                            # camera_mode=["observer_camera"],
+                                            camera_mode=["FIRST_PERSON"],
                                             file_name_prefix=prefix)
         import pdb; pdb.set_trace()
         print("Finish Rendering")

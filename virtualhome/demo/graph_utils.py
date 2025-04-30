@@ -216,7 +216,7 @@ def get_ambiguous_manipulable_metadata(
         
     # TODO
     manual_prefabs = {
-        "dishbowl": ["Dish_bowl_4", "FMGP_PRE_Wooden_bowl_1024"],
+        "dishbowl": ["PRE_PRO_Bowl_01", "FMGP_PRE_Wooden_bowl_1024"],
         "pillow": ["PRE_DEC_Pillow_01_02", "HSHP_PRE_DEC_Pillow_01_01"],
     }
     for cls, new_prefabs in manual_prefabs.items():
@@ -224,7 +224,7 @@ def get_ambiguous_manipulable_metadata(
         matching_indices = filtered[mask].index
 
         if len(matching_indices) != len(new_prefabs):
-            print(f"⚠️ Mismatch: {cls} has {len(matching_indices)} rows but {len(new_prefabs)} new prefabs")
+            # print(f"⚠️ Mismatch: {cls} has {len(matching_indices)} rows but {len(new_prefabs)} new prefabs")
             continue
 
         for idx, new_prefab in zip(matching_indices, new_prefabs):
@@ -267,13 +267,13 @@ def no_ops(char="<char0>", count=3):
     Return a list of no-op [Stand] actions to simulate idle time.
     """
     # TODO: may need to use [Sit] or [Lie] in some cases
-    return [f"{char} [Stand]"] * count
+    return [f"{char} [StandUp]"] * count
 
 def generate_walk_find_script(graph, target_classes):
     """
     Generate script lines like:
         <char0> [Walk] <surface> (surface_id)
-        <char0> [Find] <object> (object_id)
+        <char0> [LookAt] <object> (object_id)
     For all objects in target_classes (default: ambiguous_manipulable_objects)
     """
     id_to_node = {node['id']: node for node in graph['nodes']}
@@ -293,8 +293,12 @@ def generate_walk_find_script(graph, target_classes):
             continue
 
         script_lines.append(f"<char0> [Walk] <{surf_node['class_name']}> ({surf_node['id']})")
-        script_lines.append(f"<char0> [Find] <{obj_node['class_name']}> ({obj_node['id']})")
-        script_lines.extend(no_ops())
+        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
+        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
+        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
+        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
+        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
+        # script_lines.extend(no_ops())
 
     return script_lines
 
