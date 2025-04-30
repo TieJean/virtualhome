@@ -246,6 +246,13 @@ def load_relationships(filepath: str):
 
     return result
 
+def no_ops(char="<char0>", count=3):
+    """
+    Return a list of no-op [Stand] actions to simulate idle time.
+    """
+    # TODO: may need to use [Sit] or [Lie] in some cases
+    return [f"{char} [Stand]"] * count
+
 def generate_walk_find_script(graph, target_classes):
     """
     Generate script lines like:
@@ -271,5 +278,32 @@ def generate_walk_find_script(graph, target_classes):
 
         script_lines.append(f"<char0> [Walk] <{surf_node['class_name']}> ({surf_node['id']})")
         script_lines.append(f"<char0> [Find] <{obj_node['class_name']}> ({obj_node['id']})")
+        script_lines.extend(no_ops())
 
     return script_lines
+
+def print_edges_by_class(graph, target_class):
+    """
+    Print all edges involving nodes of the given class_name,
+    grouped by object ID (instance).
+    """
+    id_to_node = {n['id']: n for n in graph['nodes']}
+    
+    # Find all nodes of the target class
+    target_nodes = [n for n in graph['nodes'] if n['class_name'] == target_class]
+    target_ids = set(n['id'] for n in target_nodes)
+
+    # Group edges involving those nodes
+    edges_by_id = defaultdict(list)
+    for edge in graph['edges']:
+        if edge['from_id'] in target_ids or edge['to_id'] in target_ids:
+            edges_by_id[edge['from_id'] if edge['from_id'] in target_ids else edge['to_id']].append(edge)
+
+    # Print grouped edges
+    for node in target_nodes:
+        print(f"\n{node['class_name']} (id: {node['id']}, prefab: {node['prefab_name']})")
+        for edge in edges_by_id.get(node['id'], []):
+            direction = "→" if edge['from_id'] == node['id'] else "←"
+            other_id = edge['to_id'] if direction == "→" else edge['from_id']
+            other_node = id_to_node.get(other_id, {'class_name': 'UNKNOWN'})
+            print(f"    {edge['relation_type']} {direction} {other_node['class_name']} (id: {other_id})")
