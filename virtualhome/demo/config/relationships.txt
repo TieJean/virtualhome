@@ -1,0 +1,47 @@
+book ON bookshelf
+book ON desk
+book ON chair
+book ON bed
+book ON sofa
+book ON bathroomcounter
+
+mug ON desk
+mug ON kitchentable
+mug ON kitchencounter
+mug ON bathroomcounter
+mug ON bookshelf
+
+plate ON kitchentable
+plate ON kitchencounter
+plate ON bathroomcounter
+plate ON desk
+
+dishbowl ON kitchentable
+dishbowl ON kitchencounter
+dishbowl ON bathroomcounter
+dishbowl ON desk
+
+pillow ON bed
+pillow ON sofa
+pillow ON chair
+
+clothespile ON bed
+clothespile ON sofa
+clothespile ON chair
+
+towel ON towelrack
+towel ON bathroomcounter
+towel ON bed
+towel ON chair
+
+folder ON desk
+folder ON bookshelf
+folder ON chair
+folder ON bed
+
+book ON kitchentable
+mug ON sofa
+plate ON bookshelf
+pillow ON bookshelf
+clothespile ON bathroomcounter
+folder ON kitchencounter
