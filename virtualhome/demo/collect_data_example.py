@@ -11,8 +11,9 @@ from graph_utils import *
 surfaces = ["bathroomcounter", "bed", "bookshelf", "chair", "desk", "kitchencounter", "kitchentable", "sofa", "towelrack"]
 ambiguous_manipulable_objects = ["book", "mug", "plate", "dishbowl", "pillow", "clothespile", "towel", "folder"]
 
-def augment_graph(original_graph, verbose:bool = False):
+def augment_graph(original_graph, verbose: bool = False, seed: int = 42):
     relationships = load_relationships("config/relationships.txt")
+    random.seed(seed)
     
     graph = original_graph.copy()
     
@@ -58,7 +59,7 @@ def augment_graph(original_graph, verbose:bool = False):
             class_name = id_to_node[surface_id]['class_name']
             print(f"Surface {class_name} (ID {surface_id}): {count} object(s) ON it")
             
-    ambiguous_manipulable_df = get_ambiguous_manipulable_metadata(sample=True)
+    ambiguous_manipulable_df = get_ambiguous_manipulable_metadata(sample=True, seed=seed)
     # Step 6: Augment the graph with ambiguous manipulable objects
     next_id = 1000  # or find max used id and increment from there
 
@@ -114,16 +115,16 @@ def augment_graph(original_graph, verbose:bool = False):
         add_node(graph, new_node)
 
         # Step 5: add ON and INSIDE edges
-        add_edge(graph, from_id=next_id, relation_type='ON', to_id=surface_id)
-        add_edge(graph, from_id=next_id, relation_type='INSIDE', to_id=room_id)
+        add_edge(graph, fr_id=next_id, rel='ON', to_id=surface_id)
+        add_edge(graph, fr_id=next_id, rel='INSIDE', to_id=room_id)
 
         if verbose:
             print(f"✅ Added {prefab_name} (class: {obj_class}) ON {surface_class} (id: {surface_id}), in room {room_id}")
 
         next_id += 1
     
-    _, ambig_nodes, ambig_edges = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=True)
-    import pdb; pdb.set_trace()
+    if verbose:
+        _, ambig_nodes, ambig_edges = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
     
     return graph
 
@@ -132,27 +133,30 @@ def container_nodes(graph):
     containers = ["bathroomcabinet", "cabinet", "kitchencabinet"]
     pass
 
-def ambiguous_manipulable_nodes(graph):
-    pass
-
 if __name__ == "__main__":
     debug_dir = "../../outputs"
-    scene_id = 4
+    scene_ids = [4]
 
     comm = UnityCommunication(port="8080")
     comm.timeout_wait = 300 
 
     views = []
-    for scene_id in [scene_id]:
+    for scene_id in tqdm(scene_ids):
         comm.reset(scene_id)
         
         # We will go over the line below later
         comm.remove_terrain()
-        top_view = get_scene_cameras(comm, [-2])
-        views += top_view
+        init_top_view = get_scene_cameras(comm, [-scene_id])
         
-    view_pil = display_grid_img(views, nrows=2)
-    view_pil.save(os.path.join(debug_dir, "top_view.png"))
+        success, graph = comm.environment_graph()
+        augmented_graph = augment_graph(graph)
+        success, message = comm.expand_scene(graph)
+        
+        final_top_view = get_scene_cameras(comm, [-scene_id])
+        view_pil = display_grid_img(init_top_view+final_top_view, nrows=1)
+        view_pil.save(os.path.join(debug_dir, f"scene_{scene_id}.png"))
+    
+    exit(0)
 
     comm.reset(scene_id)
 

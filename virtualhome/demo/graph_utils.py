@@ -182,8 +182,9 @@ def get_ambiguous_manipulable_metadata(
 ):
     """
     Fetch prefab metadata for ambiguous manipulable objects.
-    - Match class names case-insensitively (normalize underscores).
+    - Normalize Object Name (lowercase, no underscore).
     - For 'book', only keep Book_XX and PRE_PRO_Book_01/02.
+    - If sample=True, sample up to 2 prefabs per class.
     """
     df = fetch_virtualhome_objects()
 
@@ -193,20 +194,23 @@ def get_ambiguous_manipulable_metadata(
     mask = df["Object Name"].apply(lambda name: normalize(name) in target_set)
     filtered = df[mask].copy()
 
-    # Special-case for 'book'
+    # Special-case filtering for 'book'
     is_book = filtered["Object Name"].apply(lambda s: normalize(s) == "book")
     keep_book = filtered["Prefab Name"].apply(
         lambda name: bool(re.fullmatch(r"Book_\d+", name)) or name in {"PRE_PRO_Book_01", "PRE_PRO_Book_02"}
     )
     filtered = filtered[~is_book | keep_book]
-    
-    # Optional: sample up to 2 per class
+
+    # Normalize "Object Name" column in output
+    filtered["Object Name"] = filtered["Object Name"].apply(normalize)
+
+    # Optional sampling
     if sample:
         random.seed(seed)
         sampled_rows = []
         for cls in ambiguous_classes:
             norm_cls = normalize(cls)
-            subset = filtered[filtered["Object Name"].apply(lambda s: normalize(s) == norm_cls)]
+            subset = filtered[filtered["Object Name"] == norm_cls]
             sampled_rows.append(subset.sample(n=min(2, len(subset)), random_state=seed))
         filtered = pd.concat(sampled_rows, ignore_index=True)
 
