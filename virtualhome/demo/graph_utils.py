@@ -176,7 +176,7 @@ def fetch_virtualhome_objects(url:str = "http://virtual-home.org/documentation/m
     return df
 
 def get_ambiguous_manipulable_metadata(
-    ambiguous_classes: list = ["book", "mug", "plate", "dishbowl", "pillow", "clothespile", "towel", "folder"],
+    ambiguous_classes: list = ["book", "dishbowl", "pillow", "clothespile", "towel", "folder"],
     sample: bool = False,
     seed: int = 42
 ):
@@ -213,6 +213,22 @@ def get_ambiguous_manipulable_metadata(
             subset = filtered[filtered["Object Name"] == norm_cls]
             sampled_rows.append(subset.sample(n=min(2, len(subset)), random_state=seed))
         filtered = pd.concat(sampled_rows, ignore_index=True)
+        
+    # TODO
+    manual_prefabs = {
+        "dishbowl": ["Dish_bowl_4", "FMGP_PRE_Wooden_bowl_1024"],
+        "pillow": ["PRE_DEC_Pillow_01_02", "HSHP_PRE_DEC_Pillow_01_01"],
+    }
+    for cls, new_prefabs in manual_prefabs.items():
+        mask = filtered["Object Name"] == cls
+        matching_indices = filtered[mask].index
+
+        if len(matching_indices) != len(new_prefabs):
+            print(f"⚠️ Mismatch: {cls} has {len(matching_indices)} rows but {len(new_prefabs)} new prefabs")
+            continue
+
+        for idx, new_prefab in zip(matching_indices, new_prefabs):
+            filtered.at[idx, "Prefab Name"] = new_prefab
 
     return filtered
 

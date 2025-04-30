@@ -14,14 +14,15 @@ ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "t
 def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int = 5):
     random.seed(seed)
     relationships = load_relationships("config/relationships.txt")
+    ambiguous_manipulable_df = get_ambiguous_manipulable_metadata(ambiguous_manipulable_objects, sample=True, seed=seed)
 
     success, graph = comm.environment_graph()
     
     if not success:
         raise RuntimeError("Failed to get initial environment graph.")
-
+    
     graph = remove_nodes_by_class(graph, ambiguous_manipulable_objects)
-    graph = remove_all_objects_on_surfaces(graph, surfaces) # TODO: optional?
+    # graph = remove_all_objects_on_surfaces(graph, surfaces, verbose) # TODO: optional?
     success, message = comm.expand_scene(graph)  # Clean baseline
     if not success:
         import pdb; pdb.set_trace()
@@ -39,7 +40,6 @@ def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int 
         for edge in graph['edges'] if edge['relation_type'] == 'INSIDE'
     }
 
-    ambiguous_manipulable_df = get_ambiguous_manipulable_metadata(sample=True, seed=seed)
     next_id = 1000
     failed_objects = []
 
@@ -84,7 +84,7 @@ def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int 
             add_edge(graph, fr_id=next_id, rel='ON', to_id=surface_id)
             add_edge(graph, fr_id=next_id, rel='INSIDE', to_id=room_id)
 
-            success, _ = comm.expand_scene(graph)
+            success, message = comm.expand_scene(graph)
             if success:
                 if verbose:
                     print(f"✅ Added {prefab_name} (class: {obj_class}; id: {next_id}) ON {surface_class} (id: {surface_id}), in room {room_id}")
