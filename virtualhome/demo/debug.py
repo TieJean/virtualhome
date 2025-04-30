@@ -1,0 +1,50 @@
+import sys
+
+sys.path.append('../simulation')
+from unity_simulator.comm_unity import UnityCommunication
+from utils_demo import add_node, add_edge
+
+if __name__ == "__main__":
+    comm = UnityCommunication(port="8080")
+    comm.timeout_wait = 300
+
+    # Step 1: Reset and get the original graph
+    comm.reset(4)
+    success, graph = comm.environment_graph()
+    if not success:
+        raise RuntimeError("Failed to get initial environment graph.")
+
+    target_id = 85
+
+    # === Save a copy of the node and its edges ===
+    original_node = next((n for n in graph['nodes'] if n['id'] == target_id), None)
+    if original_node is None:
+        raise ValueError(f"Node with ID {target_id} not found.")
+
+    related_edges = [e for e in graph['edges'] if e['from_id'] == target_id or e['to_id'] == target_id]
+
+    # === Remove node and its edges ===
+    graph['nodes'] = [n for n in graph['nodes'] if n['id'] != target_id]
+    graph['edges'] = [e for e in graph['edges'] if e['from_id'] != target_id and e['to_id'] != target_id]
+
+    success, message = comm.expand_scene(graph)
+    if not success:
+        import pdb; pdb.set_trace()
+        raise RuntimeError("❌ Scene expansion failed after removing node.")
+
+    # === Restore node and its edges ===
+    graph['nodes'].append(original_node)
+    graph['edges'].extend(related_edges)
+
+    # OR: if you want to do it through helper functions (for consistency)
+    # add_node(graph, original_node)
+    # for edge in related_edges:
+    #     add_edge(graph, edge['from_id'], edge['relation_type'], edge['to_id'])
+
+    success, message = comm.expand_scene(graph)
+    if not success:
+        import pdb; pdb.set_trace()
+        raise RuntimeError("❌ Scene expansion failed after restoring node.")
+
+    print("✅ Node and edges restored successfully.")
+    exit(0)
