@@ -134,6 +134,7 @@ def container_nodes(graph):
     pass
 
 if __name__ == "__main__":
+    viz = False
     debug_dir = "../../outputs"
     scene_ids = [4]
 
@@ -142,78 +143,51 @@ if __name__ == "__main__":
 
     views = []
     for scene_id in tqdm(scene_ids):
+        prefix = "test"
+        
         comm.reset(scene_id)
         
-        # We will go over the line below later
-        comm.remove_terrain()
-        init_top_view = get_scene_cameras(comm, [-scene_id])
-        
+        if viz:
+            # We will go over the line below later
+            comm.remove_terrain()
+            init_top_view = get_scene_cameras(comm, [-scene_id])
+            
         success, graph = comm.environment_graph()
         augmented_graph = augment_graph(graph)
         success, message = comm.expand_scene(graph)
+            
+        if viz:
+            final_top_view = get_scene_cameras(comm, [-scene_id])
+            view_pil = display_grid_img(init_top_view+final_top_view, nrows=1)
+            view_pil.save(os.path.join(debug_dir, f"scene_{scene_id}.png"))
         
-        final_top_view = get_scene_cameras(comm, [-scene_id])
-        view_pil = display_grid_img(init_top_view+final_top_view, nrows=1)
-        view_pil.save(os.path.join(debug_dir, f"scene_{scene_id}.png"))
+        comm.add_character('chars/Female2', initial_room='bathroom')
+        comm.add_character_camera(position=[1.5, 1.0, 0.0], rotation=[0, -60, 0], field_view=90, name="observer_camera")
+        
+        script = generate_walk_find_script(augmented_graph, ambiguous_manipulable_objects)
+        print(script)
+        
+        import pdb; pdb.set_trace()
+        script = script[2:3]
+        
+        # sofa = find_nodes(graph, class_name='sofa')[-1]
+        # script = ['<char0> [Walk] <sofa> ({})'.format(sofa['id']),
+        #         '<char0> [Sit] <sofa> ({})'.format(sofa['id'])]
+        
+        success, message = comm.render_script(script=script,
+                                            processing_time_limit=120,
+                                            find_solution=False,
+                                            image_width=640,
+                                            image_height=480,  
+                                            skip_animation=False,
+                                            recording=True,
+                                            save_pose_data=True,
+                                            camera_mode=["observer_camera"],
+                                            file_name_prefix=prefix)
+        print("Finish Rendering")
+
+        input_path = os.path.abspath('../../unity_output/')
+        output_path = os.path.abspath('../../outputs/')
+        utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)
     
     exit(0)
-
-    comm.reset(scene_id)
-
-    imgs_prev = get_scene_cameras(comm, [-scene_id])
-    view_pil = display_grid_img(imgs_prev, nrows=1)
-
-    success, graph = comm.environment_graph()
-    augment_graph(graph)
-    
-    sofa = find_nodes(graph, class_name='sofa')[-1]
-    add_node(graph, {'class_name': 'book', 
-                    'category': 'Animals',
-                    "prefab_name": "Book_1", 
-                    'id': 1000, 
-                    'properties': [], 
-                    'states': []})
-    add_edge(graph, 1000, 'ON', sofa['id'])
-    add_node(graph, {'class_name': 'book', 
-                    'category': 'Animals',
-                    "prefab_name": "Book_2", 
-                    'id': 1001, 
-                    'properties': [], 
-                    'states': []})
-    add_edge(graph, 1001, 'ON', sofa['id'])
-    success, message = comm.expand_scene(graph)
-
-    imgs_final = get_scene_cameras(comm, [-4])
-    view_pil = display_grid_img(imgs_prev+imgs_final, nrows=1)
-    view_pil.save(os.path.join(debug_dir, "scene4_final.png"))
-
-    comm.add_character('chars/Female2', initial_room='kitchen')
-    comm.add_character_camera(position=[1.5, 1.0, 0.0], rotation=[0, -60, 0], field_view=90, name="observer_camera")
-    s, g = comm.environment_graph()
-    cat_id = [node['id'] for node in g['nodes'] if node['class_name'] == 'book'][0]
-
-    s, nc = comm.camera_count()
-    indices = range(nc - 6, nc)
-    imgs_prev = get_scene_cameras(comm, indices)
-    view_pil = display_grid_img(imgs_prev, nrows=2)
-    view_pil.save(os.path.join(debug_dir, "character_view.png"))
-
-    script = ['<char0> [Walk] <sofa> ({})'.format(sofa['id']),
-            '<char0> [Find] <cat> ({})'.format(cat_id),
-            '<char0> [Grab] <cat> ({})'.format(cat_id),
-            '<char0> [Sit] <sofa> ({})'.format(sofa['id'])]
-
-    success, message = comm.render_script(script=script,
-                                        processing_time_limit=120,
-                                        find_solution=False,
-                                        image_width=640,
-                                        image_height=480,  
-                                        skip_animation=False,
-                                        recording=True,
-                                        save_pose_data=True,
-                                        camera_mode=["observer_camera"],
-                                        file_name_prefix='relax')
-
-    input_path = os.path.abspath('../../unity_output/')
-    output_path = os.path.abspath('../../outputs/')
-    utils_viz.generate_video(input_path=input_path, prefix='relax', output_path=output_path)

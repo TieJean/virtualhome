@@ -39,9 +39,10 @@ def generate_video(input_path, prefix, char_id=0, image_synthesis=['normal'], fr
         print("The input path: {} you specified does not exist.".format(input_path))
     else:
         for vid_mod in image_synthesis:
-            command_set = ['ffmpeg', '-i',
-                             '{}/Action_%04d_0_{}.png'.format(vid_folder, vid_mod), 
+            command_set = ['ffmpeg', 
                              '-framerate', str(frame_rate),
+                             '-i',
+                             '{}/Action_%04d_0_{}.png'.format(vid_folder, vid_mod), 
                              '-pix_fmt', 'yuv420p',
                              '{}/video_{}.mp4'.format(output_path, vid_mod)]
             subprocess.call(command_set)

@@ -245,3 +245,31 @@ def load_relationships(filepath: str):
             result[obj][relation].append(surface)
 
     return result
+
+def generate_walk_find_script(graph, target_classes):
+    """
+    Generate script lines like:
+        <char0> [Walk] <surface> (surface_id)
+        <char0> [Find] <object> (object_id)
+    For all objects in target_classes (default: ambiguous_manipulable_objects)
+    """
+    id_to_node = {node['id']: node for node in graph['nodes']}
+
+    # Find all ON edges where from_node is in target_classes
+    script_lines = []
+    for edge in graph['edges']:
+        if edge['relation_type'] != 'ON':
+            continue
+
+        obj_node = id_to_node.get(edge['from_id'])
+        surf_node = id_to_node.get(edge['to_id'])
+        if not obj_node or not surf_node:
+            continue
+
+        if obj_node['class_name'] not in target_classes:
+            continue
+
+        script_lines.append(f"<char0> [Walk] <{surf_node['class_name']}> ({surf_node['id']})")
+        script_lines.append(f"<char0> [Find] <{obj_node['class_name']}> ({obj_node['id']})")
+
+    return script_lines
