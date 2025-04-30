@@ -307,3 +307,32 @@ def print_edges_by_class(graph, target_class):
             other_id = edge['to_id'] if direction == "→" else edge['from_id']
             other_node = id_to_node.get(other_id, {'class_name': 'UNKNOWN'})
             print(f"    {edge['relation_type']} {direction} {other_node['class_name']} (id: {other_id})")
+
+def remove_all_objects_on_surfaces(graph, surface_class_names, verbose=False):
+    """
+    Removes all nodes that are ON any surface whose class_name is in surface_class_names.
+    Cleans up all edges involving those nodes.
+    """
+    # Step 1: Identify surface node IDs
+    surface_ids = {node['id'] for node in graph['nodes'] if node['class_name'] in surface_class_names}
+
+    # Step 2: Find ON edges where to_id is a surface
+    on_edges = [e for e in graph['edges'] if e['relation_type'] == 'ON' and e['to_id'] in surface_ids]
+    object_ids = {e['from_id'] for e in on_edges}
+
+    if verbose and object_ids:
+        print(f"🧹 Preparing to remove {len(object_ids)} object nodes from surfaces...")
+
+    # Step 3: Clean up all nodes with those IDs
+    graph['nodes'] = [n for n in graph['nodes'] if n['id'] not in object_ids]
+
+    # Step 4: Remove all edges involving those IDs
+    graph['edges'] = [
+        e for e in graph['edges']
+        if e['from_id'] not in object_ids and e['to_id'] not in object_ids
+    ]
+
+    if verbose and object_ids:
+        print(f"✅ Removed objects: {sorted(object_ids)}")
+        
+    return graph

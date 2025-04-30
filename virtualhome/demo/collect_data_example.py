@@ -21,7 +21,11 @@ def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int 
         raise RuntimeError("Failed to get initial environment graph.")
 
     graph = remove_nodes_by_class(graph, ambiguous_manipulable_objects)
-    comm.expand_scene(graph)  # Clean baseline
+    graph = remove_all_objects_on_surfaces(graph, surfaces) # TODO: optional?
+    success, message = comm.expand_scene(graph)  # Clean baseline
+    if not success:
+        import pdb; pdb.set_trace()
+        raise RuntimeError("Failed to expand scene after removing objects.")
     success, graph = comm.environment_graph()
 
     _, surface_nodes, _ = find_nodes_and_edges_by_class(graph, surfaces, verbose=verbose)
