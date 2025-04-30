@@ -1,4 +1,5 @@
 book ON bookshelf
+book ON wallshelf
 book ON desk
 book ON chair
 book ON bed
@@ -9,17 +10,20 @@ mug ON desk
 mug ON kitchentable
 mug ON kitchencounter
 mug ON bathroomcounter
-mug ON bookshelf
+mug ON wallshelf
+mug ON coffeetable
 
 plate ON kitchentable
 plate ON kitchencounter
-plate ON bathroomcounter
 plate ON desk
+plate ON wallshelf
+plate ON coffeetable
 
 dishbowl ON kitchentable
 dishbowl ON kitchencounter
-dishbowl ON bathroomcounter
 dishbowl ON desk
+dishbowl ON wallshelf
+dishbowl ON coffeetable
 
 pillow ON bed
 pillow ON sofa
@@ -38,10 +42,8 @@ folder ON desk
 folder ON bookshelf
 folder ON chair
 folder ON bed
+folder ON wallshelf
 
 book ON kitchentable
-mug ON sofa
-plate ON bookshelf
-pillow ON bookshelf
 clothespile ON bathroomcounter
 folder ON kitchencounter

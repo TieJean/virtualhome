@@ -8,127 +8,104 @@ from utils_demo import *
 from graph_utils import *
 
 # TODO move to config
-surfaces = ["bathroomcounter", "bed", "bookshelf", "chair", "desk", "kitchencounter", "kitchentable", "sofa", "towelrack", "wallshelf"]
-ambiguous_manipulable_objects = ["book", "mug", "plate", "dishbowl", "pillow", "clothespile", "towel", "folder"]
+surfaces = ["bathroomcounter", "bed", "bookshelf", "chair", "desk", "kitchencounter", "kitchentable", "sofa", "towelrack", "wallshelf", "coffeetable", "dinningtable", "kitchentable"]
+ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "towel", "folder"]
 
-def augment_graph(original_graph, verbose: bool = False, seed: int = 42):
-    print_edges_by_class(original_graph, "book")
-    
-    relationships = load_relationships("config/relationships.txt")
+def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int = 5):
     random.seed(seed)
+    relationships = load_relationships("config/relationships.txt")
+
+    success, graph = comm.environment_graph()
     
-    graph = original_graph.copy()
-    
+    if not success:
+        raise RuntimeError("Failed to get initial environment graph.")
+
     graph = remove_nodes_by_class(graph, ambiguous_manipulable_objects)
-    
-    surface_node_ids, surface_nodes, surface_edges = find_nodes_and_edges_by_class(graph, surfaces, verbose=verbose)
-    
-    # Step 3: From nodes (objects on surfaces)
-    from_ids = extract_from_ids(surface_edges)
-    from_nodes = extract_nodes_by_ids(graph['nodes'], from_ids)
-    
-    if verbose:
-        unique_classes = get_unique_class_names(from_nodes)
-        print("\n=== Unique object classes ON surfaces ===")
-        print(unique_classes)
-        
-        categorized_from_nodes = categorize_from_nodes(from_nodes)
-        print("\n=== Class Categorization ===")
-        for k, v in categorized_from_nodes.items():
-            print(f"{k}: {sorted(v)}")
-            
-    # Step 4: Pretty-print edge descriptions
-    id_to_node = {node['id']: node for node in graph['nodes']}
+    comm.expand_scene(graph)  # Clean baseline
+    success, graph = comm.environment_graph()
 
-    edge_descriptions = []
-    for edge in surface_edges:
-        from_node = id_to_node.get(edge['from_id'])
-        to_node = id_to_node.get(edge['to_id'])
-        if from_node and to_node:
-            desc = f"{from_node['prefab_name']} ON {to_node['prefab_name']}"
-            edge_descriptions.append(desc)
-            
-    # Step 5: Group from_ids by each surface to_id
-    surface_to_objects = defaultdict(list)
-    for edge in surface_edges:
-        surface_to_objects[edge['to_id']].append(edge['from_id'])
-
-    # Print summary if verbose
-    if verbose:
-        print("\n=== Object counts per surface ===")
-        for surface_id in surface_node_ids:
-            count = len(surface_to_objects.get(surface_id, []))
-            class_name = id_to_node[surface_id]['class_name']
-            print(f"Surface {class_name} (ID {surface_id}): {count} object(s) ON it")
-            
-    ambiguous_manipulable_df = get_ambiguous_manipulable_metadata(sample=True, seed=seed)
-    # Step 6: Augment the graph with ambiguous manipulable objects
-    next_id = 1000  # or find max used id and increment from there
-
-    # Index surfaces by class_name for fast lookup
+    _, surface_nodes, _ = find_nodes_and_edges_by_class(graph, surfaces, verbose=verbose)
     surface_class_to_nodes = defaultdict(list)
     for node in surface_nodes:
         surface_class_to_nodes[node['class_name']].append(node)
 
-    # Build surface id → room id mapping from INSIDE edges
-    surface_id_to_room_id = {}
-    for edge in graph['edges']:
-        if edge['relation_type'] == 'INSIDE':
-            surface_id_to_room_id[edge['from_id']] = edge['to_id']
+    # Map surface node ID → room ID
+    surface_id_to_room_id = {
+        edge['from_id']: edge['to_id']
+        for edge in graph['edges'] if edge['relation_type'] == 'INSIDE'
+    }
+
+    ambiguous_manipulable_df = get_ambiguous_manipulable_metadata(sample=True, seed=seed)
+    next_id = 1000
+    failed_objects = []
 
     for _, row in ambiguous_manipulable_df.iterrows():
         obj_class = row["Object Name"]
         prefab_name = row["Prefab Name"]
-
-        # Step 1: sample one surface class
         possible_surfaces = relationships.get(obj_class, {}).get("ON", [])
-        if not possible_surfaces:
+        placed = False
+
+        for attempt_i in range(max_retries):
+            success, graph = comm.environment_graph()
+            if not possible_surfaces:
+                if verbose:
+                    print(f"⚠️ No ON surfaces listed for class '{obj_class}', skipping.")
+                break
+
+            surface_class = random.choice(possible_surfaces)
+            candidates = surface_class_to_nodes.get(surface_class, [])
+            if not candidates:
+                if verbose:
+                    print(f"⚠️ No surface nodes found for surface class '{surface_class}', skipping attempt.")
+                continue
+
+            surface_node = random.choice(candidates)
+            surface_id = surface_node['id']
+            room_id = surface_id_to_room_id.get(surface_id)
+            if room_id is None:
+                if verbose:
+                    print(f"⚠️ Could not find room for surface ID {surface_id}, skipping attempt.")
+                continue
+
+            # Build and inject
+            new_node = {
+                'id': next_id,
+                'class_name': obj_class,
+                'prefab_name': prefab_name,
+                'category': 'AmbiguousObject',
+                'properties': ['GRABBABLE'],
+                'states': []
+            }
+            add_node(graph, new_node)
+            add_edge(graph, fr_id=next_id, rel='ON', to_id=surface_id)
+            add_edge(graph, fr_id=next_id, rel='INSIDE', to_id=room_id)
+
+            success, _ = comm.expand_scene(graph)
+            if success:
+                if verbose:
+                    print(f"✅ Added {prefab_name} (class: {obj_class}; id: {next_id}) ON {surface_class} (id: {surface_id}), in room {room_id}")
+                next_id += 1
+                placed = True
+                break
+            else:
+                # Clean up and retry
+                # graph['nodes'] = [n for n in graph['nodes'] if n['id'] != next_id]
+                # graph['edges'] = [e for e in graph['edges'] if e['from_id'] != next_id and e['to_id'] != next_id]
+                if verbose:
+                    surface_desc = surface_node.get('prefab_name') or surface_node['class_name']
+                    print(f"❌ Failed to place {prefab_name} ON {surface_desc} (id: {surface_id}) on attempt {attempt_i+1}/{max_retries}, trying again...")
+
+        if not placed:
+            failed_objects.append((obj_class, prefab_name))
             if verbose:
-                print(f"⚠️ No ON surfaces listed for class '{obj_class}', skipping.")
-            continue
-        surface_class = random.choice(possible_surfaces)
+                print(f"⚠️ Gave up on placing {prefab_name} (class: {obj_class}) after {max_retries} attempts.")
 
-        # Step 2: find all surface nodes of that class
-        candidate_surfaces = surface_class_to_nodes.get(surface_class, [])
-        if not candidate_surfaces:
-            if verbose:
-                print(f"⚠️ No surface nodes found for class '{surface_class}', skipping.")
-            continue
+    if failed_objects:
+        print("\n⚠️ Some objects could not be placed:")
+        for cls, prefab in failed_objects:
+            print(f"   - {prefab} (class: {cls})")
 
-        # Step 3: sample one surface node
-        surface_node = random.choice(candidate_surfaces)
-        surface_id = surface_node['id']
-        room_id = surface_id_to_room_id.get(surface_id)
-
-        if room_id is None:
-            if verbose:
-                print(f"⚠️ Could not find room for surface ID {surface_id}, skipping.")
-            continue
-
-        # Step 4: create and add new object node
-        new_node = {
-            'id': next_id,
-            'class_name': obj_class,
-            'prefab_name': prefab_name,
-            'category': 'AmbiguousObject',  # optionally: set a custom category
-            'properties': ['GRABBABLE'],
-            'states': []
-        }
-        add_node(graph, new_node)
-
-        # Step 5: add ON and INSIDE edges
-        add_edge(graph, fr_id=next_id, rel='ON', to_id=surface_id)
-        add_edge(graph, fr_id=next_id, rel='INSIDE', to_id=room_id)
-
-        if verbose:
-            print(f"✅ Added {prefab_name} (class: {obj_class}; id: {next_id}) ON {surface_class} (id: {surface_id}), in room {room_id}")
-
-        next_id += 1
-    
-    if verbose:
-        _, ambig_nodes, ambig_edges = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
-    
-    return graph
+    return
 
 
 def container_nodes(graph):
@@ -163,8 +140,10 @@ if __name__ == "__main__":
         
         
         success, graph = comm.environment_graph()
-        augmented_graph = augment_graph(graph, verbose=False)
-        success, message = comm.expand_scene(augmented_graph)
+        augment_graph(comm, verbose=True)
+        
+        # augmented_graph = augment_graph(graph, verbose=False)
+        # success, message = comm.expand_scene(augmented_graph)
         import pdb; pdb.set_trace()
         
         success, graph = comm.environment_graph()
