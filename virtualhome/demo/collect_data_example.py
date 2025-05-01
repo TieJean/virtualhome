@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import sys, os
+import json
 
 sys.path.append('../simulation')
 from unity_simulator.comm_unity import UnityCommunication
@@ -9,7 +10,7 @@ from graph_utils import *
 
 # TODO move to config
 surfaces = ["bathroomcounter", "bed", "bookshelf", "chair", "desk", "kitchencounter", "kitchentable", "sofa", "towelrack", "wallshelf", "coffeetable", "dinningtable", "kitchentable"]
-# ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "towel", "folder"]
+# ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "clothesshirt", "clothespant" "towel", "folder"]
 ambiguous_manipulable_objects = ["book", "folder"]
 
 def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int = 10):
@@ -41,7 +42,8 @@ def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int 
         for edge in graph['edges'] if edge['relation_type'] == 'INSIDE'
     }
 
-    next_id = 1000
+    start_id = sorted([n["id"] for n in graph["nodes"]])[-1] + 1
+    next_id = start_id
     failed_objects = []
 
     for _, row in ambiguous_manipulable_df.iterrows():
@@ -84,9 +86,10 @@ def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int 
             add_node(graph, new_node)
             add_edge(graph, fr_id=next_id, rel='ON', to_id=surface_id)
             add_edge(graph, fr_id=next_id, rel='INSIDE', to_id=room_id)
-
+            
             success, message = comm.expand_scene(graph)
             if success:
+                # sorted([n["id"] for n in graph["nodes"]])[-1]
                 if verbose:
                     print(f"✅ Added {prefab_name} (class: {obj_class}; id: {next_id}) ON {surface_class} (id: {surface_id}), in room {room_id}")
                 next_id += 1
@@ -109,8 +112,35 @@ def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int 
         print("\n⚠️ Some objects could not be placed:")
         for cls, prefab in failed_objects:
             print(f"   - {prefab} (class: {cls})")
+            
+    # === Construct minimal GT graph for added ambiguous objects ===
+    success, graph = comm.environment_graph()
+    ambiguous_node_ids = list(range(start_id, next_id))
+    gt_nodes = []
+    gt_edges = []
+    id_set = set()
+    id_to_node = {n['id']: n for n in graph['nodes']}
 
-    return
+    for node_id in ambiguous_node_ids:
+        node = id_to_node[node_id]
+        gt_nodes.append(node)
+        id_set.add(node_id)
+
+        for edge in graph['edges']:
+            if edge['from_id'] == node_id or edge['to_id'] == node_id:
+                gt_edges.append(edge)
+                other_id = edge['to_id'] if edge['from_id'] == node_id else edge['from_id']
+                if other_id not in id_set:
+                    id_set.add(other_id)
+                    if other_id in id_to_node:
+                        gt_nodes.append(id_to_node[other_id])
+
+    gt_graph = {
+        "nodes": gt_nodes,
+        "edges": gt_edges
+    }
+
+    return graph, gt_graph
 
 
 def container_nodes(graph):
@@ -118,6 +148,9 @@ def container_nodes(graph):
     pass
 
 if __name__ == "__main__":
+    # scenepath = "../../unity_output/test/0/augmented_graph.json"
+    scenepath = None
+    verbose = True
     viz = False
     debug_dir = "../../outputs"
     scene_ids = [4]
@@ -143,7 +176,28 @@ if __name__ == "__main__":
         # success, message = comm.render_script(script=script, processing_time_limit=120, find_solution=False, image_width=640, image_height=480, skip_animation=False, recording=True, save_pose_data=True, camera_mode=["observer_camera"], file_name_prefix=prefix)
         # import pdb; pdb.set_trace()
         
-        augment_graph(comm, verbose=True)
+        if scenepath is not None:
+            with open(scenepath, "r") as f:
+                graph = json.load(f)
+            success, message = comm.expand_scene(graph)
+            if not success:
+                raise RuntimeError(f"Failed to expand scene after loading graph at: {scenepath}.")
+        else:
+            graph, gt_graph = augment_graph(comm, verbose=verbose)
+            print("here")
+            output_dir = os.path.join("../../unity_output", prefix, "0")
+            os.makedirs(output_dir, exist_ok=True)
+            graph_path = os.path.join(output_dir, "graph.json")
+            with open(graph_path, "w") as f:
+                json.dump(graph, f, indent=2)
+                if verbose:
+                    print(f"graph saved to {graph_path}")
+            graph_gt_path = os.path.join(output_dir, "gt_graph.json")
+            with open(graph_gt_path, "w") as f:
+                json.dump(gt_graph, f, indent=2)
+                if verbose:
+                    print(f"GT graph saved to {graph_gt_path}")
+                
         success, graph = comm.environment_graph()
             
         if viz:
@@ -157,7 +211,6 @@ if __name__ == "__main__":
         script = generate_walk_find_script(graph, ambiguous_manipulable_objects)
         print(script)
         
-        import pdb; pdb.set_trace()
         # script = script[5:10]
         
         # sofa = find_nodes(graph, class_name='sofa')[-1]
@@ -166,7 +219,7 @@ if __name__ == "__main__":
         # success, message = comm.render_script(script=script, processing_time_limit=120, find_solution=False, image_width=640, image_height=480, skip_animation=False, recording=True, save_pose_data=True, camera_mode=["observer_camera"], file_name_prefix=prefix)
         
         success, message = comm.render_script(script=script,
-                                            processing_time_limit=120,
+                                            processing_time_limit=300,
                                             find_solution=False,
                                             image_width=640,
                                             image_height=480,  
