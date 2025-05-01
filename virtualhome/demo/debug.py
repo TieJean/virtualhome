@@ -45,6 +45,16 @@ if __name__ == "__main__":
         raise RuntimeError("Attempt4: ❌ Scene expansion failed after removing node.")
 
     # === Restore node and its edges ===
+    success, graph = comm.environment_graph()
+    
+    new_id = max(n['id'] for n in graph['nodes']) + 1  # safe new ID
+    original_node['id'] = new_id
+    for e in related_edges:
+        if e['from_id'] == target_id:
+            e['from_id'] = new_id
+        if e['to_id'] == target_id:
+            e['to_id'] = new_id
+    
     graph['nodes'].append(original_node)
     graph['edges'].extend(related_edges)
 
@@ -53,14 +63,16 @@ if __name__ == "__main__":
     # for edge in related_edges:
     #     add_edge(graph, edge['from_id'], edge['relation_type'], edge['to_id'])
     
-    success, message = comm.expand_scene(original_graph)
-    if not success:
-        import pdb; pdb.set_trace()
-        print("Attempt5: ❌ Scene expansion failed after restoring node.")
+    # success, message = comm.expand_scene(original_graph)
+    # if not success:
+        # import pdb; pdb.set_trace()
+        # print("Attempt5: ❌ Scene expansion failed after restoring node.")
 
     success, message = comm.expand_scene(graph)
     if not success:
         print("Attempt6: ❌ Scene expansion failed after restoring node.")
+        import pdb; pdb.set_trace()
+        
         success, message = comm.expand_scene(original_graph)
         if not success:
             print("Attempt7: ❌ Scene expansion failed after restoring original graph.")
