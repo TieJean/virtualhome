@@ -356,3 +356,33 @@ def remove_all_objects_on_surfaces(graph, surface_class_names, verbose=False):
         print(f"✅ Removed objects: {sorted(object_ids)}")
         
     return graph
+
+def get_node_parents(graph, node_id):
+    return [edge['from_id'] for edge in graph['edges'] if edge['to_id'] == node_id]
+
+def get_node_children(graph, node_id):
+    return [edge['to_id'] for edge in graph['edges'] if edge['from_id'] == node_id]
+
+def find_room_of_node(graph, node_id):
+    """
+    Traverses the graph to find the room that contains the given node_id.
+    Assumes rooms are top-level containers and reachable via INSIDE or ON edges.
+    """
+    children = get_node_children(graph, node_id)
+    
+    # BFS upward until we find a room
+    visited = set()
+    queue = list(children)
+    
+    while queue:
+        current_id = queue.pop(0)
+        current_node = [n for n in graph['nodes'] if n['id'] == current_id][0]
+        
+        if current_node['class_name'] in ['bathroom', 'kitchen', 'bedroom', 'livingroom', 'diningroom']:
+            return current_node  # Found room
+        
+        if current_id not in visited:
+            visited.add(current_id)
+            queue.extend(get_node_children(graph, current_id))  # Go upward
+
+    return None  # Room not found
