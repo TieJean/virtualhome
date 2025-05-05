@@ -148,8 +148,8 @@ def container_nodes(graph):
     pass
 
 if __name__ == "__main__":
-    # scenepath = "../../unity_output/test/0/augmented_graph.json"
-    scenepath = None
+    scenepath = "../../unity_output/test/0/graph.json"
+    # scenepath = None
     verbose = True
     viz = False
     debug_dir = "../../outputs"
@@ -160,7 +160,8 @@ if __name__ == "__main__":
 
     views = []
     for scene_id in tqdm(scene_ids):
-        prefix = "test"
+        # prefix = "test"
+        prefix = "test_observer_camera"
         
         comm.reset(scene_id)
         
@@ -206,7 +207,8 @@ if __name__ == "__main__":
             view_pil.save(os.path.join(debug_dir, f"scene_{scene_id}.png"))
         
         comm.add_character('chars/Female2', initial_room='bathroom')
-        # comm.add_character_camera(position=[1.5, 1.0, 0.0], rotation=[0, -60, 0], field_view=90, name="observer_camera")
+        # comm.add_character_camera(position=[1.0, 1.0, -0.5], rotation=[0, -45, 0], field_view=90, name="observer_camera")
+        comm.add_character_camera(position=[0.5, 1.5, -1.0], rotation=[0, -45, 0], field_view=90, name="observer_camera")
         
         script = generate_walk_find_script(graph, ambiguous_manipulable_objects)
         print(script)
@@ -226,8 +228,8 @@ if __name__ == "__main__":
                                             skip_animation=False,
                                             recording=True,
                                             save_pose_data=True,
-                                            # camera_mode=["observer_camera"],
-                                            camera_mode=["FIRST_PERSON"],
+                                            camera_mode=["observer_camera"],
+                                            # camera_mode=["FIRST_PERSON"],
                                             file_name_prefix=prefix)
         import pdb; pdb.set_trace()
         print("Finish Rendering")
