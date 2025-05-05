@@ -15,6 +15,7 @@ if __name__ == "__main__":
     prefix = "test"
     seed = 42
     verbose = False
+    relationships = load_relationships("config/relationships.txt")
     
     comm = UnityCommunication(port="8080")
     comm.timeout_wait = 300 
@@ -27,7 +28,7 @@ if __name__ == "__main__":
 
     # Step 3: Add shirt node and place inside bedroom
     _, ambiguous_manipulable_nodes, _ = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
-    node = ambiguous_manipulable_nodes[-16] # book
+    node = random.choice(ambiguous_manipulable_nodes) # book
     
     src_room = find_room_of_node(graph, node['id'])
     if not src_room:
@@ -37,7 +38,9 @@ if __name__ == "__main__":
     if not surface_nodes:
         raise RuntimeError("❌ No surface found in the scene.")
 
-    dst_surface = surface_nodes[0]
+    dst_surface = choose_valid_surface(graph, node["class_name"], relationships, verbose=verbose)
+    if not dst_surface:
+        raise RuntimeError(f"No valid surface found for object {node['class_name']}")
     dst_room = find_room_of_node(graph, dst_surface['id'])
     if not dst_room:
         raise RuntimeError("❌ Could not find room for surface.")

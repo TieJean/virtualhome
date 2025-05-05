@@ -386,3 +386,30 @@ def find_room_of_node(graph, node_id):
             queue.extend(get_node_children(graph, current_id))  # Go upward
 
     return None  # Room not found
+
+def choose_valid_surface(graph, obj_class, relationships, verbose=False):
+    """
+    Chooses a valid surface node for a given object class based on relationships.
+
+    Args:
+        graph: Environment graph
+        obj_class: e.g., "book"
+        relationships: dict mapping object class to valid surface classes
+        verbose: whether to print fallback info
+
+    Returns:
+        A valid surface node (dict), or None if not found.
+    """
+    valid_surface_classes = relationships.get(obj_class, {}).get("ON", [])
+    if not valid_surface_classes:
+        if verbose:
+            print(f"⚠️ No ON-surfaces defined for '{obj_class}' in relationships.")
+        return None
+
+    _, surface_nodes, _ = find_nodes_and_edges_by_class(graph, valid_surface_classes, verbose=verbose)
+    if not surface_nodes:
+        if verbose:
+            print(f"⚠️ No surface nodes in scene for classes: {valid_surface_classes}")
+        return None
+
+    return random.choice(surface_nodes)
