@@ -13,7 +13,6 @@ ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "c
 if __name__ == "__main__":
     seed = 42
     # scenepath = "../../unity_output/test/0/graph.json"
-    scenepath = None
     verbose = False
     viz = False
     debug_dir = "../../outputs"
@@ -25,9 +24,18 @@ if __name__ == "__main__":
     
     for scene_id in tqdm(scene_ids):
         prefix = "test_collect_data"
+        scenepath_in = None
+        scenepath_out = None
         
-        # Step 1: Reset and load scene
-        comm.reset(scene_id)
+        if scenepath_in is not None:
+            with open(scenepath_in, "r") as f:
+                graph = json.load(f)
+            success, message = comm.expand_scene(graph)
+            if not success:
+                raise RuntimeError(f"Failed to expand scene after loading graph at: {scenepath_in}.")
+        else:
+            # Step 1: Reset and load scene
+            comm.reset(scene_id)
         
         # Step 2: Get the environment graph
         success, graph = comm.environment_graph()
@@ -41,7 +49,7 @@ if __name__ == "__main__":
                 import pdb; pdb.set_trace()
                 raise RuntimeError("Failed to expand scene after removing objects.")
     
-        if False:
+        if True:
             # Convert to DataFrame
             success, graph = comm.environment_graph()
             _, ambiguous_manipulable_nodes, _ = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
@@ -59,11 +67,16 @@ if __name__ == "__main__":
             print(df[["class_name", "prefab_name"]].sort_values(by="class_name").to_string(index=False))
         
         success, graph = comm.environment_graph()
+        # save the graph to a file
+        if scenepath_out is not None:
+            with open(scenepath_out, "w") as f:
+                json.dump(graph, f, indent=2)
         
         comm.add_character('chars/Female2', initial_room='bathroom')
-        comm.add_character_camera(position=[0.0, 1.0, 0.0], rotation=[0, 0, 0], field_view=90, name="observer_camera")
-        script = generate_walk_find_script(graph, ["book"])
-        # script = script[:1]
+        comm.add_character_camera(position=[0.0, 1.0, -0.1], rotation=[0, 0, 0], field_view=90, name="observer_camera")
+        script = generate_walk_find_script(graph, ["towel"])
+        print(script)
+        
         success, message = comm.render_script(script=script,
                                         processing_time_limit=1000,
                                         find_solution=False,

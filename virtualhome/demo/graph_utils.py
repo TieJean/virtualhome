@@ -344,15 +344,15 @@ def generate_walk_find_script(graph, target_classes):
             continue
 
         # Step 1: Walk to room (if any)
-        room_node = find_room_of_node(graph, surf_node['id'])
-        if room_node:
-            script_lines.append(f"<char0> [Walk] <{room_node['class_name']}> ({room_node['id']})")
+        # room_node = find_room_of_node(graph, surf_node['id'])
+        # if room_node:
+        #     script_lines.append(f"<char0> [Walk] <{room_node['class_name']}> ({room_node['id']})")
 
         # Step 2: Walk to surface
         script_lines.append(f"<char0> [Walk] <{surf_node['class_name']}> ({surf_node['id']})")
 
         # Step 3: Repeated LookAt
-        for _ in range(5):
+        for _ in range(1):
             script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
 
     return script_lines
