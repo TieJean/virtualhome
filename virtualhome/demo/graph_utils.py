@@ -357,6 +357,50 @@ def generate_walk_find_script(graph, target_classes):
 
     return script_lines
 
+def generate_single_object_replacement_script(graph, node, relationships, character:str='<char0>', verbose=False):
+    """
+    Generates a script for <char1> to pick up an object and place it on a valid surface.
+    <char0> walks along but does not interact with objects.
+
+    Args:
+        graph: environment graph
+        node: a single object node (dict)
+        relationships: ON-placement map, from object class to valid surface classes
+        verbose: whether to print debug info
+
+    Returns:
+        List[str]: list of action lines
+    """
+    src_room = find_room_of_node(graph, node['id'])
+    if not src_room:
+        print("❌ Could not find room for object.")
+        return None
+
+    dst_surface = choose_valid_surface(graph, node["class_name"], relationships, verbose=verbose)
+    if not dst_surface:
+        print(f"No valid surface found for object {node['class_name']}")
+        return None
+    
+    dst_room = find_room_of_node(graph, dst_surface['id'])
+    if not dst_room:
+        print("❌ Could not find room for surface.")
+        return None
+
+    script = [
+        f'{character} [Walk] <{src_room["class_name"]}> ({src_room["id"]})',
+        f'{character} [Grab] <{node["class_name"]}> ({node["id"]})',
+        f'{character} [Walk] <{dst_room["class_name"]}> ({dst_room["id"]})',
+        f'{character} [Walk] <{dst_surface["class_name"]}> ({dst_surface["id"]})',
+        f'{character} [Put] <{node["class_name"]}> ({node["id"]}) <{dst_surface["class_name"]}> ({dst_surface["id"]})'
+    ]
+
+    if verbose:
+        print("✅ Script generated:")
+        for line in script:
+            print("  ", line)
+
+    return script
+
 def print_edges_by_class(graph, target_class):
     """
     Print all edges involving nodes of the given class_name,
@@ -481,3 +525,17 @@ def filter_nodes_by_prefab(nodes, prefab_names):
         List[dict]: Filtered list of nodes matching the prefab_names.
     """
     return [node for node in nodes if node.get("prefab_name") in prefab_names]
+
+
+def filter_nodes_by_class(nodes, class_names):
+    """
+    Filters a list of nodes by a given list of prefab names.
+
+    Args:
+        nodes (List[dict]): List of node dictionaries.
+        prefab_names (List[str]): List of prefab names to keep.
+
+    Returns:
+        List[dict]: Filtered list of nodes matching the prefab_names.
+    """
+    return [node for node in nodes if node.get("class_name") in class_names]

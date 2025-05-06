@@ -19,6 +19,8 @@ if __name__ == "__main__":
     scene_ids = [4]
     relationships = load_relationships("config/relationships.txt")
     
+    random.seed(seed)
+    
     comm = UnityCommunication(port="8080")
     comm.timeout_wait = 300 
     
@@ -66,12 +68,41 @@ if __name__ == "__main__":
             print("\n📋 class_name ↔ prefab_name table:")
             print(df[["class_name", "prefab_name"]].sort_values(by="class_name").to_string(index=False))
         
-        success, graph = comm.environment_graph()
-        # save the graph to a file
-        if scenepath_out is not None:
-            with open(scenepath_out, "w") as f:
-                json.dump(graph, f, indent=2)
+        if True:
+            comm.add_character('chars/Female2', initial_room='bathroom')
+            _, ambiguous_manipulable_nodes, _ = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
+            nodes = filter_nodes_by_class(ambiguous_manipulable_nodes, ["book"])
+            for node in nodes:
+                script = generate_single_object_replacement_script(graph, node, relationships, verbose=verbose)
+                if script is None:
+                    continue
+                print(script)
+                success, message = comm.render_script(script=script,
+                                        processing_time_limit=1000,
+                                        find_solution=False,
+                                        image_width=640,
+                                        image_height=480,  
+                                        skip_animation=False,
+                                        recording=True,
+                                        save_pose_data=True,
+                                        file_name_prefix=prefix)
+                
+                # import pdb; pdb.set_trace()
+                input_path = os.path.abspath('../../unity_output/')
+                output_path = os.path.abspath('../../outputs/')
+                utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)
+                
+                scenepath_out = os.path.join(debug_dir, f"scene_{scene_id}_modified.json")
+                if scenepath_out is not None:
+                    with open(scenepath_out, "w") as f:
+                        json.dump(graph, f, indent=2)
         
+            success, graph = comm.environment_graph()
+            # save the graph to a file
+            if scenepath_out is not None:
+                with open(scenepath_out, "w") as f:
+                    json.dump(graph, f, indent=2)
+                    
         comm.add_character('chars/Female2', initial_room='bathroom')
         comm.add_character_camera(position=[0.0, 1.0, -0.1], rotation=[0, 0, 0], field_view=90, name="observer_camera")
         script = generate_walk_find_script(graph, ["towel"])
