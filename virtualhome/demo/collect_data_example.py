@@ -23,7 +23,7 @@ def augment_graph(comm, verbose: bool = False, seed: int = 42, max_retries: int 
     if not success:
         raise RuntimeError("Failed to get initial environment graph.")
     
-    graph = remove_nodes_by_class(graph, ambiguous_manipulable_objects)
+    graph = remove_nodes_by_classes(graph, ambiguous_manipulable_objects)
     # graph = remove_all_objects_on_surfaces(graph, surfaces, verbose) # TODO: optional?
     success, message = comm.expand_scene(graph)  # Clean baseline
     if not success:

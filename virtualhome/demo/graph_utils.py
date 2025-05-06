@@ -4,6 +4,15 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import re
 import random
+from utils_demo import *
+
+def viz_scene(comm, scene_id:int, savepath:str):
+    view = get_scene_cameras(comm, [scene_id])
+    view_pil = display_grid_img(view, nrows=1)
+    if os.path.isdir(savepath):
+        view_pil.save(os.path.join(savepath, f"scene_{scene_id}.png"))
+    else:
+        view_pil.save(savepath)
 
 def extract_from_ids(edges):
     """Return a set of 'from_id's from a list of edges."""
@@ -61,7 +70,35 @@ def find_nodes_and_edges_by_class(graph, target_classes: list, verbose: bool = F
 
     return node_ids, selected_nodes, selected_edges
 
-def remove_nodes_by_class(graph, target_classes: list, verbose: bool = False):
+def remove_nodes_by_ids(graph, target_ids: list, verbose: bool = False):
+    """
+    Remove specific nodes (by ID) and their connected edges.
+
+    Args:
+        graph: The scene graph (dict with 'nodes' and 'edges')
+        target_ids: List or set of node IDs to remove
+        verbose: If True, print summary
+
+    Returns:
+        Modified graph (in-place, also returned)
+    """
+    target_ids = set(target_ids)
+
+    if verbose:
+        print(f"🧹 Removing {len(target_ids)} nodes by ID...")
+
+    # Remove nodes
+    graph['nodes'] = [n for n in graph['nodes'] if n['id'] not in target_ids]
+
+    # Remove related edges
+    graph['edges'] = [
+        e for e in graph['edges']
+        if e['from_id'] not in target_ids and e['to_id'] not in target_ids
+    ]
+
+    return graph
+
+def remove_nodes_by_classes(graph, target_classes: list, verbose: bool = False):
     """
     Remove all nodes whose class_name is in target_classes,
     and remove any edges connected to those nodes.
@@ -69,29 +106,43 @@ def remove_nodes_by_class(graph, target_classes: list, verbose: bool = False):
     """
     # Step 1: Identify node ids to remove
     target_ids = {node['id'] for node in graph['nodes'] if node['class_name'] in target_classes}
+    return remove_nodes_by_ids(graph, target_ids, verbose=verbose)
+
+def remove_duplicate_prefabs_by_class(graph, target_classes, verbose=False):
+    """
+    Removes duplicate prefab instances (by prefab_name) for the given target classes.
+    Keeps only one node per unique prefab_name.
+
+    Args:
+        graph (dict): Scene graph with 'nodes' and 'edges'.
+        target_classes (list[str]): Class names to search for duplicates within.
+        verbose (bool): If True, prints removed nodes.
+
+    Returns:
+        Modified graph (in place).
+    """
+    _, candidate_nodes, _ = find_nodes_and_edges_by_class(graph, target_classes, verbose=False)
+
+    seen_prefabs = {}
+    nodes_to_remove = []
+
+    for node in candidate_nodes:
+        prefab = node.get("prefab_name")
+        node_id = node.get("id")
+
+        if prefab not in seen_prefabs:
+            seen_prefabs[prefab] = node_id  # Keep one
+        else:
+            nodes_to_remove.append(node_id)
+
+    if verbose and nodes_to_remove:
+        print(f"🧹 Removing {len(nodes_to_remove)} duplicate prefab instances:")
+        for node in candidate_nodes:
+            if node["id"] in nodes_to_remove:
+                print(f"  - {node['prefab_name']} (id: {node['id']}, class: {node['class_name']})")
+
+    return remove_nodes_by_ids(graph, nodes_to_remove, verbose=False)
     
-    if verbose:
-        print(f"\n=== Removing {len(target_ids)} ambiguous nodes and their edges ===")
-
-    # Step 2: Filter nodes
-    original_node_count = len(graph['nodes'])
-    graph['nodes'] = [node for node in graph['nodes'] if node['id'] not in target_ids]
-    
-    # Step 3: Filter edges
-    original_edge_count = len(graph['edges'])
-    graph['edges'] = [
-        edge for edge in graph['edges']
-        if edge['from_id'] not in target_ids and edge['to_id'] not in target_ids
-    ]
-
-    if verbose:
-        removed_nodes = original_node_count - len(graph['nodes'])
-        removed_edges = original_edge_count - len(graph['edges'])
-        print(f"Removed {removed_nodes} nodes and {removed_edges} edges.")
-
-    return graph  # (optional, since it's in-place)
-
-
 def categorize_from_nodes(from_nodes):
     """
     Categorize class_names of from_nodes into 4 buckets based on:
@@ -272,33 +323,37 @@ def no_ops(char="<char0>", count=3):
 def generate_walk_find_script(graph, target_classes):
     """
     Generate script lines like:
+        <char0> [Walk] <room> (room_id)      ← added
         <char0> [Walk] <surface> (surface_id)
         <char0> [LookAt] <object> (object_id)
-    For all objects in target_classes (default: ambiguous_manipulable_objects)
+    For all objects in target_classes that are ON surfaces.
     """
     id_to_node = {node['id']: node for node in graph['nodes']}
-
-    # Find all ON edges where from_node is in target_classes
     script_lines = []
+
     for edge in graph['edges']:
         if edge['relation_type'] != 'ON':
             continue
 
         obj_node = id_to_node.get(edge['from_id'])
         surf_node = id_to_node.get(edge['to_id'])
+
         if not obj_node or not surf_node:
             continue
-
         if obj_node['class_name'] not in target_classes:
             continue
 
+        # Step 1: Walk to room (if any)
+        room_node = find_room_of_node(graph, surf_node['id'])
+        if room_node:
+            script_lines.append(f"<char0> [Walk] <{room_node['class_name']}> ({room_node['id']})")
+
+        # Step 2: Walk to surface
         script_lines.append(f"<char0> [Walk] <{surf_node['class_name']}> ({surf_node['id']})")
-        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
-        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
-        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
-        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
-        script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
-        # script_lines.extend(no_ops())
+
+        # Step 3: Repeated LookAt
+        for _ in range(5):
+            script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
 
     return script_lines
 
@@ -413,3 +468,16 @@ def choose_valid_surface(graph, obj_class, relationships, verbose=False):
         return None
 
     return random.choice(surface_nodes)
+
+def filter_nodes_by_prefab(nodes, prefab_names):
+    """
+    Filters a list of nodes by a given list of prefab names.
+
+    Args:
+        nodes (List[dict]): List of node dictionaries.
+        prefab_names (List[str]): List of prefab names to keep.
+
+    Returns:
+        List[dict]: Filtered list of nodes matching the prefab_names.
+    """
+    return [node for node in nodes if node.get("prefab_name") in prefab_names]
