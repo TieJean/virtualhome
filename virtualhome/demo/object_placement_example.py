@@ -47,14 +47,16 @@ if __name__ == "__main__":
 
     # Step 5: Add character
     comm.add_character('chars/Female2', initial_room='bathroom')
+    comm.add_character('chars/Male2', initial_room='bathroom')
+    comm.add_character_camera(position=[0.0, 1.0, 0.0], rotation=[0, 0, 0], field_view=90, name="observer_camera")
     
     # Step 7: Generate program
     script = [
-        f'<char0> [Walk] <{src_room["class_name"]}> ({src_room["id"]})',
-        f'<char0> [Grab] <{node["class_name"]}> ({node["id"]})',
-        f'<char0> [Walk] <{dst_room["class_name"]}> ({dst_room["id"]})',
-        f'<char0> [Walk] <{dst_surface["class_name"]}> ({dst_surface["id"]})',
-        f'<char0> [Put] <{node["class_name"]}> ({node["id"]}) <{dst_surface["class_name"]}> ({dst_surface["id"]})'
+        f'<char1> [Walk] <{src_room["class_name"]}> ({src_room["id"]}) | <char0> [Walk] <{src_room["class_name"]}> ({src_room["id"]})',
+        f'<char1> [Grab] <{node["class_name"]}> ({node["id"]}) | <char0> [Walk] <{dst_room["class_name"]}> ({dst_room["id"]})',
+        f'<char1> [Walk] <{dst_room["class_name"]}> ({dst_room["id"]}) | <char0> [Walk] <{dst_room["class_name"]}> ({dst_room["id"]})',
+        f'<char1> [Walk] <{dst_surface["class_name"]}> ({dst_surface["id"]}) | <char0> [Walk] <{dst_surface["class_name"]}> ({dst_surface["id"]})',
+        f'<char1> [Put] <{node["class_name"]}> ({node["id"]}) <{dst_surface["class_name"]}> ({dst_surface["id"]}) | <char0> [Walk] <{dst_room["class_name"]}> ({dst_room["id"]})'
     ]
     print(script)
     
@@ -66,7 +68,7 @@ if __name__ == "__main__":
                                         skip_animation=False,
                                         recording=True,
                                         save_pose_data=True,
-                                        # camera_mode=["FIRST_PERSON"],
+                                        camera_mode=["observer_camera"],
                                         file_name_prefix=prefix)
     import pdb; pdb.set_trace()
     
