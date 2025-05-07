@@ -344,9 +344,9 @@ def generate_walk_find_script(graph, target_classes):
             continue
 
         # Step 1: Walk to room (if any)
-        # room_node = find_room_of_node(graph, surf_node['id'])
-        # if room_node:
-        #     script_lines.append(f"<char0> [Walk] <{room_node['class_name']}> ({room_node['id']})")
+        room_node = find_room_of_node(graph, surf_node['id'])
+        if room_node:
+            script_lines.append(f"<char0> [Walk] <{room_node['class_name']}> ({room_node['id']})")
 
         # Step 2: Walk to surface
         script_lines.append(f"<char0> [Walk] <{surf_node['class_name']}> ({surf_node['id']})")
@@ -539,3 +539,47 @@ def filter_nodes_by_class(nodes, class_names):
         List[dict]: Filtered list of nodes matching the prefab_names.
     """
     return [node for node in nodes if node.get("class_name") in class_names]
+
+def diff_node_edges(graph_old, graph_new, class_name_map=None):
+    """
+    Prints a node-centric diff of edge changes between two graphs.
+
+    Args:
+        graph_old, graph_new: Graphs in VirtualHome format
+        class_name_map (optional): Dict mapping node_id to class_name for faster lookup
+    """
+    from collections import defaultdict
+
+    def edges_by_node(edges):
+        edge_map = defaultdict(set)
+        for edge in edges:
+            key = (edge['relation_type'], edge['to_id'])
+            edge_map[edge['from_id']].add(key)
+        return edge_map
+
+    # Build class name map
+    if class_name_map is None:
+        class_name_map = {node['id']: node['class_name'] for node in graph_new['nodes']}
+        class_name_map.update({node['id']: node['class_name'] for node in graph_old['nodes']})
+
+    edges_old = edges_by_node(graph_old['edges'])
+    edges_new = edges_by_node(graph_new['edges'])
+
+    all_node_ids = set(edges_old.keys()).union(edges_new.keys())
+    for node_id in sorted(all_node_ids):
+        old = edges_old.get(node_id, set())
+        new = edges_new.get(node_id, set())
+        added = new - old
+        removed = old - new
+
+        if not added and not removed:
+            continue
+
+        cls = class_name_map.get(node_id, "unknown")
+        print(f"\n📍 {cls} (id: {node_id})")
+        for rel, to_id in sorted(added):
+            to_cls = class_name_map.get(to_id, "unknown")
+            print(f"  ➕ ADDED EDGE: {rel} → {to_cls} (id: {to_id})")
+        for rel, to_id in sorted(removed):
+            to_cls = class_name_map.get(to_id, "unknown")
+            print(f"  ➖ REMOVED EDGE: {rel} → {to_cls} (id: {to_id})")
