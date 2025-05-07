@@ -7,12 +7,12 @@ from unity_simulator.comm_unity import UnityCommunication
 from unity_simulator import utils_viz
 from utils_demo import *
 from graph_utils import *
+from viz_utils import *
 
 ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "clothesshirt", "clothespant", "towel", "folder"]
 
 if __name__ == "__main__":
     seed = 42
-    # scenepath = "../../unity_output/test/0/graph.json"
     verbose = False
     viz = False
     debug_dir = "../../outputs"
@@ -25,21 +25,12 @@ if __name__ == "__main__":
     comm.timeout_wait = 300 
     
     for scene_id in tqdm(scene_ids):
-        prefix = "test_collect_data"
+        prefix = "test"
+        # scenepath_in = f"../../outputs/scene_{scene_id}_modified.json"
         scenepath_in = None
         scenepath_out = None
         
-        if scenepath_in is not None:
-            with open(scenepath_in, "r") as f:
-                graph = json.load(f)
-            success, message = comm.expand_scene(graph)
-            if not success:
-                raise RuntimeError(f"Failed to expand scene after loading graph at: {scenepath_in}.")
-        else:
-            # Step 1: Reset and load scene
-            comm.reset(scene_id)
-        
-        # Step 2: Get the environment graph
+        comm.reset(scene_id)
         success, graph = comm.environment_graph()
         
         if True:
@@ -68,6 +59,8 @@ if __name__ == "__main__":
             print("\n📋 class_name ↔ prefab_name table:")
             print(df[["class_name", "prefab_name"]].sort_values(by="class_name").to_string(index=False))
         
+        success, graph_before = comm.environment_graph()
+        
         if True:
             comm.add_character('chars/Female2', initial_room='bathroom')
             _, ambiguous_manipulable_nodes, _ = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
@@ -76,26 +69,40 @@ if __name__ == "__main__":
                 script = generate_single_object_replacement_script(graph, node, relationships, verbose=verbose)
                 if script is None:
                     continue
-                print(script)
                 success, message = comm.render_script(script=script,
                                         processing_time_limit=1000,
                                         find_solution=False,
                                         image_width=640,
                                         image_height=480,  
-                                        skip_animation=False,
-                                        recording=True,
+                                        skip_animation=True, # False,
+                                        recording=False, # True,
                                         save_pose_data=True,
                                         file_name_prefix=prefix)
                 
-                # import pdb; pdb.set_trace()
-                input_path = os.path.abspath('../../unity_output/')
-                output_path = os.path.abspath('../../outputs/')
-                utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)
+                if not success:
+                    raise RuntimeError(f"Failed to render script: {message}")
                 
-                scenepath_out = os.path.join(debug_dir, f"scene_{scene_id}_modified.json")
-                if scenepath_out is not None:
-                    with open(scenepath_out, "w") as f:
-                        json.dump(graph, f, indent=2)
+                # import pdb; pdb.set_trace()
+                # input_path = os.path.abspath('../../unity_output/')
+                # output_path = os.path.abspath('../../outputs/')
+                # utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)
+                
+            graph = remove_nodes_by_classes(graph, ["character"])
+            success, message = comm.expand_scene(graph)
+            if not success:
+                import pdb; pdb.set_trace()
+                raise RuntimeError("Failed to expand scene after removing objects.")
+            success, graph = comm.environment_graph()
+                
+            scenepath_out = os.path.join(debug_dir, f"scene_{scene_id}_modified.json")
+            if scenepath_out is not None:
+                with open(scenepath_out, "w") as f:
+                    json.dump(graph, f, indent=2)
+        
+            success, graph_after = comm.environment_graph()
+            diff_node_edges(graph_before, graph_after)
+        
+            import pdb; pdb.set_trace()
         
             success, graph = comm.environment_graph()
             # save the graph to a file
