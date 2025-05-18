@@ -13,7 +13,7 @@ ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "c
 if __name__ == "__main__":
     scene_id = 4
     prefix = "test"
-    seed = 42
+    seed = 40
     verbose = False
     relationships = load_relationships("config/relationships.txt")
     
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     print(script)
     
     success, message = comm.render_script(script=script,
-                                        processing_time_limit=300,
+                                        processing_time_limit=600,
                                         find_solution=False,
                                         image_width=640,
                                         image_height=480,  
