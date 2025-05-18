@@ -488,7 +488,7 @@ class UnityCommunication(object):
         # validate parameters
         assert isinstance(script, list), "script must be a list of strings"
         assert isinstance(image_synthesis, list), "image_synthesis must be a list of strings"
-        assert isinstance(camera_mode, list), "camera_mode must be a list of strings"
+        # assert isinstance(camera_mode, list), "camera_mode must be a list of strings"
         
         params = {'randomize_execution': randomize_execution, 'random_seed': random_seed,
                   'processing_time_limit': processing_time_limit, 'skip_execution': skip_execution,

@@ -8,6 +8,7 @@ from utils_demo import *
 
 debug_dir = "../../outputs"
 scene_id = 4
+prefix = "test"
 
 comm = UnityCommunication(port="8080")
 comm.timeout_wait = 300 
@@ -17,7 +18,6 @@ for scene_id in [scene_id]:
     comm.reset(scene_id)
     
     # We will go over the line below later
-    comm.remove_terrain()
     top_view = get_scene_cameras(comm, [-2])
     views += top_view
     
@@ -72,34 +72,22 @@ script = ['<char0> [Walk] <sofa> ({})'.format(sofa['id']),
           '<char0> [Grab] <cat> ({})'.format(cat_id),
           '<char0> [Sit] <sofa> ({})'.format(sofa['id'])]
 
-success, message = comm.render_script(script=script[:1],
-                                      processing_time_limit=120,
-                                      find_solution=False,
-                                      image_width=640,
-                                      image_height=480,  
-                                      skip_animation=False,
-                                      recording=True,
-                                      save_pose_data=True,
-                                      camera_mode=["observer_camera"],
-                                      file_name_prefix='relax_0')
-print("finish part I")
-input_path = os.path.abspath('../../unity_output/')
+input_path = os.path.abspath('../../docker/unity_output/')
 output_path = os.path.abspath('../../outputs/')
-utils_viz.generate_video(input_path=input_path, prefix='relax_0', output_path=output_path)
 
-success, message = comm.render_script(script=script[1:],
-                                      processing_time_limit=120,
-                                      find_solution=False,
-                                      image_width=640,
-                                      image_height=480,  
-                                      skip_animation=False,
-                                      recording=True,
-                                      save_pose_data=True,
-                                      camera_mode=["observer_camera"],
-                                      file_name_prefix='relax_1')
-
-print("finish part II")
+success, message = comm.render_script(script=script,
+                                            processing_time_limit=300,
+                                            find_solution=False,
+                                            image_width=640,
+                                            image_height=480,  
+                                            skip_animation=False,
+                                            recording=True,
+                                            save_pose_data=True,
+                                            camera_mode="FIRST_PERSON",
+                                            file_name_prefix=prefix)
+import pdb; pdb.set_trace()
+print("Finish Rendering")
 
 input_path = os.path.abspath('../../unity_output/')
 output_path = os.path.abspath('../../outputs/')
-utils_viz.generate_video(input_path=input_path, prefix='relax_1', output_path=output_path)
+utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)

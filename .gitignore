@@ -2,6 +2,8 @@ outputs
 unity_vol
 unity_output
 virtualhome/dataset
+__MACOSX/
+*.zip
 
 .DS_Store
 # Byte-compiled / optimized / DLL files
