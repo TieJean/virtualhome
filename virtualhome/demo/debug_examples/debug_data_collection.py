@@ -1,6 +1,7 @@
 from tqdm import tqdm
 import sys, os
 import json
+import copy
 
 sys.path.append('../simulation')
 from unity_simulator.comm_unity import UnityCommunication
@@ -189,7 +190,7 @@ def example_object_placement(comm):
             filepath = os.path.join(root, file)
             os.remove(filepath)
     
-    with open("../resources/PrefabClass.json", "r") as f:
+    with open("../resources/PrefabClassCustomed.json", "r") as f:
         prefab_classes = {}
         for prefab_class in json.load(f)["prefabClasses"]:
             prefab_classes[prefab_class["className"].lower()] = prefab_class["prefabs"]
@@ -204,11 +205,15 @@ def example_object_placement(comm):
     graph = remove_nodes_by_classes(graph, ambiguous_manipulable_objects)
     success, message = comm.expand_scene(graph)
     print("[Case 4.1]", message) # {}
+    
+    graph = remove_all_objects_on_surfaces(graph, ["desk", "wallshelf"])
+    success, message = comm.expand_scene(graph)
+    print("[Case 4.2]", message)
 
     success, graph = comm.environment_graph()
-    graph = insert_objects_with_placement(graph, prefab_classes, class_placements, "book", relations=["ON"], n=3, verbose=True)
+    graph = insert_objects_with_placement(graph, prefab_classes, class_placements, "book", relations=["ON"], n=5, verbose=True)
     success, message = comm.expand_scene(graph)
-    print("[Case 4.2]", message) # {}
+    print("[Case 4.3]", message) # {}
     
     comm.add_character('chars/Female2', initial_room='bathroom')
     success, graph = comm.environment_graph()
@@ -227,7 +232,7 @@ def example_object_placement(comm):
     success, graph = comm.environment_graph()
     graph = remove_nodes_by_classes(graph, ["character"])
     success, message = comm.expand_scene(graph)
-    print("[Case 4.3]", message) #  {}
+    print("[Case 4.4]", message) #  {}
     if success:
         utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)
     
@@ -237,6 +242,63 @@ def example_object_placement(comm):
     comm.reset()
     success, message = comm.expand_scene(graph)
     print("[Case 4.4]", message) # {}
+    
+    
+def example_object_placement2(comm):
+    input_path = os.path.abspath('../../unity_output/')
+    output_path = os.path.abspath('../../outputs/')
+    prefix = "test"
+    image_dir = os.path.join('../../unity_output/', prefix)
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+    for root, _, files in os.walk(image_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            os.remove(filepath)
+    
+    with open("../resources/PrefabClassCustomed.json", "r") as f:
+        prefab_classes = {}
+        for prefab_class in json.load(f)["prefabClasses"]:
+            prefab_classes[prefab_class["className"].lower()] = prefab_class["prefabs"]
+        
+    with open("../resources/object_script_placing_customed.json", "r") as f:
+        class_placements = json.load(f)
+    
+    comm.reset(4)
+    random.seed(40)
+    
+    success, new_graph = comm.environment_graph()
+    new_graph = copy.deepcopy(replace_prefab_names(new_graph, "book", ["Book_7", "PRE_PRO_Book_07", "PRE_PRO_Book_01"]))
+    
+    success, graph = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, ambiguous_manipulable_objects)
+    success, message = comm.expand_scene(graph)
+    print("[Case 5.1]", message) # {}
+    
+    comm.reset()
+    success, message = comm.expand_scene(new_graph)
+    print("[Case 5.2]", message) # {}
+    
+    comm.add_character('chars/Female2', initial_room='bathroom')
+    success, graph = comm.environment_graph()
+    script = generate_walk_find_script(graph, ["book"])
+    success, message = comm.render_script(script=script,
+                                        processing_time_limit=1000,
+                                        find_solution=False,
+                                        image_width=640,
+                                        image_height=480,  
+                                        skip_animation=False,
+                                        recording=True,
+                                        save_pose_data=True,
+                                        camera_mode=["FIRST_PERSON"],
+                                        file_name_prefix=prefix)
+    print("render_script success: ", message)
+    success, graph = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, ["character"])
+    success, message = comm.expand_scene(graph)
+    print("[Case 5.3]", message) #  {}
+    if success:
+        utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)
 
 if __name__ == "__main__":
     comm = UnityCommunication(port="8080")
@@ -246,3 +308,4 @@ if __name__ == "__main__":
     # example_generate_walk_find_script(comm)
     # example_single_object_replacement(comm)
     example_object_placement(comm)
+    # example_object_placement2(comm) 

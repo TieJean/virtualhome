@@ -8548,6 +8548,11 @@
             "room": "null"
         }, 
         {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
             "destination": "music_stand", 
             "relation": "ON", 
             "room": "null"
