@@ -1069,49 +1069,6 @@
       "states": []
     },
     {
-      "id": 38,
-      "category": "Furniture",
-      "class_name": "clothesshirt",
-      "prefab_name": "MOD_PRO_Shirt_02",
-      "obj_transform": {
-        "position": [
-          -1.266,
-          1.81,
-          0.8919984
-        ],
-        "rotation": [
-          0.0,
-          0.999953568,
-          0.0,
-          -0.009639889
-        ],
-        "scale": [
-          1.0,
-          0.917863846,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.26608348,
-          1.52669728,
-          0.8919986
-        ],
-        "size": [
-          0.05330244,
-          0.737567246,
-          0.5795156
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "HANGABLE",
-        "CLOTHES",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
       "id": 39,
       "category": "Furniture",
       "class_name": "hanger",
@@ -1136,14 +1093,14 @@
       },
       "bounding_box": {
         "center": [
-          -1.86603713,
+          -1.86603725,
           1.90511858,
           0.886958838
         ],
         "size": [
           0.0321550369,
           0.241116285,
-          0.46996063
+          0.469960451
         ]
       },
       "properties": [
@@ -1178,14 +1135,14 @@
       },
       "bounding_box": {
         "center": [
-          -1.864382,
+          -1.86438215,
           1.50540423,
-          0.8869406
+          0.886940539
         ],
         "size": [
           0.05334997,
           0.6125164,
-          0.297051966
+          0.2970518
         ]
       },
       "properties": [
@@ -1228,55 +1185,12 @@
         "size": [
           0.07001996,
           0.241116285,
-          0.46824795
+          0.468248129
         ]
       },
       "properties": [
         "GRABBABLE",
         "HANGABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 42,
-      "category": "Furniture",
-      "class_name": "clothesshirt",
-      "prefab_name": "MOD_PRO_Shirt_01",
-      "obj_transform": {
-        "position": [
-          -1.41000068,
-          1.815,
-          0.8920098
-        ],
-        "rotation": [
-          0.0,
-          0.9982739,
-          0.0,
-          0.05873093
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.41008341,
-          1.50634575,
-          0.8919986
-        ],
-        "size": [
-          0.109731391,
-          0.8035693,
-          0.5797602
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "HANGABLE",
-        "CLOTHES",
         "MOVABLE"
       ],
       "states": []
@@ -1313,7 +1227,7 @@
         "size": [
           0.0441243649,
           0.241116285,
-          0.469753742
+          0.469753921
         ]
       },
       "properties": [
@@ -1354,8 +1268,8 @@
         ],
         "size": [
           0.0604200363,
-          0.6399491,
-          0.260182142
+          0.6399493,
+          0.260182381
         ]
       },
       "properties": [
@@ -1391,14 +1305,14 @@
       },
       "bounding_box": {
         "center": [
-          -2.043037,
+          -2.04303718,
           1.90511858,
-          0.893958867
+          0.8939588
         ],
         "size": [
           0.0321550369,
           0.241116285,
-          0.46996057
+          0.4699604
         ]
       },
       "properties": [
@@ -1433,14 +1347,14 @@
       },
       "bounding_box": {
         "center": [
-          -2.04138184,
+          -2.041382,
           1.50540423,
           0.893940568
         ],
         "size": [
           0.05334997,
           0.6125164,
-          0.2970519
+          0.297051728
         ]
       },
       "properties": [
@@ -1476,14 +1390,14 @@
       },
       "bounding_box": {
         "center": [
-          -1.95803714,
+          -1.95803726,
           1.90511858,
-          0.890958846
+          0.8909588
         ],
         "size": [
           0.0321550369,
           0.241116285,
-          0.46996057
+          0.4699604
         ]
       },
       "properties": [
@@ -1518,14 +1432,14 @@
       },
       "bounding_box": {
         "center": [
-          -1.956382,
+          -1.95638216,
           1.56151783,
           0.8909405
         ],
         "size": [
           0.04903364,
-          0.492955685,
-          0.178707361
+          0.492955446,
+          0.178707242
         ]
       },
       "properties": [
@@ -1568,7 +1482,7 @@
         "size": [
           0.0404250622,
           0.241116285,
-          0.46985054
+          0.469850719
         ]
       },
       "properties": [
@@ -1664,49 +1578,6 @@
       "states": []
     },
     {
-      "id": 52,
-      "category": "Furniture",
-      "class_name": "clothesshirt",
-      "prefab_name": "MOD_PRO_Shirt_01",
-      "obj_transform": {
-        "position": [
-          -1.543427,
-          1.82600009,
-          0.8762546
-        ],
-        "rotation": [
-          0.0,
-          0.999616265,
-          0.0,
-          -0.0277006626
-        ],
-        "scale": [
-          1.0,
-          0.8636028,
-          0.980948
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.54351044,
-          1.55944538,
-          0.876257837
-        ],
-        "size": [
-          0.0735305548,
-          0.6939647,
-          0.569246054
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "HANGABLE",
-        "CLOTHES",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
       "id": 53,
       "category": "Furniture",
       "class_name": "hanger",
@@ -1731,14 +1602,14 @@
       },
       "bounding_box": {
         "center": [
-          -0.999019444,
+          -0.9990194,
           1.90511858,
-          0.873958349
+          0.8739583
         ],
         "size": [
-          0.05384457,
+          0.05384451,
           0.241116285,
-          0.469359219
+          0.469359279
         ]
       },
       "properties": [
@@ -1773,7 +1644,7 @@
       },
       "bounding_box": {
         "center": [
-          -0.9420856,
+          -0.942085564,
           1.90511858,
           0.868961632
         ],
@@ -1815,7 +1686,7 @@
       },
       "bounding_box": {
         "center": [
-          -0.8280597,
+          -0.8280596,
           1.90511858,
           0.861959755
         ],
@@ -1871,96 +1742,6 @@
       "states": []
     },
     {
-      "id": 57,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_01",
-      "obj_transform": {
-        "position": [
-          -1.433,
-          0.840000033,
-          0.885400057
-        ],
-        "rotation": [
-          0.0,
-          0.6872896,
-          0.0,
-          0.726383567
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.4330008,
-          0.9212562,
-          0.8854
-        ],
-        "size": [
-          0.337138653,
-          0.1625135,
-          0.4531213
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 58,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_02",
-      "obj_transform": {
-        "position": [
-          -1.809,
-          0.838,
-          0.885400057
-        ],
-        "rotation": [
-          0.0,
-          0.722425,
-          0.0,
-          0.691449344
-        ],
-        "scale": [
-          0.92,
-          0.92,
-          0.92
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.80900073,
-          0.912755668,
-          0.8854001
-        ],
-        "size": [
-          0.3057258,
-          0.14951241,
-          0.413791776
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
       "id": 59,
       "category": "Furniture",
       "class_name": "closetdrawer",
@@ -1985,7 +1766,7 @@
       },
       "bounding_box": {
         "center": [
-          -0.9074009,
+          -0.907400846,
           0.6993225,
           0.8789996
         ],
@@ -1997,51 +1778,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 60,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_06",
-      "obj_transform": {
-        "position": [
-          -0.905000031,
-          0.6095,
-          0.8449999
-        ],
-        "rotation": [
-          0.0,
-          0.9983631,
-          0.0,
-          -0.05719307
-        ],
-        "scale": [
-          0.828000247,
-          0.828000069,
-          0.828000069
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -0.905000031,
-          0.6767801,
-          0.8450007
-        ],
-        "size": [
-          0.3886701,
-          0.134561062,
-          0.299147129
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 61,
@@ -2068,7 +1804,7 @@
       },
       "bounding_box": {
         "center": [
-          -0.907000959,
+          -0.9070009,
           0.470222533,
           0.8789996
         ],
@@ -2080,51 +1816,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 62,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_07",
-      "obj_transform": {
-        "position": [
-          -0.905400038,
-          0.381200016,
-          0.8449999
-        ],
-        "rotation": [
-          0.0,
-          0.9986892,
-          0.0,
-          -0.0511860549
-        ],
-        "scale": [
-          0.8280001,
-          0.626598835,
-          0.828
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -0.905400038,
-          0.432115048,
-          0.8450007
-        ],
-        "size": [
-          0.38603586,
-          0.101830721,
-          0.295162559
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 63,
@@ -2165,141 +1856,6 @@
       "states": []
     },
     {
-      "id": 64,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_04",
-      "obj_transform": {
-        "position": [
-          -1.356,
-          0.608,
-          0.885
-        ],
-        "rotation": [
-          0.0,
-          0.704123855,
-          0.0,
-          0.710077167
-        ],
-        "scale": [
-          0.7252129,
-          0.7252129,
-          0.7252129
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.35600054,
-          0.666928,
-          0.885
-        ],
-        "size": [
-          0.230008364,
-          0.11785686,
-          0.318431139
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 65,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_05",
-      "obj_transform": {
-        "position": [
-          -1.63599992,
-          0.608,
-          0.881000042
-        ],
-        "rotation": [
-          0.0,
-          0.7224936,
-          0.0,
-          0.6913776
-        ],
-        "scale": [
-          0.7252128,
-          0.7252129,
-          0.725212753
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.63600051,
-          0.666928,
-          0.881000042
-        ],
-        "size": [
-          0.241056681,
-          0.11785686,
-          0.32622385
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 66,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_06",
-      "obj_transform": {
-        "position": [
-          -1.914,
-          0.608,
-          0.8930001
-        ],
-        "rotation": [
-          0.0,
-          0.679417551,
-          0.0,
-          0.733751833
-        ],
-        "scale": [
-          0.7252129,
-          0.7252129,
-          0.725212753
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.91400063,
-          0.666928,
-          0.893000066
-        ],
-        "size": [
-          0.25098443,
-          0.11785686,
-          0.3330506
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
       "id": 67,
       "category": "Furniture",
       "class_name": "closetdrawer",
@@ -2338,141 +1894,6 @@
       "states": []
     },
     {
-      "id": 68,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_03",
-      "obj_transform": {
-        "position": [
-          -1.908,
-          0.3753,
-          0.889000058
-        ],
-        "rotation": [
-          0.0,
-          0.722425,
-          0.0,
-          0.691449344
-        ],
-        "scale": [
-          0.8280001,
-          0.828000069,
-          0.828
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.90800071,
-          0.4425801,
-          0.8890002
-        ],
-        "size": [
-          0.27515316,
-          0.134561181,
-          0.372412741
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 69,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_04",
-      "obj_transform": {
-        "position": [
-          -1.642,
-          0.3753,
-          0.917000055
-        ],
-        "rotation": [
-          0.0,
-          0.697554052,
-          0.0,
-          0.7165322
-        ],
-        "scale": [
-          0.828000247,
-          0.828000069,
-          0.828000069
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.64200068,
-          0.4425801,
-          0.917000055
-        ],
-        "size": [
-          0.269179821,
-          0.134561092,
-          0.368227
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 70,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_05",
-      "obj_transform": {
-        "position": [
-          -1.363,
-          0.3753,
-          0.883
-        ],
-        "rotation": [
-          0.0,
-          0.7113233,
-          0.0,
-          0.702865064
-        ],
-        "scale": [
-          0.828000247,
-          0.828000069,
-          0.828
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.36300087,
-          0.4425801,
-          0.883
-        ],
-        "size": [
-          0.263879061,
-          0.134561092,
-          0.364470243
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
       "id": 71,
       "category": "Furniture",
       "class_name": "closetdrawer",
@@ -2497,7 +1918,7 @@
       },
       "bounding_box": {
         "center": [
-          -0.907000959,
+          -0.9070009,
           0.239522517,
           0.8789996
         ],
@@ -2509,51 +1930,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 72,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_08",
-      "obj_transform": {
-        "position": [
-          -0.904999554,
-          0.150532,
-          0.8450002
-        ],
-        "rotation": [
-          0.0,
-          0.913674355,
-          0.0,
-          0.406447
-        ],
-        "scale": [
-          0.7217808,
-          0.546216,
-          0.721780658
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -0.9050001,
-          0.194915429,
-          0.8450007
-        ],
-        "size": [
-          0.37900424,
-          0.08876744,
-          0.385493875
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 73,
@@ -2592,186 +1968,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 74,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_06",
-      "obj_transform": {
-        "position": [
-          -1.335,
-          0.1496,
-          0.801000059
-        ],
-        "rotation": [
-          0.0,
-          0.69816643,
-          0.0,
-          0.7159355
-        ],
-        "scale": [
-          0.6224207,
-          0.6224206,
-          0.622420549
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.33500051,
-          0.200175524,
-          0.801000059
-        ],
-        "size": [
-          0.201890945,
-          0.101151705,
-          0.276480556
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 75,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_07",
-      "obj_transform": {
-        "position": [
-          -1.545,
-          0.1496,
-          0.804
-        ],
-        "rotation": [
-          0.0,
-          0.744521558,
-          0.0,
-          0.6675984
-        ],
-        "scale": [
-          0.6224207,
-          0.6224206,
-          0.486493647
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.54500031,
-          0.200175524,
-          0.8040001
-        ],
-        "size": [
-          0.181120872,
-          0.101151705,
-          0.286622643
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 76,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_08",
-      "obj_transform": {
-        "position": [
-          -1.758,
-          0.1496,
-          0.8490001
-        ],
-        "rotation": [
-          0.0,
-          0.6890636,
-          0.0,
-          0.724700868
-        ],
-        "scale": [
-          0.6224207,
-          0.6224206,
-          0.622420549
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.75800049,
-          0.200175524,
-          0.8490001
-        ],
-        "size": [
-          0.208565712,
-          0.101151705,
-          0.2811494
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 77,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_09",
-      "obj_transform": {
-        "position": [
-          -1.967,
-          0.1498,
-          0.810000062
-        ],
-        "rotation": [
-          0.0,
-          0.7113233,
-          0.0,
-          0.702865064
-        ],
-        "scale": [
-          0.6224207,
-          0.548164845,
-          0.622420549
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.96700048,
-          0.194341779,
-          0.810000062
-        ],
-        "size": [
-          0.198362,
-          0.08908415,
-          0.273978
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 78,
@@ -2923,8 +2119,8 @@
         ],
         "size": [
           0.240040079,
-          0.306458771,
-          0.09690706
+          0.306458741,
+          0.09690703
         ]
       },
       "properties": [
@@ -3062,88 +2258,6 @@
       "states": []
     },
     {
-      "id": 85,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "PRE_DEC_Pillow_01_02",
-      "obj_transform": {
-        "position": [
-          -1.926,
-          0.742,
-          -1.81
-        ],
-        "rotation": [
-          -0.03718953,
-          -0.0576055162,
-          -0.408764482,
-          0.9100606
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.83538389,
-          0.792398334,
-          -1.8123337
-        ],
-        "size": [
-          0.6456821,
-          0.713207364,
-          0.8679671
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 86,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "PRE_DEC_Pillow_01_01",
-      "obj_transform": {
-        "position": [
-          -1.672,
-          0.583,
-          -2.777
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -1.64986324,
-          0.684271753,
-          -2.780273
-        ],
-        "size": [
-          0.6613115,
-          0.202543557,
-          0.7817019
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
       "id": 87,
       "category": "Decor",
       "class_name": "wallpictureframe",
@@ -3185,100 +2299,6 @@
         "MOVABLE"
       ],
       "states": []
-    },
-    {
-      "id": 88,
-      "category": "Props",
-      "class_name": "book",
-      "prefab_name": "PRE_PRO_Book_08",
-      "obj_transform": {
-        "position": [
-          -0.0657,
-          1.7502,
-          -3.5686
-        ],
-        "rotation": [
-          0.0,
-          -0.6282664,
-          0.0,
-          0.7779983
-        ],
-        "scale": [
-          0.7551471,
-          0.755147159,
-          0.7551471
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -0.06476098,
-          1.767113,
-          -3.56423616
-        ],
-        "size": [
-          0.270502985,
-          0.03431015,
-          0.233598322
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CUTTABLE",
-        "CAN_OPEN",
-        "READABLE",
-        "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 89,
-      "category": "Props",
-      "class_name": "book",
-      "prefab_name": "PRE_PRO_Book_07",
-      "obj_transform": {
-        "position": [
-          0.248081982,
-          1.74832118,
-          -3.52946949
-        ],
-        "rotation": [
-          0.0,
-          -0.7818348,
-          0.0,
-          0.623485744
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.247090876,
-          1.76518273,
-          -3.52513123
-        ],
-        "size": [
-          0.271301717,
-          0.0342060961,
-          0.235210449
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CUTTABLE",
-        "CAN_OPEN",
-        "READABLE",
-        "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 90,
@@ -5551,7 +4571,7 @@
       },
       "bounding_box": {
         "center": [
-          4.075401,
+          4.07540035,
           2.05115032,
           1.06242347
         ],
@@ -5815,7 +4835,7 @@
         "center": [
           7.00399971,
           0.838,
-          -1.06099951
+          -1.06099975
         ],
         "size": [
           0.37717995,
@@ -5856,7 +4876,7 @@
         "center": [
           7.33499956,
           1.103,
-          -1.09699976
+          -1.097
         ],
         "size": [
           0.100000381,
@@ -6313,48 +5333,6 @@
       ]
     },
     {
-      "id": 163,
-      "category": "Appliances",
-      "class_name": "dishbowl",
-      "prefab_name": "Dish_bowl_4",
-      "obj_transform": {
-        "position": [
-          4.949509,
-          1.259052,
-          0.7943264
-        ],
-        "rotation": [
-          -1.49011612e-07,
-          0.809901357,
-          -2.38418579e-07,
-          -0.5865661
-        ],
-        "scale": [
-          0.405281931,
-          0.277871132,
-          0.405281872
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.979604,
-          1.24395573,
-          0.703566551
-        ],
-        "size": [
-          0.274703026,
-          0.0584743023,
-          0.2746613
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "RECIPIENT",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
       "id": 164,
       "category": "Lamps",
       "class_name": "ceilinglamp",
@@ -6429,96 +5407,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 166,
-      "category": "Props",
-      "class_name": "clothespile",
-      "prefab_name": "PRE_PRO_Clothes_pile_05",
-      "obj_transform": {
-        "position": [
-          2.66800022,
-          0.7679,
-          -4.35100031
-        ],
-        "rotation": [
-          0.0,
-          0.6778231,
-          0.0,
-          0.7352251
-        ],
-        "scale": [
-          0.63841325,
-          0.6384133,
-          0.6384133
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.66799974,
-          0.819775,
-          -4.35100031
-        ],
-        "size": [
-          0.222082138,
-          0.103750706,
-          0.293959618
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 167,
-      "category": "Props",
-      "class_name": "clothespile",
-      "prefab_name": "PRE_PRO_Clothes_pile_04",
-      "obj_transform": {
-        "position": [
-          2.66900015,
-          0.768,
-          -5.06200027
-        ],
-        "rotation": [
-          0.0,
-          0.742066741,
-          0.0,
-          0.670326
-        ],
-        "scale": [
-          0.679163039,
-          0.6791631,
-          0.679163158
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.66899967,
-          0.8231862,
-          -5.06200027
-        ],
-        "size": [
-          0.241855145,
-          0.110373139,
-          0.316477776
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 168,
@@ -7056,9 +5944,9 @@
           -6.052
         ],
         "size": [
-          0.310811073,
+          0.310811043,
           0.141684666,
-          0.2271497
+          0.22714968
         ]
       },
       "properties": [
@@ -7372,241 +6260,6 @@
       ]
     },
     {
-      "id": 188,
-      "category": "Props",
-      "class_name": "folder",
-      "prefab_name": "Folder_3",
-      "obj_transform": {
-        "position": [
-          2.69000053,
-          1.30304551,
-          -4.959641
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.69000053,
-          1.30304551,
-          -4.959641
-        ],
-        "size": [
-          0.2811513,
-          0.319756985,
-          0.07499981
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "READABLE",
-        "CONTAINERS",
-        "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 189,
-      "category": "Props",
-      "class_name": "folder",
-      "prefab_name": "Folder_4",
-      "obj_transform": {
-        "position": [
-          2.69,
-          1.3031,
-          -5.05184174
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.69,
-          1.3031,
-          -5.05184174
-        ],
-        "size": [
-          0.2811513,
-          0.319756985,
-          0.07499981
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "READABLE",
-        "CONTAINERS",
-        "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 190,
-      "category": "Props",
-      "class_name": "folder",
-      "prefab_name": "Folder_2",
-      "obj_transform": {
-        "position": [
-          2.689999,
-          1.2983,
-          -5.14483738
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.689999,
-          1.2983,
-          -5.14483738
-        ],
-        "size": [
-          0.2811513,
-          0.319756985,
-          0.07499981
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "READABLE",
-        "CONTAINERS",
-        "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 191,
-      "category": "Props",
-      "class_name": "folder",
-      "prefab_name": "Folder_2",
-      "obj_transform": {
-        "position": [
-          2.6615,
-          0.918113053,
-          -5.433717
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.6615,
-          0.9181131,
-          -5.433717
-        ],
-        "size": [
-          0.2811513,
-          0.319757044,
-          0.07499981
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "READABLE",
-        "CONTAINERS",
-        "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 192,
-      "category": "Props",
-      "class_name": "folder",
-      "prefab_name": "Folder_1",
-      "obj_transform": {
-        "position": [
-          2.6614995,
-          0.927,
-          -5.51156664
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.6614995,
-          0.927000046,
-          -5.51156664
-        ],
-        "size": [
-          0.2811513,
-          0.319757044,
-          0.07499981
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "READABLE",
-        "CONTAINERS",
-        "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
       "id": 193,
       "category": "Props",
       "class_name": "coffeepot",
@@ -7650,88 +6303,6 @@
       "states": [
         "CLOSED"
       ]
-    },
-    {
-      "id": 194,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "PRE_DEC_Pillow_01_08",
-      "obj_transform": {
-        "position": [
-          7.05648,
-          0.73924,
-          -5.3689003
-        ],
-        "rotation": [
-          0.0458935127,
-          -0.08820166,
-          0.438951463,
-          0.892992735
-        ],
-        "scale": [
-          0.9741421,
-          0.974142134,
-          0.9741421
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          6.991634,
-          0.8167001,
-          -5.36731243
-        ],
-        "size": [
-          0.631489038,
-          0.7416425,
-          0.874763131
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 195,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "PRE_DEC_Pillow_01_07",
-      "obj_transform": {
-        "position": [
-          7.058,
-          0.737,
-          -4.306
-        ],
-        "rotation": [
-          0.0287907943,
-          -0.05864531,
-          0.439335048,
-          0.895944536
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          6.991633,
-          0.8166995,
-          -4.306353
-        ],
-        "size": [
-          0.6239811,
-          0.723006248,
-          0.861265361
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
     },
     {
       "id": 196,
@@ -7807,9 +6378,9 @@
           -2.055528
         ],
         "size": [
-          0.177247152,
+          0.177247137,
           0.136592865,
-          0.177247167
+          0.177247152
         ]
       },
       "properties": [],
@@ -8099,55 +6670,13 @@
           -2.042322
         ],
         "size": [
-          0.0662647039,
+          0.06626472,
           0.0112850908,
-          0.03907538
+          0.0390753821
         ]
       },
       "properties": [
         "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 205,
-      "category": "Foods",
-      "class_name": "dishbowl",
-      "prefab_name": "FMGP_PRE_Wooden_bowl_1024",
-      "obj_transform": {
-        "position": [
-          7.04857635,
-          1.0706296,
-          -1.926792
-        ],
-        "rotation": [
-          0.0,
-          0.979333639,
-          0.0,
-          0.2022515
-        ],
-        "scale": [
-          1.37713337,
-          1.37713337,
-          1.37713337
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          7.04857635,
-          1.11452508,
-          -1.92679214
-        ],
-        "size": [
-          0.468811035,
-          0.087790966,
-          0.468811154
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "RECIPIENT",
         "MOVABLE"
       ],
       "states": []
@@ -8552,7 +7081,7 @@
       },
       "bounding_box": {
         "center": [
-          3.793499,
+          3.79349947,
           0.0,
           -9.978
         ],
@@ -8592,7 +7121,7 @@
       },
       "bounding_box": {
         "center": [
-          3.79349947,
+          3.7935,
           0.0,
           -7.47800064
         ],
@@ -8712,7 +7241,7 @@
       },
       "bounding_box": {
         "center": [
-          3.79349,
+          3.79349041,
           2.50000024,
           -9.978
         ],
@@ -8750,7 +7279,7 @@
       },
       "bounding_box": {
         "center": [
-          3.79349041,
+          3.793491,
           2.50000024,
           -7.47800064
         ],
@@ -8864,9 +7393,9 @@
       },
       "bounding_box": {
         "center": [
-          3.79349852,
+          3.793499,
           1.2500093,
-          -7.47798824
+          -7.47798729
         ],
         "size": [
           2.50000119,
@@ -8902,7 +7431,7 @@
       },
       "bounding_box": {
         "center": [
-          1.29350054,
+          1.2935003,
           1.25,
           -9.978001
         ],
@@ -8940,7 +7469,7 @@
       },
       "bounding_box": {
         "center": [
-          3.79349661,
+          3.793497,
           1.25,
           -9.978
         ],
@@ -8980,7 +7509,7 @@
         "center": [
           1.29350221,
           1.25,
-          -7.478002
+          -7.478001
         ],
         "size": [
           2.50000381,
@@ -9021,9 +7550,9 @@
           -11.1181622
         ],
         "size": [
-          0.158661589,
+          0.1586616,
           0.6224402,
-          0.123676062
+          0.123676069
         ]
       },
       "properties": [],
@@ -9054,14 +7583,14 @@
       },
       "bounding_box": {
         "center": [
-          3.496502,
+          3.4965024,
           1.46314442,
           -11.1181631
         ],
         "size": [
-          0.158661589,
+          0.1586616,
           0.6224402,
-          0.123676062
+          0.123676069
         ]
       },
       "properties": [],
@@ -9094,11 +7623,11 @@
         "center": [
           2.68250036,
           0.777597845,
-          -6.691002
+          -6.691001
         ],
         "size": [
           0.3638115,
-          0.577501655,
+          0.5775014,
           0.371454239
         ]
       },
@@ -9219,12 +7748,12 @@
         "center": [
           2.08350039,
           1.20399988,
-          -6.284244
+          -6.284243
         ],
         "size": [
-          0.6663878,
+          0.6663879,
           0.285949975,
-          0.0124841947
+          0.0124841956
         ]
       },
       "properties": [
@@ -9262,12 +7791,12 @@
         "center": [
           2.01549935,
           1.77300012,
-          -6.289115
+          -6.289114
         ],
         "size": [
-          0.5090842,
+          0.5090843,
           0.6696534,
-          0.0222260859
+          0.0222260877
         ]
       },
       "properties": [
@@ -9305,7 +7834,7 @@
         "center": [
           1.18249917,
           1.38800013,
-          -6.29886246
+          -6.2988615
         ],
         "size": [
           0.955630362,
@@ -9317,129 +7846,6 @@
         "GRABBABLE",
         "HANGABLE",
         "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 235,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "PRE_DEC_Pillow_01_10",
-      "obj_transform": {
-        "position": [
-          4.239506,
-          0.6087502,
-          -10.8543873
-        ],
-        "rotation": [
-          0.127985418,
-          0.6252152,
-          0.114405632,
-          0.761338949
-        ],
-        "scale": [
-          0.8758579,
-          0.8758578,
-          0.8758579
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.23915863,
-          0.6988511,
-          -10.8428345
-        ],
-        "size": [
-          0.785589337,
-          0.396022528,
-          0.721372247
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 236,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "PRE_DEC_Pillow_01_09",
-      "obj_transform": {
-        "position": [
-          4.24697447,
-          0.606944859,
-          -8.698998
-        ],
-        "rotation": [
-          -0.1320162,
-          0.6974971,
-          -0.09432049,
-          0.6979778
-        ],
-        "scale": [
-          0.87585783,
-          0.8758579,
-          0.8758579
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.23963356,
-          0.6846999,
-          -8.745389
-        ],
-        "size": [
-          0.698329568,
-          0.387082249,
-          0.610959
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 237,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "PRE_DEC_Pillow_01_03",
-      "obj_transform": {
-        "position": [
-          0.5695001,
-          0.5939,
-          -10.6019993
-        ],
-        "rotation": [
-          0.354109526,
-          0.788386166,
-          0.171845973,
-          0.4727819
-        ],
-        "scale": [
-          0.6066889,
-          0.606689036,
-          0.606689036
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.588042,
-          0.646111,
-          -10.572176
-        ],
-        "size": [
-          0.581133366,
-          0.404306382,
-          0.558930039
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
         "MOVABLE"
       ],
       "states": []
@@ -9469,7 +7875,7 @@
       },
       "bounding_box": {
         "center": [
-          2.74049973,
+          2.7405,
           1.577583,
           -11.038
         ],
@@ -9509,7 +7915,7 @@
         "center": [
           3.0195,
           0.004026125,
-          -7.964001
+          -7.9640007
         ],
         "size": [
           1.469562,
@@ -9522,88 +7928,6 @@
         "GRABBABLE",
         "SITTABLE",
         "LIEABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 240,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "HSHP_PRE_DEC_Pillow_01_01",
-      "obj_transform": {
-        "position": [
-          1.61193466,
-          0.440117121,
-          -6.783331
-        ],
-        "rotation": [
-          0.0,
-          0.7492775,
-          0.0,
-          0.662256241
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          1.60596752,
-          0.541388869,
-          -6.804901
-        ],
-        "size": [
-          0.857013345,
-          0.202543616,
-          0.752323151
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 241,
-      "category": "Decor",
-      "class_name": "pillow",
-      "prefab_name": "HSHP_PRE_DEC_Pillow_01_01",
-      "obj_transform": {
-        "position": [
-          0.7656308,
-          0.6463858,
-          -6.840857
-        ],
-        "rotation": [
-          -0.650452554,
-          -3.32008625e-08,
-          -0.759546936,
-          -2.84321846e-08
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.7589917,
-          0.54511404,
-          -6.819489
-        ],
-        "size": [
-          0.874123156,
-          0.2025437,
-          0.7736845
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
         "MOVABLE"
       ],
       "states": []
@@ -9633,9 +7957,9 @@
       },
       "bounding_box": {
         "center": [
-          3.75849557,
+          3.758496,
           1.029126,
-          -6.231359
+          -6.231358
         ],
         "size": [
           0.928397357,
@@ -9689,53 +8013,6 @@
       ]
     },
     {
-      "id": 244,
-      "category": "Props",
-      "class_name": "book",
-      "prefab_name": "PRE_PRO_Book_02",
-      "obj_transform": {
-        "position": [
-          2.37649965,
-          1.513,
-          -11.0009995
-        ],
-        "rotation": [
-          0.0,
-          -0.5858052,
-          0.0,
-          0.810452
-        ],
-        "scale": [
-          0.609649539,
-          0.609649539,
-          0.609649539
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.3776288,
-          1.52665424,
-          -10.9975777
-        ],
-        "size": [
-          0.228691161,
-          0.02769946,
-          0.203991413
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CUTTABLE",
-        "CAN_OPEN",
-        "READABLE",
-        "HAS_PAPER",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
       "id": 245,
       "category": "Props",
       "class_name": "perfume",
@@ -9760,7 +8037,7 @@
       },
       "bounding_box": {
         "center": [
-          2.49549937,
+          2.49549961,
           1.15842271,
           -10.983
         ],
@@ -9798,7 +8075,7 @@
       },
       "bounding_box": {
         "center": [
-          2.58449936,
+          2.5844996,
           1.15520382,
           -11.03
         ],
@@ -9836,7 +8113,7 @@
       },
       "bounding_box": {
         "center": [
-          2.69649935,
+          2.69649959,
           1.09776378,
           -11.037
         ],
@@ -9919,7 +8196,7 @@
         "center": [
           3.15394068,
           1.20072865,
-          -6.28053331
+          -6.28053236
         ],
         "size": [
           0.068677865,
@@ -9962,7 +8239,7 @@
         "center": [
           3.1610496,
           0.192064941,
-          -6.28602743
+          -6.28602648
         ],
         "size": [
           0.09082342,
@@ -9998,7 +8275,7 @@
       },
       "bounding_box": {
         "center": [
-          0.3300004,
+          0.330000281,
           1.215,
           -9.459923
         ],
@@ -10045,7 +8322,7 @@
       },
       "bounding_box": {
         "center": [
-          2.48449945,
+          2.48449969,
           0.990366,
           -11.0430012
         ],
@@ -10083,7 +8360,7 @@
       },
       "bounding_box": {
         "center": [
-          2.48449945,
+          2.48449969,
           1.419366,
           -11.0430012
         ],
@@ -10121,14 +8398,14 @@
       },
       "bounding_box": {
         "center": [
-          0.6095712,
+          0.6095711,
           0.6179,
           -10.5742989
         ],
         "size": [
-          0.149568066,
+          0.149568185,
           1.04890013,
-          0.9402543
+          0.9402542
         ]
       },
       "properties": [
@@ -10164,9 +8441,9 @@
       },
       "bounding_box": {
         "center": [
-          4.61749935,
+          4.6175,
           1.1825217,
-          -7.30400944
+          -7.30400848
         ],
         "size": [
           0.6238642,
@@ -10207,9 +8484,9 @@
       },
       "bounding_box": {
         "center": [
-          4.62545538,
+          4.625457,
           1.90511858,
-          -6.840966
+          -6.84096432
         ],
         "size": [
           0.4699602,
@@ -10249,9 +8526,9 @@
       },
       "bounding_box": {
         "center": [
-          4.625437,
+          4.625438,
           1.50540423,
-          -6.842622
+          -6.84262
         ],
         "size": [
           0.29705143,
@@ -10292,9 +8569,9 @@
       },
       "bounding_box": {
         "center": [
-          4.628464,
+          4.628465,
           1.90511858,
-          -7.715125
+          -7.715124
         ],
         "size": [
           0.4682474,
@@ -10305,49 +8582,6 @@
       "properties": [
         "GRABBABLE",
         "HANGABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 259,
-      "category": "Furniture",
-      "class_name": "clothesshirt",
-      "prefab_name": "MOD_PRO_Shirt_01",
-      "obj_transform": {
-        "position": [
-          4.64176941,
-          1.815,
-          -7.71657228
-        ],
-        "rotation": [
-          0.0,
-          0.747416,
-          0.0,
-          -0.664356351
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.641756,
-          1.50634575,
-          -7.716491
-        ],
-        "size": [
-          0.5797601,
-          0.8035693,
-          0.109732747
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "HANGABLE",
-        "CLOTHES",
         "MOVABLE"
       ],
       "states": []
@@ -10379,7 +8613,7 @@
         "center": [
           4.609268,
           1.90511858,
-          -7.020057
+          -7.020056
         ],
         "size": [
           0.46985054,
@@ -10419,9 +8653,9 @@
       },
       "bounding_box": {
         "center": [
-          4.609396,
+          4.609398,
           1.47963452,
-          -7.01844931
+          -7.018447
         ],
         "size": [
           0.279218674,
@@ -10462,9 +8696,9 @@
       },
       "bounding_box": {
         "center": [
-          4.601897,
+          4.601898,
           1.90511858,
-          -7.1598587
+          -7.159857
         ],
         "size": [
           0.469836235,
@@ -10475,49 +8709,6 @@
       "properties": [
         "GRABBABLE",
         "HANGABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 263,
-      "category": "Furniture",
-      "class_name": "clothesshirt",
-      "prefab_name": "MOD_PRO_Shirt_01",
-      "obj_transform": {
-        "position": [
-          4.61475372,
-          1.82600009,
-          -7.16357374
-        ],
-        "rotation": [
-          0.0,
-          0.687248945,
-          0.0,
-          -0.7264221
-        ],
-        "scale": [
-          1.0,
-          0.8636028,
-          0.980948
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.614755,
-          1.55944538,
-          -7.16349363
-        ],
-        "size": [
-          0.5692459,
-          0.6939647,
-          0.0735293
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "HANGABLE",
-        "CLOTHES",
         "MOVABLE"
       ],
       "states": []
@@ -10547,9 +8738,9 @@
       },
       "bounding_box": {
         "center": [
-          4.600459,
+          4.60046,
           1.90511858,
-          -7.87894249
+          -7.87894154
         ],
         "size": [
           0.4681406,
@@ -10589,9 +8780,9 @@
       },
       "bounding_box": {
         "center": [
-          4.612497,
+          4.61249876,
           0.6982225,
-          -7.05300236
+          -7.053001
         ],
         "size": [
           0.5653767,
@@ -10601,141 +8792,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 266,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_04",
-      "obj_transform": {
-        "position": [
-          4.6235,
-          0.608,
-          -7.351
-        ],
-        "rotation": [
-          0.0,
-          0.9999912,
-          0.0,
-          0.00421074033
-        ],
-        "scale": [
-          0.7252129,
-          0.7252129,
-          0.7252129
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.623498,
-          0.666928,
-          -7.35100174
-        ],
-        "size": [
-          0.318431854,
-          0.11785686,
-          0.230009079
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 267,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_05",
-      "obj_transform": {
-        "position": [
-          4.619499,
-          0.608,
-          -7.071
-        ],
-        "rotation": [
-          0.0,
-          0.9997579,
-          0.0,
-          -0.0220012069
-        ],
-        "scale": [
-          0.7252128,
-          0.7252129,
-          0.725212753
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.61949635,
-          0.666928,
-          -7.071003
-        ],
-        "size": [
-          0.326223373,
-          0.11785686,
-          0.241055489
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 268,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_06",
-      "obj_transform": {
-        "position": [
-          4.631499,
-          0.608,
-          -6.793001
-        ],
-        "rotation": [
-          0.0,
-          0.9992616,
-          0.0,
-          0.0384212434
-        ],
-        "scale": [
-          0.7252129,
-          0.7252129,
-          0.725212753
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.63149548,
-          0.666928,
-          -6.793004
-        ],
-        "size": [
-          0.333050728,
-          0.11785686,
-          0.250985146
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 269,
@@ -10762,9 +8818,9 @@
       },
       "bounding_box": {
         "center": [
-          4.612497,
+          4.61249876,
           0.467522532,
-          -7.05300236
+          -7.053001
         ],
         "size": [
           0.5653767,
@@ -10774,96 +8830,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 270,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_03",
-      "obj_transform": {
-        "position": [
-          4.62749863,
-          0.3753,
-          -6.79900074
-        ],
-        "rotation": [
-          0.0,
-          0.99976027,
-          0.0,
-          -0.0219019651
-        ],
-        "scale": [
-          0.8280001,
-          0.828000069,
-          0.828
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.627496,
-          0.4425801,
-          -6.7990036
-        ],
-        "size": [
-          0.372411728,
-          0.134561151,
-          0.2751522
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 271,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_04",
-      "obj_transform": {
-        "position": [
-          4.65549946,
-          0.3753,
-          -7.06500053
-        ],
-        "rotation": [
-          0.0,
-          0.99991,
-          0.0,
-          0.013420701
-        ],
-        "scale": [
-          0.828000247,
-          0.828000069,
-          0.828000069
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          4.6554966,
-          0.4425801,
-          -7.0650034
-        ],
-        "size": [
-          0.368227959,
-          0.134561092,
-          0.2691803
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 272,
@@ -10935,7 +8901,7 @@
         "center": [
           2.6815,
           0.242000014,
-          -6.675002
+          -6.675001
         ],
         "size": [
           0.7479999,
@@ -10979,12 +8945,12 @@
         "center": [
           1.14450049,
           0.276930243,
-          -7.546261
+          -7.54626036
         ],
         "size": [
           1.991632,
           0.5527216,
-          2.40117455
+          2.4011755
         ]
       },
       "properties": [
@@ -11019,7 +8985,7 @@
       },
       "bounding_box": {
         "center": [
-          0.285000682,
+          0.285000443,
           0.539809465,
           -9.385
         ],
@@ -11141,7 +9107,7 @@
       },
       "bounding_box": {
         "center": [
-          3.70599914,
+          3.70599961,
           0.0,
           5.0
         ],
@@ -11181,9 +9147,9 @@
       },
       "bounding_box": {
         "center": [
-          3.70599914,
+          3.70599961,
           0.0,
-          2.50000143
+          2.500001
         ],
         "size": [
           2.5,
@@ -11223,7 +9189,7 @@
         "center": [
           1.20600033,
           0.0,
-          2.50000143
+          2.500001
         ],
         "size": [
           2.5,
@@ -11299,7 +9265,7 @@
       },
       "bounding_box": {
         "center": [
-          3.705999,
+          3.70599937,
           1.25,
           4.99999952
         ],
@@ -11339,7 +9305,7 @@
         "center": [
           3.705998,
           1.25,
-          2.50000286
+          2.500002
         ],
         "size": [
           2.50000381,
@@ -11377,7 +9343,7 @@
         "center": [
           1.20600092,
           1.2500093,
-          2.499988
+          2.49998713
         ],
         "size": [
           2.50000048,
@@ -11453,7 +9419,7 @@
         "center": [
           1.20600939,
           2.50000024,
-          2.50000143
+          2.500001
         ],
         "size": [
           2.5,
@@ -11489,9 +9455,9 @@
       },
       "bounding_box": {
         "center": [
-          3.7060082,
+          3.70600867,
           2.50000024,
-          2.50000143
+          2.500001
         ],
         "size": [
           2.5,
@@ -11527,7 +9493,7 @@
       },
       "bounding_box": {
         "center": [
-          3.7060082,
+          3.70600867,
           2.50000024,
           5.0
         ],
@@ -11567,7 +9533,7 @@
         "center": [
           1.24100435,
           1.029126,
-          1.24845922
+          1.24845827
         ],
         "size": [
           0.928397357,
@@ -11645,9 +9611,9 @@
       },
       "bounding_box": {
         "center": [
-          4.836454,
+          4.83645439,
           1.364,
-          3.775005
+          3.77500486
         ],
         "size": [
           0.1370904,
@@ -11683,9 +9649,9 @@
       },
       "bounding_box": {
         "center": [
-          1.88599968,
+          1.88599992,
           2.43006635,
-          3.71000123
+          3.71000075
         ],
         "size": [
           0.9264263,
@@ -11723,7 +9689,7 @@
         "center": [
           4.13401175,
           1.25068724,
-          2.07451344
+          2.07451248
         ],
         "size": [
           1.56272185,
@@ -11759,9 +9725,9 @@
       },
       "bounding_box": {
         "center": [
-          3.62792873,
+          3.62792921,
           1.24817312,
-          2.80200243
+          2.80200076
         ],
         "size": [
           0.3018598,
@@ -11803,7 +9769,7 @@
       },
       "bounding_box": {
         "center": [
-          4.130987,
+          4.13098764,
           1.25,
           5.42348957
         ],
@@ -11841,7 +9807,7 @@
       },
       "bounding_box": {
         "center": [
-          4.04871368,
+          4.048714,
           0.214479119,
           5.704841
         ],
@@ -11971,7 +9937,7 @@
       },
       "bounding_box": {
         "center": [
-          1.72000086,
+          1.720001,
           0.934,
           5.86
         ],
@@ -12012,7 +9978,7 @@
       },
       "bounding_box": {
         "center": [
-          1.71499968,
+          1.71499979,
           1.01,
           6.136
         ],
@@ -12056,7 +10022,7 @@
         "center": [
           2.16400242,
           1.273,
-          1.3532325
+          1.35323155
         ],
         "size": [
           0.496149659,
@@ -12096,14 +10062,14 @@
       },
       "bounding_box": {
         "center": [
-          0.333000839,
+          0.3330006,
           1.1825217,
-          2.06100965
+          2.061009
         ],
         "size": [
           0.6238673,
           2.36524463,
-          1.49973249
+          1.499732
         ]
       },
       "properties": [
@@ -12139,12 +10105,12 @@
       },
       "bounding_box": {
         "center": [
-          0.333042145,
+          0.333041668,
           1.90511858,
-          2.19775438
+          2.19775248
         ],
         "size": [
-          0.469926953,
+          0.469927073,
           0.241116285,
           0.0240974426
         ]
@@ -12181,12 +10147,12 @@
       },
       "bounding_box": {
         "center": [
-          0.360042572,
+          0.3600421,
           1.90511858,
-          2.62196612
+          2.62196469
         ],
         "size": [
-          0.46996057,
+          0.46996066,
           0.241116285,
           0.0321550369
         ]
@@ -12223,12 +10189,12 @@
       },
       "bounding_box": {
         "center": [
-          0.333036,
+          0.333035529,
           1.90511858,
-          2.12912846
+          2.12912655
         ],
         "size": [
-          0.4682479,
+          0.468248,
           0.241116285,
           0.0700202
         ]
@@ -12265,9 +10231,9 @@
       },
       "bounding_box": {
         "center": [
-          0.336040974,
+          0.3360405,
           1.90511858,
-          1.9390707
+          1.93906879
         ],
         "size": [
           0.469753861,
@@ -12307,9 +10273,9 @@
       },
       "bounding_box": {
         "center": [
-          0.326004148,
+          0.326003671,
           1.90511858,
-          1.63028669
+          1.63028479
         ],
         "size": [
           0.456421852,
@@ -12349,12 +10315,12 @@
       },
       "bounding_box": {
         "center": [
-          0.333031774,
+          0.3330313,
           1.90511858,
-          1.84485435
+          1.84485245
         ],
         "size": [
-          0.466912746,
+          0.466912776,
           0.241116285,
           0.08324361
         ]
@@ -12391,12 +10357,12 @@
       },
       "bounding_box": {
         "center": [
-          0.346041322,
+          0.346040845,
           1.90511858,
-          2.00494957
+          2.00494766
         ],
         "size": [
-          0.46985054,
+          0.469850659,
           0.241116285,
           0.040424943
         ]
@@ -12433,9 +10399,9 @@
       },
       "bounding_box": {
         "center": [
-          0.349041522,
+          0.349041045,
           1.90511858,
-          2.05694771
+          2.0569458
         ],
         "size": [
           0.469836473,
@@ -12475,12 +10441,12 @@
       },
       "bounding_box": {
         "center": [
-          0.33804518,
+          0.3380447,
           1.90511858,
-          2.46511674
+          2.46511531
         ],
         "size": [
-          0.469926357,
+          0.4699266,
           0.241116285,
           0.03608036
         ]
@@ -12517,12 +10483,12 @@
       },
       "bounding_box": {
         "center": [
-          0.3430394,
+          0.343038917,
           1.90511858,
-          2.52191734
+          2.521916
         ],
         "size": [
-          0.469808131,
+          0.469808221,
           0.241116285,
           0.0421872139
         ]
@@ -12559,9 +10525,9 @@
       },
       "bounding_box": {
         "center": [
-          0.350035548,
+          0.350035071,
           1.90511858,
-          2.68787837
+          2.687877
         ],
         "size": [
           0.468140155,
@@ -12601,9 +10567,9 @@
       },
       "bounding_box": {
         "center": [
-          0.3376013,
+          0.337600827,
           0.928222537,
-          1.81000257
+          1.81000066
         ],
         "size": [
           0.565374553,
@@ -12639,9 +10605,9 @@
       },
       "bounding_box": {
         "center": [
-          0.33800137,
+          0.3380009,
           0.467522532,
-          1.81000257
+          1.81000066
         ],
         "size": [
           0.565374553,
@@ -12677,9 +10643,9 @@
       },
       "bounding_box": {
         "center": [
-          0.33800137,
+          0.3380009,
           0.23882255,
-          1.81000257
+          1.81000066
         ],
         "size": [
           0.565374553,
@@ -12715,9 +10681,9 @@
       },
       "bounding_box": {
         "center": [
-          0.333000481,
+          0.333000362,
           1.1825217,
-          3.56100845
+          3.561008
         ],
         "size": [
           0.6238673,
@@ -12758,12 +10724,12 @@
       },
       "bounding_box": {
         "center": [
-          0.333041668,
+          0.33304143,
           1.90511858,
-          3.697751
+          3.69775
         ],
         "size": [
-          0.469926953,
+          0.469927073,
           0.241116285,
           0.0240974426
         ]
@@ -12771,49 +10737,6 @@
       "properties": [
         "GRABBABLE",
         "HANGABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 319,
-      "category": "Furniture",
-      "class_name": "clothesshirt",
-      "prefab_name": "MOD_PRO_Shirt_02",
-      "obj_transform": {
-        "position": [
-          0.320001841,
-          1.81,
-          3.69800043
-        ],
-        "rotation": [
-          0.0,
-          0.7138903,
-          0.0,
-          0.70025754
-        ],
-        "scale": [
-          1.0,
-          0.917863846,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.320002258,
-          1.52669728,
-          3.69791913
-        ],
-        "size": [
-          0.5795156,
-          0.737567246,
-          0.05330237
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "HANGABLE",
-        "CLOTHES",
         "MOVABLE"
       ],
       "states": []
@@ -12843,12 +10766,12 @@
       },
       "bounding_box": {
         "center": [
-          0.325042,
+          0.325041771,
           1.90511858,
-          3.09796453
+          3.09796357
         ],
         "size": [
-          0.46996057,
+          0.469960451,
           0.241116285,
           0.0321550369
         ]
@@ -12885,12 +10808,12 @@
       },
       "bounding_box": {
         "center": [
-          0.325060248,
+          0.32506,
           1.50540423,
-          3.09961987
+          3.09961843
         ],
         "size": [
-          0.2970519,
+          0.2970518,
           0.6125164,
           0.05334997
         ]
@@ -12928,9 +10851,9 @@
       },
       "bounding_box": {
         "center": [
-          0.3460405,
+          0.346040249,
           1.90511858,
-          3.19306731
+          3.19306636
         ],
         "size": [
           0.469753861,
@@ -12970,9 +10893,9 @@
       },
       "bounding_box": {
         "center": [
-          0.346100748,
+          0.346100271,
           1.49929976,
-          3.19142723
+          3.1914258
         ],
         "size": [
           0.260182261,
@@ -13013,12 +10936,12 @@
       },
       "bounding_box": {
         "center": [
-          0.31804204,
+          0.3180418,
           1.90511858,
-          2.92096448
+          2.92096353
         ],
         "size": [
-          0.46996057,
+          0.469960451,
           0.241116285,
           0.0321550369
         ]
@@ -13055,12 +10978,12 @@
       },
       "bounding_box": {
         "center": [
-          0.318060279,
+          0.31806004,
           1.50540423,
-          2.9226203
+          2.92261887
         ],
         "size": [
-          0.2970519,
+          0.2970518,
           0.6125164,
           0.05334997
         ]
@@ -13098,9 +11021,9 @@
       },
       "bounding_box": {
         "center": [
-          0.348601758,
+          0.34860152,
           1.90511858,
-          3.41685772
+          3.41685677
         ],
         "size": [
           0.469836473,
@@ -13111,49 +11034,6 @@
       "properties": [
         "GRABBABLE",
         "HANGABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 327,
-      "category": "Furniture",
-      "class_name": "clothesshirt",
-      "prefab_name": "MOD_PRO_Shirt_01",
-      "obj_transform": {
-        "position": [
-          0.335745633,
-          1.82600009,
-          3.42057323
-        ],
-        "rotation": [
-          0.0,
-          0.7264227,
-          0.0,
-          0.6872482
-        ],
-        "scale": [
-          1.0,
-          0.8636028,
-          0.980948
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.335743,
-          1.55944538,
-          3.420492
-        ],
-        "size": [
-          0.569245934,
-          0.6939647,
-          0.07353048
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "HANGABLE",
-        "CLOTHES",
         "MOVABLE"
       ],
       "states": []
@@ -13183,12 +11063,12 @@
       },
       "bounding_box": {
         "center": [
-          0.338042378,
+          0.33804214,
           1.90511858,
-          3.96498227
+          3.96498132
         ],
         "size": [
-          0.469359159,
+          0.469359279,
           0.241116285,
           0.0538444519
         ]
@@ -13225,12 +11105,12 @@
       },
       "bounding_box": {
         "center": [
-          0.343038917,
+          0.343038678,
           1.90511858,
-          4.021916
+          4.021915
         ],
         "size": [
-          0.469808131,
+          0.469808221,
           0.241116285,
           0.0421867371
         ]
@@ -13267,9 +11147,9 @@
       },
       "bounding_box": {
         "center": [
-          0.333000958,
+          0.33300072,
           0.6993225,
-          4.05660057
+          4.05659962
         ],
         "size": [
           0.565374553,
@@ -13279,51 +11159,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 331,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_06",
-      "obj_transform": {
-        "position": [
-          0.367000282,
-          0.6095,
-          4.059
-        ],
-        "rotation": [
-          0.0,
-          0.7463909,
-          0.0,
-          0.6655078
-        ],
-        "scale": [
-          0.828000247,
-          0.828000069,
-          0.828000069
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.367000043,
-          0.6767801,
-          4.0590024
-        ],
-        "size": [
-          0.299147,
-          0.134561181,
-          0.388669968
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 332,
@@ -13350,9 +11185,9 @@
       },
       "bounding_box": {
         "center": [
-          0.333000958,
+          0.33300072,
           0.470222533,
-          4.057001
+          4.057
         ],
         "size": [
           0.565374553,
@@ -13388,9 +11223,9 @@
       },
       "bounding_box": {
         "center": [
-          0.3380012,
+          0.338000953,
           0.6982225,
-          3.31000137
+          3.31000042
         ],
         "size": [
           0.565374553,
@@ -13400,96 +11235,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 334,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_04",
-      "obj_transform": {
-        "position": [
-          0.32700026,
-          0.608,
-          3.608
-        ],
-        "rotation": [
-          0.0,
-          -0.00420969725,
-          0.0,
-          0.9999912
-        ],
-        "scale": [
-          0.7252129,
-          0.7252129,
-          0.7252129
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.327000678,
-          0.666928,
-          3.60800123
-        ],
-        "size": [
-          0.318431139,
-          0.11785686,
-          0.230008125
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 335,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_06",
-      "obj_transform": {
-        "position": [
-          0.319000363,
-          0.608,
-          3.05000019
-        ],
-        "rotation": [
-          0.0,
-          -0.0384202,
-          0.0,
-          0.9992616
-        ],
-        "scale": [
-          0.7252129,
-          0.7252129,
-          0.725212753
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.319000959,
-          0.666928,
-          3.05000162
-        ],
-        "size": [
-          0.333050668,
-          0.11785686,
-          0.2509842
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 336,
@@ -13516,9 +11261,9 @@
       },
       "bounding_box": {
         "center": [
-          0.3380012,
+          0.338000953,
           0.467522532,
-          3.31000137
+          3.31000042
         ],
         "size": [
           0.565374553,
@@ -13528,96 +11273,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 337,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_03",
-      "obj_transform": {
-        "position": [
-          0.323000431,
-          0.3753,
-          3.05600047
-        ],
-        "rotation": [
-          0.0,
-          0.0219029784,
-          0.0,
-          0.999760151
-        ],
-        "scale": [
-          0.8280001,
-          0.828000069,
-          0.828
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.323001027,
-          0.4425801,
-          3.05600142
-        ],
-        "size": [
-          0.372412562,
-          0.134561181,
-          0.27515316
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
-    },
-    {
-      "id": 338,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_05",
-      "obj_transform": {
-        "position": [
-          0.3290003,
-          0.3753,
-          3.60100031
-        ],
-        "rotation": [
-          0.0,
-          0.00598078966,
-          0.0,
-          0.999982238
-        ],
-        "scale": [
-          0.828000247,
-          0.828000069,
-          0.828
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.329000771,
-          0.4425801,
-          3.60100174
-        ],
-        "size": [
-          0.364470124,
-          0.134561092,
-          0.263878822
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 339,
@@ -13644,9 +11299,9 @@
       },
       "bounding_box": {
         "center": [
-          0.333000958,
+          0.33300072,
           0.239522517,
-          4.057001
+          4.057
         ],
         "size": [
           0.565374553,
@@ -13656,51 +11311,6 @@
       },
       "properties": [],
       "states": []
-    },
-    {
-      "id": 340,
-      "category": "Furniture",
-      "class_name": "clothespile",
-      "prefab_name": "MOD_PRO_Clothes_pile_08",
-      "obj_transform": {
-        "position": [
-          0.367000043,
-          0.150532,
-          4.05900049
-        ],
-        "rotation": [
-          0.0,
-          0.358663857,
-          0.0,
-          0.9334668
-        ],
-        "scale": [
-          0.7217808,
-          0.546216,
-          0.721780658
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.3670001,
-          0.194915429,
-          4.059002
-        ],
-        "size": [
-          0.3854938,
-          0.08876744,
-          0.37900424
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "CAN_OPEN",
-        "CONTAINERS",
-        "MOVABLE"
-      ],
-      "states": [
-        "CLOSED"
-      ]
     },
     {
       "id": 341,
@@ -13729,7 +11339,7 @@
         "center": [
           2.96382928,
           1.27314723,
-          1.35323107
+          1.35323012
         ],
         "size": [
           0.496149659,
@@ -13740,132 +11350,6 @@
       "properties": [
         "SURFACES",
         "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 342,
-      "category": "Props",
-      "class_name": "towel",
-      "prefab_name": "PRE_PRO_Towel_04",
-      "obj_transform": {
-        "position": [
-          2.80599976,
-          1.037,
-          5.92
-        ],
-        "rotation": [
-          0.0,
-          0.9982377,
-          0.0,
-          -0.0593419075
-        ],
-        "scale": [
-          0.797313452,
-          0.7973135,
-          0.797313869
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.80599928,
-          1.07213962,
-          5.92
-        ],
-        "size": [
-          0.135646969,
-          0.07028044,
-          0.315167367
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "COVER_OBJECT",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 343,
-      "category": "Props",
-      "class_name": "towel",
-      "prefab_name": "PRE_PRO_Towel_03",
-      "obj_transform": {
-        "position": [
-          2.889,
-          0.977,
-          5.92
-        ],
-        "rotation": [
-          0.0,
-          0.9992037,
-          0.0,
-          -0.0399016142
-        ],
-        "scale": [
-          0.889999866,
-          0.89,
-          0.8900004
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.88899946,
-          1.01622462,
-          5.92
-        ],
-        "size": [
-          0.138640046,
-          0.0784504339,
-          0.3487899
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "COVER_OBJECT",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 344,
-      "category": "Props",
-      "class_name": "towel",
-      "prefab_name": "PRE_PRO_Towel_02",
-      "obj_transform": {
-        "position": [
-          2.7409997,
-          0.977,
-          5.92
-        ],
-        "rotation": [
-          0.0,
-          0.07510278,
-          0.0,
-          0.9971758
-        ],
-        "scale": [
-          0.890000045,
-          0.89,
-          0.8900004
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.74099922,
-          1.01622462,
-          5.92
-        ],
-        "size": [
-          0.1616163,
-          0.0784504339,
-          0.3538606
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "COVER_OBJECT",
         "MOVABLE"
       ],
       "states": []
@@ -13895,7 +11379,7 @@
       },
       "bounding_box": {
         "center": [
-          3.51532626,
+          3.51532674,
           0.9196487,
           4.94832134
         ],
@@ -13942,7 +11426,7 @@
         "center": [
           4.868975,
           1.331713,
-          2.054488
+          2.054487
         ],
         "size": [
           0.07297797,
@@ -13983,7 +11467,7 @@
         "center": [
           4.854613,
           0.7356922,
-          2.1032908
+          2.10328984
         ],
         "size": [
           0.1021537,
@@ -14028,7 +11512,7 @@
         "center": [
           4.861882,
           0.7356922,
-          1.99298239
+          1.99298143
         ],
         "size": [
           0.0739292055,
@@ -14073,7 +11557,7 @@
         "center": [
           2.5288682,
           0.0359069146,
-          1.57585716
+          1.57585621
         ],
         "size": [
           0.341854572,
@@ -14116,7 +11600,7 @@
         "center": [
           3.08879471,
           0.03590691,
-          1.55725288
+          1.55725193
         ],
         "size": [
           0.438432217,
@@ -14157,7 +11641,7 @@
       },
       "bounding_box": {
         "center": [
-          1.98729992,
+          1.9873,
           1.02411687,
           6.1244
         ],
@@ -14200,14 +11684,14 @@
       },
       "bounding_box": {
         "center": [
-          2.00607753,
-          1.06643713,
-          6.11037254
+          2.00370765,
+          1.067029,
+          6.110321
         ],
         "size": [
-          0.0518322,
-          0.182852581,
-          0.04274823
+          0.0680467039,
+          0.2400536,
+          0.0561209768
         ]
       },
       "properties": [
@@ -14247,9 +11731,9 @@
           6.074354
         ],
         "size": [
-          0.148812026,
+          0.148812056,
           0.0433942862,
-          0.14186506
+          0.141865045
         ]
       },
       "properties": [
@@ -14322,7 +11806,7 @@
       },
       "bounding_box": {
         "center": [
-          2.19878745,
+          2.19878769,
           1.04971588,
           6.10303
         ],
@@ -14360,14 +11844,14 @@
       },
       "bounding_box": {
         "center": [
-          2.085712,
+          2.08571219,
           0.992275953,
           6.104555
         ],
         "size": [
-          0.08546614,
+          0.08546613,
           0.03152771,
-          0.08546619
+          0.08546618
         ]
       },
       "properties": [
@@ -14463,90 +11947,6 @@
       ]
     },
     {
-      "id": 359,
-      "category": "Props",
-      "class_name": "towel",
-      "prefab_name": "PRE_PRO_Towel_01",
-      "obj_transform": {
-        "position": [
-          2.16400051,
-          1.271,
-          1.3983016
-        ],
-        "rotation": [
-          0.0,
-          -0.707106948,
-          0.0,
-          0.7071066
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.164,
-          1.089952,
-          1.39236867
-        ],
-        "size": [
-          0.316705555,
-          0.4129926,
-          0.03320746
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "COVER_OBJECT",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 360,
-      "category": "Props",
-      "class_name": "towel",
-      "prefab_name": "PRE_PRO_Towel_01",
-      "obj_transform": {
-        "position": [
-          2.96382761,
-          1.27114725,
-          1.39830017
-        ],
-        "rotation": [
-          0.0,
-          -0.707106948,
-          0.0,
-          0.7071066
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.963827,
-          1.09009933,
-          1.39236677
-        ],
-        "size": [
-          0.316705555,
-          0.4129926,
-          0.03320746
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "COVER_OBJECT",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
       "id": 361,
       "category": "Decor",
       "class_name": "wallpictureframe",
@@ -14571,7 +11971,7 @@
       },
       "bounding_box": {
         "center": [
-          0.011408668,
+          0.01140843,
           1.436,
           5.022
         ],
@@ -14614,14 +12014,14 @@
       },
       "bounding_box": {
         "center": [
-          1.95699906,
+          1.9569993,
           0.01789104,
-          3.52800155
+          3.528001
         ],
         "size": [
-          1.90070784,
+          1.90070808,
           0.0157888234,
-          2.4763968
+          2.476397
         ]
       },
       "properties": [
@@ -14658,9 +12058,9 @@
       },
       "bounding_box": {
         "center": [
-          4.100999,
+          4.10099936,
           0.009710528,
-          3.77000117
+          3.7700007
         ],
         "size": [
           1.39259887,
@@ -14704,7 +12104,7 @@
         "center": [
           1.80214894,
           0.139007658,
-          1.30802846
+          1.30802751
         ],
         "size": [
           0.09082342,
@@ -14740,7 +12140,7 @@
       },
       "bounding_box": {
         "center": [
-          0.451000273,
+          0.451000154,
           1.37499976,
           6.191968
         ],
@@ -14780,7 +12180,7 @@
         "center": [
           1.78900027,
           1.254,
-          1.30255461
+          1.30255365
         ],
         "size": [
           0.068677865,
@@ -14826,9 +12226,9 @@
           4.75
         ],
         "size": [
-          0.662162542,
+          0.6621626,
           0.9977087,
-          0.7247697
+          0.7247698
         ]
       },
       "properties": [
@@ -14841,6 +12241,53 @@
       "states": [
         "CLOSED",
         "OFF"
+      ]
+    },
+    {
+      "id": 368,
+      "category": "Book_7",
+      "class_name": "book",
+      "prefab_name": "Book_7",
+      "obj_transform": {
+        "position": [
+          2.677,
+          1.64103913,
+          -4.87800026
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "bounding_box": {
+        "center": [
+          2.677,
+          1.6407392,
+          -4.87800026
+        ],
+        "size": [
+          0.0513604954,
+          0.25652,
+          0.17424
+        ]
+      },
+      "properties": [
+        "GRABBABLE",
+        "CUTTABLE",
+        "CAN_OPEN",
+        "READABLE",
+        "HAS_PAPER",
+        "MOVABLE"
+      ],
+      "states": [
+        "CLOSED"
       ]
     }
   ],
@@ -14941,6 +12388,11 @@
       "relation_type": "INSIDE"
     },
     {
+      "from_id": 31,
+      "to_id": 11,
+      "relation_type": "INSIDE"
+    },
+    {
       "from_id": 32,
       "to_id": 11,
       "relation_type": "INSIDE"
@@ -14971,11 +12423,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 38,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 39,
       "to_id": 11,
       "relation_type": "INSIDE"
@@ -14987,11 +12434,6 @@
     },
     {
       "from_id": 41,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 42,
       "to_id": 11,
       "relation_type": "INSIDE"
     },
@@ -15041,11 +12483,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 52,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 53,
       "to_id": 11,
       "relation_type": "INSIDE"
@@ -15066,22 +12503,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 57,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 58,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 59,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 60,
       "to_id": 11,
       "relation_type": "INSIDE"
     },
@@ -15091,27 +12513,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 62,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 63,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 64,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 65,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 66,
       "to_id": 11,
       "relation_type": "INSIDE"
     },
@@ -15121,52 +12523,12 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 68,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 69,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 70,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 71,
       "to_id": 11,
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 72,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 73,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 74,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 75,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 76,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 77,
       "to_id": 11,
       "relation_type": "INSIDE"
     },
@@ -15202,16 +12564,6 @@
     },
     {
       "from_id": 84,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 85,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 86,
       "to_id": 11,
       "relation_type": "INSIDE"
     },
@@ -15466,11 +12818,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 140,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 141,
       "to_id": 111,
       "relation_type": "INSIDE"
@@ -15581,27 +12928,12 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 163,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 164,
       "to_id": 111,
       "relation_type": "INSIDE"
     },
     {
       "from_id": 165,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 166,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 167,
       "to_id": 111,
       "relation_type": "INSIDE"
     },
@@ -15706,42 +13038,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 188,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 189,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 190,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 191,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 192,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 193,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 194,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 195,
       "to_id": 111,
       "relation_type": "INSIDE"
     },
@@ -15787,11 +13084,6 @@
     },
     {
       "from_id": 204,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 205,
       "to_id": 111,
       "relation_type": "INSIDE"
     },
@@ -15936,37 +13228,12 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 235,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 236,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 237,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 238,
       "to_id": 214,
       "relation_type": "INSIDE"
     },
     {
       "from_id": 239,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 240,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 241,
       "to_id": 214,
       "relation_type": "INSIDE"
     },
@@ -16021,6 +13288,11 @@
       "relation_type": "INSIDE"
     },
     {
+      "from_id": 253,
+      "to_id": 214,
+      "relation_type": "INSIDE"
+    },
+    {
       "from_id": 254,
       "to_id": 214,
       "relation_type": "INSIDE"
@@ -16046,11 +13318,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 259,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 260,
       "to_id": 214,
       "relation_type": "INSIDE"
@@ -16066,11 +13333,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 263,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 264,
       "to_id": 214,
       "relation_type": "INSIDE"
@@ -16081,32 +13343,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 266,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 267,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 268,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 269,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 270,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 271,
       "to_id": 214,
       "relation_type": "INSIDE"
     },
@@ -16341,11 +13578,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 319,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 320,
       "to_id": 276,
       "relation_type": "INSIDE"
@@ -16381,11 +13613,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 327,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 328,
       "to_id": 276,
       "relation_type": "INSIDE"
@@ -16401,11 +13628,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 331,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 332,
       "to_id": 276,
       "relation_type": "INSIDE"
@@ -16416,27 +13638,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 334,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 335,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 336,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 337,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 338,
       "to_id": 276,
       "relation_type": "INSIDE"
     },
@@ -16446,27 +13648,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 340,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 341,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 342,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 343,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 344,
       "to_id": 276,
       "relation_type": "INSIDE"
     },
@@ -16537,16 +13719,6 @@
     },
     {
       "from_id": 358,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 359,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 360,
       "to_id": 276,
       "relation_type": "INSIDE"
     },
@@ -16692,12 +13864,12 @@
     },
     {
       "from_id": 97,
-      "to_id": 98,
+      "to_id": 29,
       "relation_type": "ON"
     },
     {
       "from_id": 97,
-      "to_id": 29,
+      "to_id": 98,
       "relation_type": "ON"
     },
     {
@@ -16727,12 +13899,12 @@
     },
     {
       "from_id": 105,
-      "to_id": 106,
+      "to_id": 29,
       "relation_type": "ON"
     },
     {
       "from_id": 105,
-      "to_id": 29,
+      "to_id": 106,
       "relation_type": "ON"
     },
     {
@@ -16772,17 +13944,12 @@
     },
     {
       "from_id": 138,
-      "to_id": 196,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 138,
       "to_id": 116,
       "relation_type": "ON"
     },
     {
-      "from_id": 140,
-      "to_id": 115,
+      "from_id": 138,
+      "to_id": 196,
       "relation_type": "ON"
     },
     {
@@ -16808,26 +13975,6 @@
     {
       "from_id": 162,
       "to_id": 150,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 166,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 167,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 168,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 169,
-      "to_id": 140,
       "relation_type": "ON"
     },
     {
@@ -16891,38 +14038,13 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 188,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 189,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 190,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 191,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 192,
-      "to_id": 140,
+      "from_id": 193,
+      "to_id": 182,
       "relation_type": "ON"
     },
     {
       "from_id": 193,
       "to_id": 138,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 193,
-      "to_id": 182,
       "relation_type": "ON"
     },
     {
@@ -16933,11 +14055,6 @@
     {
       "from_id": 200,
       "to_id": 133,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 204,
-      "to_id": 205,
       "relation_type": "ON"
     },
     {
@@ -16957,12 +14074,12 @@
     },
     {
       "from_id": 212,
-      "to_id": 138,
+      "to_id": 186,
       "relation_type": "ON"
     },
     {
       "from_id": 212,
-      "to_id": 186,
+      "to_id": 138,
       "relation_type": "ON"
     },
     {
@@ -16976,13 +14093,8 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 240,
-      "to_id": 274,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 241,
-      "to_id": 274,
+      "from_id": 238,
+      "to_id": 253,
       "relation_type": "ON"
     },
     {
@@ -17008,6 +14120,11 @@
     {
       "from_id": 251,
       "to_id": 275,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 253,
+      "to_id": 224,
       "relation_type": "ON"
     },
     {
@@ -17091,21 +14208,6 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 342,
-      "to_id": 344,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 343,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 344,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
       "from_id": 351,
       "to_id": 298,
       "relation_type": "ON"
@@ -17156,42 +14258,12 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 85,
-      "to_id": 27,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 86,
-      "to_id": 27,
-      "relation_type": "ON"
-    },
-    {
       "from_id": 28,
       "to_id": 84,
       "relation_type": "ON"
     },
     {
-      "from_id": 57,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 42,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 56,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 38,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 52,
       "to_id": 36,
       "relation_type": "INSIDE"
     },
@@ -17206,27 +14278,12 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 58,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 64,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 63,
       "to_id": 36,
       "relation_type": "INSIDE"
     },
     {
       "from_id": 40,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 65,
       "to_id": 36,
       "relation_type": "INSIDE"
     },
@@ -17241,22 +14298,12 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 60,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 46,
       "to_id": 36,
       "relation_type": "INSIDE"
     },
     {
       "from_id": 41,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 66,
       "to_id": 36,
       "relation_type": "INSIDE"
     },
@@ -17271,22 +14318,12 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 70,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 67,
       "to_id": 36,
       "relation_type": "INSIDE"
     },
     {
       "from_id": 49,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 69,
       "to_id": 36,
       "relation_type": "INSIDE"
     },
@@ -17316,16 +14353,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 68,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 62,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 47,
       "to_id": 36,
       "relation_type": "INSIDE"
@@ -17346,39 +14373,9 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 74,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 75,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 76,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 71,
       "to_id": 36,
       "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 72,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 77,
-      "to_id": 36,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 38,
-      "to_id": 56,
-      "relation_type": "ON"
     },
     {
       "from_id": 40,
@@ -17386,23 +14383,8 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 42,
-      "to_id": 57,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 42,
-      "to_id": 56,
-      "relation_type": "ON"
-    },
-    {
       "from_id": 44,
       "to_id": 56,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 44,
-      "to_id": 58,
       "relation_type": "ON"
     },
     {
@@ -17416,71 +14398,6 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 50,
-      "to_id": 58,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 52,
-      "to_id": 56,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 57,
-      "to_id": 63,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 58,
-      "to_id": 63,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 59,
-      "to_id": 60,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 60,
-      "to_id": 61,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 61,
-      "to_id": 62,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 63,
-      "to_id": 65,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 67,
-      "to_id": 69,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 68,
-      "to_id": 73,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 69,
-      "to_id": 73,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 70,
-      "to_id": 73,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 73,
-      "to_id": 76,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 30,
       "to_id": 108,
       "relation_type": "FACING"
@@ -17491,27 +14408,7 @@
       "relation_type": "FACING"
     },
     {
-      "from_id": 86,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
       "from_id": 27,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 85,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 60,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 62,
       "to_id": 108,
       "relation_type": "FACING"
     },
@@ -17527,11 +14424,6 @@
     },
     {
       "from_id": 71,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 70,
       "to_id": 108,
       "relation_type": "FACING"
     },
@@ -17551,22 +14443,12 @@
       "relation_type": "FACING"
     },
     {
-      "from_id": 38,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
       "from_id": 53,
       "to_id": 108,
       "relation_type": "FACING"
     },
     {
       "from_id": 63,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 42,
       "to_id": 108,
       "relation_type": "FACING"
     },
@@ -17587,11 +14469,6 @@
     },
     {
       "from_id": 37,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 52,
       "to_id": 108,
       "relation_type": "FACING"
     },
@@ -17701,17 +14578,12 @@
       "relation_type": "FACING"
     },
     {
+      "from_id": 31,
+      "to_id": 109,
+      "relation_type": "FACING"
+    },
+    {
       "from_id": 27,
-      "to_id": 109,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 85,
-      "to_id": 109,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 86,
       "to_id": 109,
       "relation_type": "FACING"
     },
@@ -17786,51 +14658,6 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 167,
-      "to_id": 140,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 166,
-      "to_id": 140,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 188,
-      "to_id": 140,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 189,
-      "to_id": 140,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 191,
-      "to_id": 140,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 190,
-      "to_id": 140,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 192,
-      "to_id": 140,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 194,
-      "to_id": 141,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 195,
-      "to_id": 141,
-      "relation_type": "ON"
-    },
-    {
       "from_id": 155,
       "to_id": 154,
       "relation_type": "INSIDE"
@@ -17851,11 +14678,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 163,
-      "to_id": 162,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 133,
       "to_id": 200,
       "relation_type": "FACING"
@@ -17866,27 +14688,12 @@
       "relation_type": "FACING"
     },
     {
-      "from_id": 194,
-      "to_id": 200,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 195,
-      "to_id": 200,
-      "relation_type": "FACING"
-    },
-    {
       "from_id": 198,
       "to_id": 200,
       "relation_type": "FACING"
     },
     {
       "from_id": 157,
-      "to_id": 200,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 205,
       "to_id": 200,
       "relation_type": "FACING"
     },
@@ -17911,32 +14718,7 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 235,
-      "to_id": 272,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 236,
-      "to_id": 272,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 263,
-      "to_id": 255,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 261,
-      "to_id": 255,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 266,
-      "to_id": 255,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 259,
       "to_id": 255,
       "relation_type": "INSIDE"
     },
@@ -17947,16 +14729,6 @@
     },
     {
       "from_id": 257,
-      "to_id": 255,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 267,
-      "to_id": 255,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 268,
       "to_id": 255,
       "relation_type": "INSIDE"
     },
@@ -17976,11 +14748,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 271,
-      "to_id": 255,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 258,
       "to_id": 255,
       "relation_type": "INSIDE"
@@ -17991,23 +14758,8 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 270,
-      "to_id": 255,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 264,
       "to_id": 255,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 265,
-      "to_id": 267,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 269,
-      "to_id": 271,
       "relation_type": "INSIDE"
     },
     {
@@ -18081,22 +14833,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 319,
-      "to_id": 317,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 327,
-      "to_id": 317,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 323,
-      "to_id": 317,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 334,
       "to_id": 317,
       "relation_type": "INSIDE"
     },
@@ -18116,17 +14853,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 331,
-      "to_id": 317,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 325,
-      "to_id": 317,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 335,
       "to_id": 317,
       "relation_type": "INSIDE"
     },
@@ -18137,11 +14864,6 @@
     },
     {
       "from_id": 326,
-      "to_id": 317,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 338,
       "to_id": 317,
       "relation_type": "INSIDE"
     },
@@ -18176,11 +14898,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 337,
-      "to_id": 317,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 324,
       "to_id": 317,
       "relation_type": "INSIDE"
@@ -18191,73 +14908,38 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 340,
-      "to_id": 317,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 330,
-      "to_id": 331,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 331,
-      "to_id": 332,
-      "relation_type": "ON"
-    },
-    {
       "from_id": 361,
       "to_id": 367,
       "relation_type": "ON"
     },
     {
-      "from_id": 88,
-      "to_id": 11,
+      "from_id": 140,
+      "to_id": 111,
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 89,
-      "to_id": 11,
+      "from_id": 368,
+      "to_id": 111,
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 31,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 244,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 253,
-      "to_id": 214,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 88,
-      "to_id": 31,
+      "from_id": 140,
+      "to_id": 115,
       "relation_type": "ON"
     },
     {
-      "from_id": 89,
-      "to_id": 31,
+      "from_id": 168,
+      "to_id": 140,
       "relation_type": "ON"
     },
     {
-      "from_id": 238,
-      "to_id": 253,
+      "from_id": 169,
+      "to_id": 140,
       "relation_type": "ON"
     },
     {
-      "from_id": 244,
-      "to_id": 253,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 253,
-      "to_id": 224,
+      "from_id": 368,
+      "to_id": 140,
       "relation_type": "ON"
     }
   ]

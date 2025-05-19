@@ -343,8 +343,6 @@ def generate_walk_find_script(graph, target_classes):
         if obj_node['class_name'] not in target_classes:
             continue
         
-        print("here")
-
         # Step 1: Walk to room (if any)
         room_node = find_room_of_node(graph, surf_node['id'])
         if room_node:
@@ -612,5 +610,90 @@ def replace_prefab_names(graph, target_class: str, new_prefab_names: list, verbo
 
     if verbose and count < len(new_prefab_names):
         print(f"⚠️ Only used {count} out of {len(new_prefab_names)} prefab names (not enough matching nodes).")
+
+    return graph
+
+def insert_objects_with_placement(graph, prefab_classes, class_placements, target_class, relations, n=1, verbose=False):
+    """
+    Insert up to n new objects of a given class into the scene graph.
+    Placement locations are sampled from allowed relations and destination classes.
+
+    Args:
+        graph (dict): Scene graph to modify in place.
+        prefab_classes (dict): Mapping from class name to prefab list.
+        class_placements (dict): Mapping from class name to placement options.
+        target_class (str): The object class to insert (e.g., "book").
+        relations (list[str]): Allowed relations (e.g., ["ON", "IN"]).
+        n (int): Number of objects to insert.
+        verbose (bool): If True, print detailed steps.
+
+    Returns:
+        dict: Modified graph
+        list[int]: List of inserted node IDs
+    """
+    inserted_ids = []
+
+    # Step 1: Validate available prefabs and placement rules
+    prefab_candidates = list(prefab_classes.get(target_class, []))
+    if not prefab_candidates:
+        if verbose:
+            print(f"❌ No prefabs found for class '{target_class}'")
+        return graph
+
+    placement_options = [
+        p for p in class_placements.get(target_class, [])
+        if p["relation"] in relations
+    ]
+    if not placement_options:
+        if verbose:
+            print(f"❌ No placement options for class '{target_class}' and relations {relations}")
+        return graph
+
+    # Step 2: Filter out prefab names already in use (to avoid duplicates)
+    used_prefabs = {node['prefab_name'] for node in graph['nodes'] if node['class_name'] == target_class}
+    available_prefabs = [p for p in prefab_candidates if p not in used_prefabs]
+    random.shuffle(available_prefabs)
+
+    # Limit to min(n, available) prefabs
+    for prefab_name in available_prefabs[:n]:
+        # Step 3: Randomly select a valid placement
+        random.shuffle(placement_options)
+        destination_node = None
+        relation_type = None
+
+        for option in placement_options:
+            destination_class = option["destination"]
+            relation = option["relation"]
+
+            candidates = [node for node in graph['nodes'] if node['class_name'] == destination_class]
+            if candidates:
+                destination_node = random.choice(candidates)
+                relation_type = relation
+                break  # Use first valid placement option
+
+        if not destination_node:
+            if verbose:
+                print(f"⚠️ No available destination nodes in scene for '{target_class}'")
+            continue
+
+        # Step 4: Insert new node and edge
+        new_id = max([node['id'] for node in graph['nodes']], default=0) + 1
+        new_node = {
+            "id": new_id,
+            "prefab_name": prefab_name,
+            "class_name": target_class,
+            "properties": ["GRABBABLE"],  # optional; remove if not guaranteed
+        }
+        graph['nodes'].append(new_node)
+        inserted_ids.append(new_id)
+
+        graph['edges'].append({
+            "from_id": new_id,
+            "to_id": destination_node['id'],
+            "relation_type": relation_type
+        })
+
+        if verbose:
+            print(f"✅ Inserted {target_class} '{prefab_name}' (id={new_id}) {relation_type} {destination_node['class_name']} (id={destination_node['id']})")
 
     return graph
