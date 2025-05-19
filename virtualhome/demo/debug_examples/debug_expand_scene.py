@@ -67,13 +67,7 @@ def example_1(comm):
     s, g = comm.environment_graph()
     cat_id = [node['id'] for node in g['nodes'] if node['class_name'] == 'cat'][0]
     
-    script = ['<char0> [Walk] <sofa> ({})'.format(sofa['id']),
-          '<char0> [Find] <cat> ({})'.format(cat_id),
-          '<char0> [Grab] <cat> ({})'.format(cat_id),
-          '<char0> [Sit] <sofa> ({})'.format(sofa['id'])]
-    
-    # success, graph = comm.environment_graph()
-    # success, message = comm.expand_scene(graph) 
+    # success, message = comm.expand_scene(g) 
     # print("[Case 5.2]", message) # Abort. In simulator - KeyNotFoundException: The given key 'Female2 (UnityEngine.GameObject)' was not present in the dictionary.
     
     graph = remove_nodes_by_classes(g, ["character"])

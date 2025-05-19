@@ -14845,47 +14845,6 @@
     },
     {
       "id": 368,
-      "category": "Cat_1",
-      "class_name": "cat",
-      "prefab_name": "Cat_1",
-      "obj_transform": {
-        "position": [
-          4.358075,
-          0.7678658,
-          -9.678059
-        ],
-        "rotation": [
-          0.0,
-          0.7071068,
-          0.0,
-          0.7071067
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          3.052066,
-          1.28267109,
-          -8.593237
-        ],
-        "size": [
-          0.396256149,
-          0.377057552,
-          0.373356342
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 369,
       "category": "Cat_2",
       "class_name": "cat",
       "prefab_name": "Cat_2",
@@ -15933,7 +15892,7 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 369,
+      "from_id": 368,
       "to_id": 214,
       "relation_type": "INSIDE"
     },
@@ -16223,6 +16182,11 @@
       "relation_type": "INSIDE"
     },
     {
+      "from_id": 272,
+      "to_id": 214,
+      "relation_type": "INSIDE"
+    },
+    {
       "from_id": 273,
       "to_id": 214,
       "relation_type": "INSIDE"
@@ -16339,11 +16303,6 @@
     },
     {
       "from_id": 297,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 298,
       "to_id": 276,
       "relation_type": "INSIDE"
     },
@@ -16559,21 +16518,6 @@
     },
     {
       "from_id": 341,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 342,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 343,
-      "to_id": 276,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 344,
       "to_id": 276,
       "relation_type": "INSIDE"
     },
@@ -17183,11 +17127,6 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 300,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
       "from_id": 315,
       "to_id": 316,
       "relation_type": "ON"
@@ -17220,61 +17159,6 @@
     {
       "from_id": 333,
       "to_id": 336,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 342,
-      "to_id": 344,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 343,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 344,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 351,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 352,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 353,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 354,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 355,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 356,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 357,
-      "to_id": 298,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 358,
-      "to_id": 298,
       "relation_type": "ON"
     },
     {
@@ -18048,6 +17932,16 @@
       "relation_type": "ON"
     },
     {
+      "from_id": 235,
+      "to_id": 272,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 236,
+      "to_id": 272,
+      "relation_type": "ON"
+    },
+    {
       "from_id": 263,
       "to_id": 255,
       "relation_type": "INSIDE"
@@ -18136,6 +18030,11 @@
       "from_id": 269,
       "to_id": 271,
       "relation_type": "INSIDE"
+    },
+    {
+      "from_id": 368,
+      "to_id": 272,
+      "relation_type": "ON"
     },
     {
       "from_id": 314,
@@ -18338,23 +18237,83 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 272,
-      "to_id": 214,
+      "from_id": 298,
+      "to_id": 276,
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 369,
-      "to_id": 272,
+      "from_id": 342,
+      "to_id": 276,
+      "relation_type": "INSIDE"
+    },
+    {
+      "from_id": 343,
+      "to_id": 276,
+      "relation_type": "INSIDE"
+    },
+    {
+      "from_id": 344,
+      "to_id": 276,
+      "relation_type": "INSIDE"
+    },
+    {
+      "from_id": 300,
+      "to_id": 298,
       "relation_type": "ON"
     },
     {
-      "from_id": 236,
-      "to_id": 272,
+      "from_id": 342,
+      "to_id": 344,
       "relation_type": "ON"
     },
     {
-      "from_id": 235,
-      "to_id": 272,
+      "from_id": 343,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 344,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 351,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 352,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 353,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 354,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 355,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 356,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 357,
+      "to_id": 298,
+      "relation_type": "ON"
+    },
+    {
+      "from_id": 358,
+      "to_id": 298,
       "relation_type": "ON"
     }
   ]
