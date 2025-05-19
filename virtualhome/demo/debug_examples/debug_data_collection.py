@@ -120,7 +120,10 @@ def example_single_object_replacement(comm):
     success, graph_before = comm.environment_graph()
     success, graph = comm.environment_graph()
     
-    graph = replace_prefab_names(graph, "book", ["PRE_PRO_Book_01", "Book_17", "PRE_PRO_Book_02"])
+    graph = replace_prefab_names(graph, "book", ["PRE_PRO_Book_08", "PRE_PRO_Book_07", "PRE_PRO_Book_01"])
+    # NOTE: For some reason, the books are not visually distinct??
+    
+    comm.reset()
     success, message = comm.expand_scene(graph)
     print("[Case 3.1]", message) # {}
     
