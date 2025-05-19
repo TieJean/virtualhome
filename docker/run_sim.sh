@@ -12,6 +12,6 @@
 Xvfb :99 -screen 0 640x480x24 &
 # export DISPLAY=:99
 
-# export DISPLAY=:99 && /unity_vol/linux_exec.v2.3.0.x86_64 -batchmode -http-port=8080 -screen-fullscreen 0 -screen-quality 4 -logfile /dev/stdout
+export DISPLAY=:99 && /unity_vol/linux_exec.v2.3.0.x86_64 -batchmode -http-port=8080 -screen-fullscreen 0 -screen-quality 4 -logfile /dev/stdout
 
 echo "Unity executable finished running."

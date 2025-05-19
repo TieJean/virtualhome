@@ -1,3 +1,5 @@
+*.zip
+*/__MACOSX/*
 outputs
 unity_vol
 unity_output
