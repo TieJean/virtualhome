@@ -342,6 +342,8 @@ def generate_walk_find_script(graph, target_classes):
             continue
         if obj_node['class_name'] not in target_classes:
             continue
+        
+        print("here")
 
         # Step 1: Walk to room (if any)
         room_node = find_room_of_node(graph, surf_node['id'])
@@ -583,3 +585,32 @@ def diff_node_edges(graph_old, graph_new, class_name_map=None):
         for rel, to_id in sorted(removed):
             to_cls = class_name_map.get(to_id, "unknown")
             print(f"  ➖ REMOVED EDGE: {rel} → {to_cls} (id: {to_id})")
+
+def replace_prefab_names(graph, target_class: str, new_prefab_names: list, verbose: bool = False):
+    """
+    Replace the 'prefab_name' of nodes of a given class with new asset names.
+
+    Args:
+        graph (dict): The scene graph (modified in-place).
+        target_class (str): The class name of nodes to modify (e.g., "book").
+        new_prefab_names (list[str]): New prefab names to assign.
+        verbose (bool): If True, print before/after info.
+
+    Returns:
+        dict: The modified graph.
+    """
+    count = 0
+    for node in graph['nodes']:
+        if node['class_name'] == target_class:
+            if count < len(new_prefab_names):
+                if verbose:
+                    print(f"🔁 Changing prefab of node id {node['id']} from '{node['prefab_name']}' to '{new_prefab_names[count]}'")
+                node['prefab_name'] = new_prefab_names[count]
+                count += 1
+            else:
+                break  # no more new prefab names
+
+    if verbose and count < len(new_prefab_names):
+        print(f"⚠️ Only used {count} out of {len(new_prefab_names)} prefab names (not enough matching nodes).")
+
+    return graph
