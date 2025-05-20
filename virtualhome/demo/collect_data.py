@@ -136,6 +136,7 @@ def run_once(args, comm, scene_id: int):
     
     graphs = []
     _, graph = comm.environment_graph()
+    graphs.append(graph)
     
     for i in range(1, 6):
         if not replace_objects(args, comm):
@@ -157,7 +158,15 @@ def run_once(args, comm, scene_id: int):
             print("Failed to expand scene:", message)
             continue
         record_graph(args, comm, prefix, script)
+        subgraph_gt = extract_minimal_subgraph_by_classes(graph, args.target_classes)
         
+        output_dir = os.path.join(args.data_dir, prefix, "0")
+        graph_path = os.path.join(output_dir, "graph.json")
+        with open(graph_path, "w") as f:
+            json.dump(graph, f, indent=2)        
+        graph_gt_path = os.path.join(output_dir, "graph_gt.json")
+        with open(graph_gt_path, "w") as f:
+            json.dump(subgraph_gt, f, indent=2)
 
 if __name__ == "__main__":
     args = parse_args()

@@ -707,3 +707,38 @@ def insert_object_with_placement(graph, prefab_classes, class_placements, target
             print(f"✅ Inserted {target_class} '{prefab_name}' (id={new_id}) {relation_type} {destination_node['class_name']} (id={destination_node['id']})")
 
     return graph
+
+def extract_minimal_subgraph_by_classes(graph, target_classes: list):
+    """
+    Extract a minimal subgraph containing all nodes of the given target classes,
+    plus any nodes directly connected to them via edges.
+
+    Args:
+        graph (dict): Full VirtualHome scene graph with 'nodes' and 'edges'
+        target_classes (list[str]): Class names to include as anchors
+
+    Returns:
+        dict: Minimal subgraph with 'nodes' and 'edges'
+    """
+    id_to_node = {node['id']: node for node in graph['nodes']}
+    
+    # Step 1: Find target nodes
+    target_ids = {node['id'] for node in graph['nodes'] if node['class_name'] in target_classes}
+    
+    # Step 2: Collect all edges involving those nodes
+    sub_edges = []
+    connected_ids = set(target_ids)  # will expand with linked nodes
+
+    for edge in graph['edges']:
+        if edge['from_id'] in target_ids or edge['to_id'] in target_ids:
+            sub_edges.append(edge)
+            connected_ids.add(edge['from_id'])
+            connected_ids.add(edge['to_id'])
+
+    # Step 3: Collect all nodes involved in those edges
+    sub_nodes = [id_to_node[nid] for nid in sorted(connected_ids) if nid in id_to_node]
+
+    return {
+        "nodes": sub_nodes,
+        "edges": sub_edges
+    }
