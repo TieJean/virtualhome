@@ -613,7 +613,7 @@ def replace_prefab_names(graph, target_class: str, new_prefab_names: list, verbo
 
     return graph
 
-def insert_objects_with_placement(graph, prefab_classes, class_placements, target_class, relations, n=1, verbose=False):
+def insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations, prefab_candidates:list = None, n=1, verbose=False):
     """
     Insert up to n new objects of a given class into the scene graph.
     Placement locations are sampled from allowed relations and destination classes.
@@ -634,7 +634,10 @@ def insert_objects_with_placement(graph, prefab_classes, class_placements, targe
     inserted_ids = []
 
     # Step 1: Validate available prefabs and placement rules
-    prefab_candidates = list(prefab_classes.get(target_class, []))
+    if prefab_candidates is None:
+        prefab_candidates = list(prefab_classes.get(target_class, []))
+    else:
+        prefab_candidates = list(prefab_candidates)
     if not prefab_candidates:
         if verbose:
             print(f"❌ No prefabs found for class '{target_class}'")

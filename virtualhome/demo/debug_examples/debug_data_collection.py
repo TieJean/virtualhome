@@ -211,7 +211,7 @@ def example_object_placement(comm):
     print("[Case 4.2]", message)
 
     success, graph = comm.environment_graph()
-    graph = insert_objects_with_placement(graph, prefab_classes, class_placements, "book", relations=["ON"], n=5, verbose=True)
+    graph = insert_object_with_placement(graph, prefab_classes, class_placements, "book", relations=["ON"], n=5, verbose=True)
     success, message = comm.expand_scene(graph)
     print("[Case 4.3]", message) # {}
     

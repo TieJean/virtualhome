@@ -1,6 +1,7 @@
 from tqdm import tqdm
 import sys, os
 import json
+import argparse
 
 sys.path.append('../simulation')
 from unity_simulator.comm_unity import UnityCommunication
@@ -8,128 +9,160 @@ from unity_simulator import utils_viz
 from utils_demo import *
 from graph_utils import *
 from viz_utils import *
+import hashlib
 
-ambiguous_manipulable_objects = ["book", "dishbowl", "pillow", "clothespile", "clothesshirt", "clothespant", "towel", "folder"]
+def parse_args():
+    parser = argparse.ArgumentParser(description='Collect data for virtual home')
+    parser.add_argument('--target_classes', nargs='+', type=str, default=["book"], help='List of target ambiguous manipulable object classes')
+    parser.add_argument('--seed', type=int, default=40, help='Random seed')
+    return parser.parse_args()
 
-if __name__ == "__main__":
-    seed = 42
-    verbose = False
-    viz = False
-    debug_dir = "../../outputs"
-    scene_ids = [4]
-    relationships = load_relationships("config/relationships.txt")
+def get_dataset_name(ambiguous_objects, scene_id):
+    obj_str = ','.join(sorted(ambiguous_objects))
+    hash_input = f"{obj_str}:{scene_id}"
+    hash_digest = hashlib.md5(hash_input.encode('utf-8')).hexdigest()
+    return f"scene{scene_id}_{hash_digest[:10]}"
+
+def prepare_scene(args, comm, scene_id: int):
+    comm.reset(scene_id)
+    random.seed(args.seed)
     
-    random.seed(seed)
+    success, graph = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, args.target_classes)
+    success, message = comm.expand_scene(graph)
+    if not success:
+        print("Failed to expand scene:", message)
+        return False
     
-    comm = UnityCommunication(port="8080")
-    comm.timeout_wait = 300 
+    graph = remove_all_objects_on_surfaces(graph, ["desk", "wallshelf"])
+    success, message = comm.expand_scene(graph)
+    if not success:
+        print("Failed to expand scene:", message)
+        return False
     
-    for scene_id in tqdm(scene_ids):
-        prefix = "test"
-        # scenepath_in = f"../../outputs/scene_{scene_id}_modified.json"
-        scenepath_in = None
-        scenepath_out = None
+    success, graph = comm.environment_graph()
+    for target_class in args.target_classes:
+        graph = insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations=["ON"], n=5, verbose=True)
+        success, message = comm.expand_scene(graph)
+        if not success:
+            print("Failed to expand scene:", message)
+            return False
         
-        comm.reset(scene_id)
-        success, graph = comm.environment_graph()
-        
-        if True:
-            _, ambiguous_manipulable_nodes, _ = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
-            graph = remove_duplicate_prefabs_by_class(graph, ambiguous_manipulable_objects, verbose=True)
-            
-            success, message = comm.expand_scene(graph)
-            if not success:
-                import pdb; pdb.set_trace()
-                raise RuntimeError("Failed to expand scene after removing objects.")
+    return True
+
+def replace_objects(args, comm):
+    _, graph = comm.environment_graph()
     
-        if True:
-            # Convert to DataFrame
-            success, graph = comm.environment_graph()
-            _, ambiguous_manipulable_nodes, _ = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
-            
-            df = pd.DataFrame(ambiguous_manipulable_nodes)
-
-            # Group by class_name
-            class_counts = df["class_name"].value_counts()
-
-            print("\n📊 Object counts by class_name:")
-            print(class_counts)
-
-            # Table of class_name and prefab_name
-            print("\n📋 class_name ↔ prefab_name table:")
-            print(df[["class_name", "prefab_name"]].sort_values(by="class_name").to_string(index=False))
+    class_to_prefabs = {}
+    for target_class in args.target_classes:
+        prefab_names = [
+            node["prefab_name"]
+            for node in graph["nodes"]
+            if node["class_name"].lower() == target_class.lower()
+        ]
+        class_to_prefabs[target_class] = prefab_names
         
-        success, graph_before = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, args.target_classes)
+    success, message = comm.expand_scene(graph)
+    if not success:
+        print("Failed to expand scene:", message)
+        return False
+    
+    success, graph = comm.environment_graph()
+    for target_class in args.target_classes:
+        graph = insert_object_with_placement(
+            graph, 
+            prefab_classes, 
+            class_placements, 
+            target_class, 
+            relations=["ON"], 
+            prefab_candidates=class_to_prefabs[target_class],
+            n=5, 
+            verbose=True
+        )
+        success, message = comm.expand_scene(graph)
+        if not success:
+            print("Failed to expand scene:", message)
+            return False
+    
+    return True
         
-        if True:
-            comm.add_character('chars/Female2', initial_room='bathroom')
-            _, ambiguous_manipulable_nodes, _ = find_nodes_and_edges_by_class(graph, ambiguous_manipulable_objects, verbose=verbose)
-            nodes = filter_nodes_by_class(ambiguous_manipulable_nodes, ["book"])
-            for node in nodes:
-                script = generate_single_object_replacement_script(graph, node, relationships, verbose=verbose)
-                if script is None:
-                    continue
-                success, message = comm.render_script(script=script,
-                                        processing_time_limit=1000,
-                                        find_solution=False,
-                                        image_width=640,
-                                        image_height=480,  
-                                        skip_animation=True, # False,
-                                        recording=False, # True,
-                                        save_pose_data=True,
-                                        file_name_prefix=prefix)
-                
-                if not success:
-                    raise RuntimeError(f"Failed to render script: {message}")
-                
-                # import pdb; pdb.set_trace()
-                # input_path = os.path.abspath('../../unity_output/')
-                # output_path = os.path.abspath('../../outputs/')
-                # utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)
-                
-            graph = remove_nodes_by_classes(graph, ["character"])
-            success, message = comm.expand_scene(graph)
-            if not success:
-                import pdb; pdb.set_trace()
-                raise RuntimeError("Failed to expand scene after removing objects.")
-            success, graph = comm.environment_graph()
-                
-            scenepath_out = os.path.join(debug_dir, f"scene_{scene_id}_modified.json")
-            if scenepath_out is not None:
-                with open(scenepath_out, "w") as f:
-                    json.dump(graph, f, indent=2)
-        
-            success, graph_after = comm.environment_graph()
-            diff_node_edges(graph_before, graph_after)
-        
-            import pdb; pdb.set_trace()
-        
-            success, graph = comm.environment_graph()
-            # save the graph to a file
-            if scenepath_out is not None:
-                with open(scenepath_out, "w") as f:
-                    json.dump(graph, f, indent=2)
-                    
-        comm.add_character('chars/Female2', initial_room='bathroom')
-        comm.add_character_camera(position=[0.0, 1.0, -0.1], rotation=[0, 0, 0], field_view=90, name="observer_camera")
-        script = generate_walk_find_script(graph, ["towel"])
-        print(script)
-        
-        success, message = comm.render_script(script=script,
-                                        processing_time_limit=1000,
+def record_graph(args, comm, prefix: str):
+    # Clean up previous images
+    image_dir = os.path.join(args.data_dir, prefix)
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+    for root, _, files in os.walk(image_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            os.remove(filepath)
+    
+    comm.add_character('chars/Male2', initial_room='bathroom')
+    success, graph = comm.environment_graph()
+    # TODO: fix generate_walk_find_script --> should traverse fixed waypoints
+    script = generate_walk_find_script(graph, args.target_classes)
+    success, message = comm.render_script(script=script,
+                                        processing_time_limit=2000,
                                         find_solution=False,
                                         image_width=640,
                                         image_height=480,  
                                         skip_animation=False,
                                         recording=True,
                                         save_pose_data=True,
-                                        camera_mode=["observer_camera"],
+                                        camera_mode=["FIRST_PERSON"],
                                         file_name_prefix=prefix)
+    
+    if not success:
+        print("Failed to render script:", message)
+        return False
+    
+    success, graph = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, ["character"])
+    success, message = comm.expand_scene(graph)
+    if not success:
+        print("Failed to expand scene:", message)
+        return False
+    
+    return True
+
+def run_once(args, comm, scene_id: int):
+    if not prepare_scene(args, comm, scene_id):
+        print(f"Failed to prepare scene {scene_id}.")
+        return
+    
+    graphs = []
+    _, graph = comm.environment_graph()
+    
+    for _ in range(5):
+        if not replace_objects(args, comm):
+            continue
+        _, graph = comm.environment_graph()
+        graphs.append(graph)
+    
+    dataset_name = get_dataset_name(args.target_classes, scene_id)
+    
+    for i, graph in enumerate(graphs):
+        prefix = f"{dataset_name}_{i}"
+        record_graph(args, comm, prefix)
+
+if __name__ == "__main__":
+    args = parse_args()
+    
+    args.data_dir = os.path.abspath('../../unity_output/')
+    os.makedirs(args.data_dir, exist_ok=True)
+    
+    with open("../resources/PrefabClassCustomed.json", "r") as f:
+        prefab_classes = {}
+        for prefab_class in json.load(f)["prefabClasses"]:
+            prefab_classes[prefab_class["className"].lower()] = prefab_class["prefabs"]
         
-        print(script)
-        
-        import pdb; pdb.set_trace()
-        
-        input_path = os.path.abspath('../../unity_output/')
-        output_path = os.path.abspath('../../outputs/')
-        utils_viz.generate_video(input_path=input_path, prefix=prefix, output_path=output_path)
+    with open("../resources/object_script_placing_customed.json", "r") as f:
+        class_placements = json.load(f)
+    
+    args.prefab_classes = prefab_classes
+    args.class_placements = class_placements
+    
+    comm = UnityCommunication(port="8080")
+    comm.timeout_wait = 300
+    
+    run_once(args, comm, scene_id=4)
