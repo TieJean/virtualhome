@@ -320,6 +320,43 @@ def no_ops(char="<char0>", count=3):
     # TODO: may need to use [Sit] or [Lie] in some cases
     return [f"{char} [StandUp]"] * count
 
+def generate_fixed_waypoint_script(graph, surface_ids):
+    """
+    Generate a deterministic navigation script for <char0> to walk to and look at surfaces,
+    grouped by their containing room, sorted by room and surface IDs.
+
+    Args:
+        graph (dict): Scene graph
+        surface_ids (list[int]): List of surface node IDs
+
+    Returns:
+        List[str]: VirtualHome script lines
+    """
+    id_to_node = {node["id"]: node for node in graph["nodes"]}
+    
+    # Group surfaces by their room ID
+    room_to_surfaces = {}
+    for sid in surface_ids:
+        room = find_room_of_node(graph, sid)
+        if not room:
+            continue  # skip surfaces without room
+        room_id = room["id"]
+        room_to_surfaces.setdefault(room_id, {"room": room, "surfaces": []})
+        room_to_surfaces[room_id]["surfaces"].append(id_to_node[sid])
+    
+    script = []
+    for room_id in sorted(room_to_surfaces):
+        room_entry = room_to_surfaces[room_id]
+        room = room_entry["room"]
+        surfaces = sorted(room_entry["surfaces"], key=lambda n: n["id"])
+
+        script.append(f"<char0> [Walk] <{room['class_name']}> ({room['id']})")
+        for surf in surfaces:
+            script.append(f"<char0> [Walk] <{surf['class_name']}> ({surf['id']})")
+            script.append(f"<char0> [LookAt] <{surf['class_name']}> ({surf['id']})")
+    
+    return script
+
 def generate_walk_find_script(graph, target_classes):
     """
     Generate script lines like:

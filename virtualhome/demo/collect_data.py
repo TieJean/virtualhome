@@ -13,6 +13,7 @@ import hashlib
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Collect data for virtual home')
+    parser.add_argument('--script_dir', type=str, default="example_scripts", help='Directory containing scripts')
     parser.add_argument('--target_classes', nargs='+', type=str, default=["book"], help='List of target ambiguous manipulable object classes')
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     return parser.parse_args()
@@ -50,7 +51,7 @@ def prepare_scene(args, comm, scene_id: int):
         
     return True
 
-def replace_objects(args, comm):
+def replace_objects(args, comm, verbose:bool = False):
     _, graph = comm.environment_graph()
     
     class_to_prefabs = {}
@@ -78,7 +79,7 @@ def replace_objects(args, comm):
             relations=["ON"], 
             prefab_candidates=class_to_prefabs[target_class],
             n=5, 
-            verbose=True
+            verbose=verbose
         )
         success, message = comm.expand_scene(graph)
         if not success:
@@ -87,7 +88,7 @@ def replace_objects(args, comm):
     
     return True
         
-def record_graph(args, comm, prefix: str):
+def record_graph(args, comm, prefix: str, script: list):
     # Clean up previous images
     image_dir = os.path.join(args.data_dir, prefix)
     if not os.path.exists(image_dir):
@@ -99,8 +100,6 @@ def record_graph(args, comm, prefix: str):
     
     comm.add_character('chars/Male2', initial_room='bathroom')
     success, graph = comm.environment_graph()
-    # TODO: fix generate_walk_find_script --> should traverse fixed waypoints
-    script = generate_walk_find_script(graph, args.target_classes)
     success, message = comm.render_script(script=script,
                                         processing_time_limit=2000,
                                         find_solution=False,
@@ -122,6 +121,11 @@ def record_graph(args, comm, prefix: str):
     if not success:
         print("Failed to expand scene:", message)
         return False
+    utils_viz.generate_video(
+        input_path=args.data_dir, 
+        prefix=prefix, 
+        output_path=os.path.join(args.data_dir, prefix)
+    )
     
     return True
 
@@ -141,9 +145,19 @@ def run_once(args, comm, scene_id: int):
     
     dataset_name = get_dataset_name(args.target_classes, scene_id)
     
+    script_path = os.path.join(args.script_dir, f"robot_scene_{scene_id}_script.txt")
+    with open(script_path, "r") as f:
+        script = [line.strip() for line in f if line.strip()]
+    
     for i, graph in enumerate(graphs):
         prefix = f"{dataset_name}_{i}"
-        record_graph(args, comm, prefix)
+        comm.reset(scene_id)
+        success, message = comm.expand_scene(graph)
+        if not success:
+            print("Failed to expand scene:", message)
+            continue
+        record_graph(args, comm, prefix, script)
+        
 
 if __name__ == "__main__":
     args = parse_args()
