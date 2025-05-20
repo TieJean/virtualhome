@@ -283,36 +283,6 @@ def get_ambiguous_manipulable_metadata(
 
     return filtered
 
-def load_relationships(filepath: str):
-    """
-    Load lines like 'book ON bookshelf' into:
-    {
-        'book': {
-            'ON': [surface1, surface2, ...]
-        },
-        ...
-    }
-    """
-    result = {}
-
-    with open(filepath, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue  # skip empty lines if any
-            try:
-                obj, relation, surface = line.split()
-            except ValueError:
-                raise ValueError(f"Line not formatted as '<object> ON <surface>': {line}")
-            
-            if obj not in result:
-                result[obj] = {}
-            if relation not in result[obj]:
-                result[obj][relation] = []
-            result[obj][relation].append(surface)
-
-    return result
-
 def no_ops(char="<char0>", count=3):
     """
     Return a list of no-op [Stand] actions to simulate idle time.

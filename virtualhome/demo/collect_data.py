@@ -137,7 +137,7 @@ def run_once(args, comm, scene_id: int):
     graphs = []
     _, graph = comm.environment_graph()
     
-    for _ in range(5):
+    for i in range(1, 6):
         if not replace_objects(args, comm):
             continue
         _, graph = comm.environment_graph()
