@@ -1,3 +1,44 @@
+# Docker Setup
+
+```bash
+mkdir -p unity_output
+mkdir -p unity_vol
+chmod 777 unity_vol
+cd unity_vol
+wget http://virtual-home.org//release/simulator/v2.0/v2.3.0/linux_exec.zip
+unzip linux_exec.zip
+cd ..
+```
+
+To build the docker/podman image:
+```bash
+cd docker
+podman build -t virtualhome .
+cd ..
+```
+
+To start the simulation service, run:
+```bash
+podman stop virtualhome_container && podman rm virtualhome_container && podman run --name virtualhome_container --device /dev/nvidia0 --device /dev/nvidiactl --device /dev/nvidia-uvm --device /dev/nvidia-uvm-tools --mount type=bind,source="$(pwd)"/unity_vol,target=/unity_vol/ --mount type=bind,source="$(pwd)"/unity_output,target=/Output/ -p 8080:8080 -it virtualhome 
+```
+
+## Important Files
+```
+virtualhome/
+├── demo/  
+│   └── Scripts for data collection.  
+│       ⚠️ All scripts are assumed to be run under virtualhome/demo directory
+│
+├── simulation/
+│   ├── evolving_graph/  
+│   │   └── Simulates scene and object state changes purely at the graph level (no rendering).  
+│   │
+│   └── unity_simulator/  
+│       └── Unity-based simulator client.  
+│           Use this for generating **rendered visual observations**.
+```
+______________________________________________________________________
+
 <div align="center">
 
 [![docs](https://img.shields.io/badge/docs-updated-brightgreen)](http://virtual-home.org/documentation/)
@@ -17,24 +58,6 @@ Check out more details of the environmnent and platform at [**virtual-home.org**
 
 </div>
 
-______________________________________________________________________
-
-# Helpful Commands
-Start docker:
-```bash
-mkdir -p unity_output
-mkdir -p unity_vol
-podman build -t virtualhome .
-podman run --name virtualhome_container --device /dev/nvidia0 --device /dev/nvidiactl --device /dev/nvidia-uvm --device /dev/nvidia-uvm-tools --mount type=bind,source="$(pwd)"/unity_vol,target=/unity_vol/ --mount type=bind,source="$(pwd)"/unity_output,target=/Output/ -p 8080:8080 -it virtualhome 
-podman stop virtualhome_container && podman rm virtualhome_container
-
-podman stop virtualhome_container && podman rm virtualhome_container && podman run --name virtualhome_container --device /dev/nvidia0 --device /dev/nvidiactl --device /dev/nvidia-uvm --device /dev/nvidia-uvm-tools --mount type=bind,source="$(pwd)"/unity_vol,target=/unity_vol/ --mount type=bind,source="$(pwd)"/unity_output,target=/Output/ -p 8080:8080 -it virtualhome 
-```
-
-Helper scripts:
-```bash
-python virtualhome/helper_scripts/generate_video.py --image_dir unity_output/script/0 --output_video outputs/test.mp4 --end-frame 100
-```
 ______________________________________________________________________
 
 ## What is New
