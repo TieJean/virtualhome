@@ -11,7 +11,7 @@ from graph_utils import *
 from viz_utils import *
 
 scene_and_target_ids = {
-    4: [27, 29, 32, 33, 35, 139, 140, 141, 253, 273, 272],
+    4: [27, 29, 32, 33, 139, 140, 141, 253, 272],
 }
 
 def parse_args():
@@ -40,11 +40,17 @@ def generate_script(comm, scene_id: int):
     else:
         comm.reset(scene_id)
         
+    comm.add_character('chars/Male2', initial_room='bathroom')
     success, graph = comm.environment_graph()
     if not success:
         raise RuntimeError("Failed to get environment graph")
-    
     script = generate_fixed_waypoint_script(graph, target_ids)
+    success, graph = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, ["character"])
+    success, message = comm.expand_scene(graph)
+    if not success:
+        print("Failed to expand scene:", message)
+        return False
     
     output = os.path.join(args.output_dir, f"robot_scene_{scene_id}_script.txt")
     with open(output, "w") as f:
