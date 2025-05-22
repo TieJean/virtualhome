@@ -7,6 +7,7 @@ sys.path.append('../simulation')
 from unity_simulator.comm_unity import UnityCommunication
 from unity_simulator import utils_viz
 from ros_utils import *
+from utils_demo import *
 
 ## ROS Service Calls
 import rospy
@@ -35,6 +36,9 @@ def observe():
     cameras_select = [cameras_select[x] for x in char_cam_indices]
     (ok_img, imgs) = comm.camera_image(cameras_select, mode="normal")
     
+    view_pil = display_grid_img([imgs[0], imgs[3], imgs[4], imgs[5]], nrows=2)
+    view_pil.save("../../outputs/debug_observe.png")
+    
     ros_images = {}
     ros_images["image"] = opencv_to_ros_image(imgs[0])
     ros_images["right"] = opencv_to_ros_image(imgs[3])
@@ -49,15 +53,16 @@ def handle_navigate_request(req):
     
     success = comm.move_character(0, [req.x, req.y, req.z])
     
-    ros_images = observe()
-    
-    return GetImageAtPoseSrvResponse(
-        success=success, 
-        image=ros_images["image"], 
-        right=ros_images["right"], 
-        left=ros_images["left"], 
-        back=ros_images["back"]
-    )
+    if False:
+        ros_images = observe()
+        return GetImageAtPoseSrvResponse(
+            success=success, 
+            image=ros_images["image"], 
+            right=ros_images["right"], 
+            left=ros_images["left"], 
+            back=ros_images["back"]
+        )
+    return GetImageAtPoseSrvResponse(success=success)
 
 def handle_observe_request(req):
     global comm
