@@ -76,6 +76,16 @@ def handle_observe_request(req):
         left=ros_images["left"], 
         back=ros_images["back"]
     )
+    
+def handle_find_request(req):
+    global comm
+    rospy.loginfo("Received find request")
+    # TODO
+    
+def handle_pick_request(req):
+    global comm
+    rospy.loginfo("Received pick request")
+    # TODO
 
 if __name__ == "__main__":
     rospy.init_node('virtualhome_ros', anonymous=True)
