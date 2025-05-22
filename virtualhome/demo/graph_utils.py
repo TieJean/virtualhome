@@ -615,6 +615,27 @@ def replace_prefab_names(graph, target_class: str, new_prefab_names: list, verbo
 
     return graph
 
+def get_connected_to_nodes(graph, from_id, relations=["ON", "INSIDE"]):
+    """
+    Return a list of node dicts that are connected from `from_id` via edges matching specified relation types.
+
+    Args:
+        graph (dict): Scene graph containing nodes and edges.
+        from_id (int): ID of the source node.
+        relations (list[str]): Allowed relation types (default: ["ON", "INSIDE"]).
+
+    Returns:
+        list[dict]: List of connected "to" node objects.
+    """
+    id2node = {node["id"]: node for node in graph["nodes"]}
+    to_nodes = []
+    for edge in graph["edges"]:
+        if edge["from_id"] == from_id and edge["relation_type"] in relations:
+            to_node = id2node.get(edge["to_id"])
+            if to_node:
+                to_nodes.append(to_node)
+    return to_nodes
+
 def insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations, prefab_candidates: list = None, n=1, verbose=False):
     """
     Insert up to n new objects of a given class into the scene graph.
