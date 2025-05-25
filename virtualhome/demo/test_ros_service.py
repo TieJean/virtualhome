@@ -32,8 +32,9 @@ def test_navigate_request():
     except rospy.ServiceException as e:
         print("Service call failed:", e)
     print("Navigate success:", response.success)
-    pil_image = ros_image_to_pil(response.image)        
-    pil_image.save("../../outputs/debug_navigate.png")
+    if response.image.data:
+        pil_image = ros_image_to_pil(response.image)        
+        pil_image.save("../../outputs/debug_navigate.png")
 
 if __name__ == "__main__":
     rospy.init_node('virtualhome_ros_client', anonymous=True)

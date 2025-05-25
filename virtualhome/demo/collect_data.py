@@ -10,6 +10,7 @@ from utils_demo import *
 from graph_utils import *
 from viz_utils import *
 import hashlib
+import re
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Collect data for virtual home')
@@ -145,6 +146,69 @@ def record_graph(args, comm, prefix: str, script: list):
     
     return True
 
+def record_graph_with_gt(args, comm, prefix: str, script: list):
+    def get_last_frame_id(output_dir: str):
+        files = [f for f in os.listdir(output_dir) if re.match(r"Action_\d+_0_normal\.png", f)]
+        if not files:
+            return None
+        frame_ids = [int(re.search(r"Action_(\d+)_0_normal\.png", f).group(1)) for f in files]
+        return max(frame_ids)
+    
+    # Clean up previous images
+    data_dir = os.path.join(args.data_dir, prefix)
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    for root, _, files in os.walk(data_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            os.remove(filepath)
+            
+    # Add character to the scene
+    comm.add_character('chars/Male2', initial_room='bathroom')
+    # Prepare character camera image streams
+    s, nc = comm.camera_count()
+    char_cam_indices = range(nc - 6, nc) # 0 should be ego centric
+    _, ncameras = comm.camera_count()
+    cameras_select = list(range(ncameras))
+    cameras_select = [cameras_select[x] for x in char_cam_indices]
+    
+    last_frame_id = -1
+    captions = []
+    
+    success, graph = comm.environment_graph()
+    for script_line in script:
+        success, message = comm.render_script(script=[script_line],
+                                        processing_time_limit=2000,
+                                        find_solution=False,
+                                        image_width=640,
+                                        image_height=480,  
+                                        skip_animation=False,
+                                        recording=True,
+                                        save_pose_data=True,
+                                        camera_mode=["FIRST_PERSON"],
+                                        file_name_prefix=prefix)
+        simulation_output_dir = os.path.join(data_dir, "0")
+        
+        if "[LookAt]" in script_line:
+            success, message = comm.get_visible_objects(cameras_select[0]) # 0 should be ego centric
+        
+        start_frame_id = last_frame_id + 1
+        last_frame_id = get_last_frame_id(simulation_output_dir)
+        if last_frame_id is None:
+            print(f"No frames found in {simulation_output_dir}.")
+            return False
+        
+    # Remove character from the saved scene
+    success, graph = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, ["character"])
+    success, message = comm.expand_scene(graph)
+    if not success:
+        print("Failed to expand scene:", message)
+        return False
+    
+    return True
+        
+
 def run_once(args, comm, scene_id: int):
     if not prepare_scene(args, comm, scene_id):
         print(f"Failed to prepare scene {scene_id}.")
@@ -154,11 +218,11 @@ def run_once(args, comm, scene_id: int):
     _, graph = comm.environment_graph()
     graphs.append(graph)
     
-    for i in range(1, 6):
-        if not replace_objects(args, comm):
-            continue
-        _, graph = comm.environment_graph()
-        graphs.append(graph)
+    # for i in range(1, 6):
+    #     if not replace_objects(args, comm):
+    #         continue
+    #     _, graph = comm.environment_graph()
+    #     graphs.append(graph)
     
     dataset_name = get_dataset_name(args.target_classes, scene_id)
     
@@ -167,13 +231,15 @@ def run_once(args, comm, scene_id: int):
         script = [line.strip() for line in f if line.strip()]
     
     for i, graph in enumerate(graphs):
-        prefix = f"{dataset_name}_{i}"
+        # prefix = f"{dataset_name}_{i}"
+        prefix = "test"
         comm.reset(scene_id)
         success, message = comm.expand_scene(graph)
         if not success:
             print("Failed to expand scene:", message)
             continue
-        record_graph(args, comm, prefix, script)
+        # record_graph(args, comm, prefix, script)
+        record_graph_with_gt(args, comm, prefix, script)
         subgraph_gt = extract_minimal_subgraph_by_classes(graph, args.target_classes)
         
         output_dir = os.path.join(args.data_dir, prefix, "0")
