@@ -788,44 +788,6 @@
       "states": []
     },
     {
-      "id": 32,
-      "category": "Furniture",
-      "class_name": "wallshelf",
-      "prefab_name": "PRE_FUR_Shelf_07",
-      "obj_transform": {
-        "position": [
-          0.001,
-          1.041,
-          -3.563
-        ],
-        "rotation": [
-          0.0,
-          -0.707106,
-          0.0,
-          0.7071076
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          0.001,
-          0.967366,
-          -3.56300116
-        ],
-        "size": [
-          1.00000072,
-          0.1819556,
-          0.2722753
-        ]
-      },
-      "properties": [],
-      "states": []
-    },
-    {
       "id": 33,
       "category": "Furniture",
       "class_name": "wallshelf",
@@ -3068,49 +3030,6 @@
       "states": []
     },
     {
-      "id": 95,
-      "category": "Props",
-      "class_name": "wineglass",
-      "prefab_name": "PRE_PRO_Wine_glass_01",
-      "obj_transform": {
-        "position": [
-          -0.16399999,
-          0.347,
-          -1.8490001
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          -0.16399999,
-          0.442104936,
-          -1.84900057
-        ],
-        "size": [
-          0.08954637,
-          0.190210134,
-          0.089546375
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "RECIPIENT",
-        "POURABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
       "id": 96,
       "category": "Props",
       "class_name": "waterglass",
@@ -4725,44 +4644,6 @@
       "states": []
     },
     {
-      "id": 139,
-      "category": "Furniture",
-      "class_name": "wallshelf",
-      "prefab_name": "PRE_FUR_Shelf_05",
-      "obj_transform": {
-        "position": [
-          5.225,
-          1.194,
-          -6.04200029
-        ],
-        "rotation": [
-          0.0,
-          0.7071069,
-          0.0,
-          -0.707106769
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          5.225,
-          1.120366,
-          -6.04200172
-        ],
-        "size": [
-          1.00000036,
-          0.1819556,
-          0.272273481
-        ]
-      },
-      "properties": [],
-      "states": []
-    },
-    {
       "id": 140,
       "category": "Furniture",
       "class_name": "bookshelf",
@@ -5971,92 +5852,6 @@
       "states": [
         "CLOSED"
       ]
-    },
-    {
-      "id": 168,
-      "category": "Props",
-      "class_name": "wineglass",
-      "prefab_name": "PRE_PRO_Wine_glass_01",
-      "obj_transform": {
-        "position": [
-          2.64662552,
-          1.51247942,
-          -4.480514
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.64662552,
-          1.60758436,
-          -4.48051453
-        ],
-        "size": [
-          0.08954637,
-          0.190210134,
-          0.089546375
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "RECIPIENT",
-        "POURABLE",
-        "MOVABLE"
-      ],
-      "states": []
-    },
-    {
-      "id": 169,
-      "category": "Props",
-      "class_name": "wineglass",
-      "prefab_name": "PRE_PRO_Wine_glass_01",
-      "obj_transform": {
-        "position": [
-          2.680572,
-          1.51247942,
-          -4.582975
-        ],
-        "rotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ]
-      },
-      "bounding_box": {
-        "center": [
-          2.680572,
-          1.60758436,
-          -4.58297539
-        ],
-        "size": [
-          0.08954637,
-          0.190210134,
-          0.089546375
-        ]
-      },
-      "properties": [
-        "GRABBABLE",
-        "RECIPIENT",
-        "POURABLE",
-        "MOVABLE"
-      ],
-      "states": []
     },
     {
       "id": 170,
@@ -13909,11 +13704,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 32,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 33,
       "to_id": 11,
       "relation_type": "INSIDE"
@@ -14179,11 +13969,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 95,
-      "to_id": 11,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 96,
       "to_id": 11,
       "relation_type": "INSIDE"
@@ -14379,11 +14164,6 @@
       "relation_type": "INSIDE"
     },
     {
-      "from_id": 139,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
       "from_id": 140,
       "to_id": 111,
       "relation_type": "INSIDE"
@@ -14520,16 +14300,6 @@
     },
     {
       "from_id": 167,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 168,
-      "to_id": 111,
-      "relation_type": "INSIDE"
-    },
-    {
-      "from_id": 169,
       "to_id": 111,
       "relation_type": "INSIDE"
     },
@@ -15519,11 +15289,6 @@
       "relation_type": "ON"
     },
     {
-      "from_id": 95,
-      "to_id": 30,
-      "relation_type": "ON"
-    },
-    {
       "from_id": 96,
       "to_id": 29,
       "relation_type": "ON"
@@ -15640,16 +15405,6 @@
     },
     {
       "from_id": 167,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 168,
-      "to_id": 140,
-      "relation_type": "ON"
-    },
-    {
-      "from_id": 169,
       "to_id": 140,
       "relation_type": "ON"
     },
@@ -16269,11 +16024,6 @@
       "relation_type": "FACING"
     },
     {
-      "from_id": 95,
-      "to_id": 108,
-      "relation_type": "FACING"
-    },
-    {
       "from_id": 86,
       "to_id": 108,
       "relation_type": "FACING"
@@ -16449,11 +16199,6 @@
       "relation_type": "FACING"
     },
     {
-      "from_id": 95,
-      "to_id": 109,
-      "relation_type": "FACING"
-    },
-    {
       "from_id": 30,
       "to_id": 109,
       "relation_type": "FACING"
@@ -16465,11 +16210,6 @@
     },
     {
       "from_id": 84,
-      "to_id": 109,
-      "relation_type": "FACING"
-    },
-    {
-      "from_id": 32,
       "to_id": 109,
       "relation_type": "FACING"
     },

@@ -10,8 +10,16 @@ from utils_demo import *
 from graph_utils import *
 from viz_utils import *
 
-scene_and_target_ids = {
-    4: [27, 29, 32, 33, 139, 140, 141, 253, 272],
+scene_to_waypoints = {
+    4: [("livingroom", "wallshelf"), 
+        ("livingroom", "sofa"),
+        ("livingroom", "wallshelf"), 
+        ("kitchen", "bookshelf"), 
+        ("kitchen", "wallshelf"), 
+        ("kitchen", "sofa"), 
+        ("bedroom", "sofa"), 
+        ("bedroom", "wallshelf"), 
+       ],
 }
 
 def parse_args():
@@ -21,9 +29,8 @@ def parse_args():
     return parser.parse_args()
 
 def generate_script(comm, scene_id: int):
-    if scene_id not in scene_and_target_ids.keys():
+    if scene_id not in scene_to_waypoints:
         return
-    target_ids = scene_and_target_ids[scene_id]
     
     if args.graph_dir is not None:
         graph_path = os.path.join(args.graph_dir, f"scene{scene_id}_graph.json")
@@ -39,6 +46,12 @@ def generate_script(comm, scene_id: int):
             comm.reset(scene_id)
     else:
         comm.reset(scene_id)
+        
+    # Dynamically find surface node IDs based on room/surface pairs
+    target_ids = []
+    for room_name, surface_class in scene_to_waypoints[scene_id]:
+        surface_nodes = find_objects_in_room(graph, room_name, surface_class)
+        target_ids.extend(node['id'] for node in surface_nodes)
         
     comm.add_character('chars/Male2', initial_room='bathroom')
     success, graph = comm.environment_graph()

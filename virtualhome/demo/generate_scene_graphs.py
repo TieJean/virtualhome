@@ -11,7 +11,7 @@ from graph_utils import *
 from viz_utils import *
 
 scene_and_remove_ids = {
-    4: [31, 34, 132, 252]
+    4: [31, 32, 34, 132, 139, 252]
 }
 
 def parse_args():
@@ -29,6 +29,7 @@ def generate_graph(comm, scene_id: int):
     
     if not success:
         raise RuntimeError("Failed to get environment graph")
+    remove_nodes_by_classes(graph, ["wineglass"])
     remove_all_objects_on_surfaces(graph, ["wallshelf"])
     remove_nodes_by_ids(graph, remove_ids)
     success, message = comm.expand_scene(graph)

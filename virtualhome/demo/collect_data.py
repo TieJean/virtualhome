@@ -60,7 +60,7 @@ def prepare_scene(args, comm, scene_id: int):
     
     success, graph = comm.environment_graph()
     for target_class in args.target_classes:
-        graph = insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations=["ON"], n=5, verbose=True)
+        graph = insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations=["ON"], n=3, verbose=True)
         success, message = comm.expand_scene(graph)
         if not success:
             print("Failed to expand scene:", message)
@@ -95,7 +95,7 @@ def replace_objects(args, comm, verbose:bool = False):
             target_class, 
             relations=["ON"], 
             prefab_candidates=class_to_prefabs[target_class],
-            n=5, 
+            n=3, 
             verbose=verbose
         )
         success, message = comm.expand_scene(graph)
@@ -115,7 +115,7 @@ def record_graph(args, comm, prefix: str, script: list):
             filepath = os.path.join(root, file)
             os.remove(filepath)
     
-    comm.add_character('chars/Male2', initial_room='bathroom')
+    comm.add_character('chars/Female2', initial_room='bathroom')
     success, graph = comm.environment_graph()
     success, message = comm.render_script(script=script,
                                         processing_time_limit=2000,
@@ -164,7 +164,7 @@ def record_graph_with_gt(args, comm, prefix: str, script: list):
             os.remove(filepath)
             
     # Add character to the scene
-    comm.add_character('chars/Male2', initial_room='bathroom')
+    comm.add_character('chars/Female2', initial_room='bathroom')
     # Prepare character camera image streams
     s, nc = comm.camera_count()
     char_cam_indices = range(nc - 6, nc) # 0 should be ego centric
@@ -238,8 +238,8 @@ def run_once(args, comm, scene_id: int):
         if not success:
             print("Failed to expand scene:", message)
             continue
-        # record_graph(args, comm, prefix, script)
-        record_graph_with_gt(args, comm, prefix, script)
+        record_graph(args, comm, prefix, script)
+        # record_graph_with_gt(args, comm, prefix, script)
         subgraph_gt = extract_minimal_subgraph_by_classes(graph, args.target_classes)
         
         output_dir = os.path.join(args.data_dir, prefix, "0")

@@ -318,7 +318,7 @@ def generate_fixed_waypoint_script(graph, surface_ids):
             script.append(f"<char0> [Walk] <{surf['class_name']}> ({surf['id']})")
             script.append(f"<char0> [LookAt] <{surf['class_name']}> ({surf['id']})")
             # no ops
-            script.append(f"<char0> [LookAt] <{surf['class_name']}> ({surf['id']})")
+            # script.append(f"<char0> [LookAt] <{surf['class_name']}> ({surf['id']})")
     
     return script
 
@@ -730,6 +730,20 @@ def insert_object_with_placement(graph, prefab_classes, class_placements, target
             "to_id": surface_node["id"],
             "relation_type": relation_type
         })
+        # Facing edge (toward room)
+        room_node = find_room_of_node(graph, surface_node["id"])
+        if room_node:
+            graph['edges'].append({
+                "from_id": new_id,
+                "to_id": room_node["id"],
+                "relation_type": "FACING"
+            })
+            if verbose:
+                print(f"   ↪️ Added FACING edge to room '{room_node['class_name']}' (id={room_node['id']})")
+        else:
+            if verbose:
+                print("   ⚠️ Could not find room for FACING edge.")
+        
         inserted_ids.append(new_id)
 
         if verbose:
@@ -771,3 +785,72 @@ def extract_minimal_subgraph_by_classes(graph, target_classes: list):
         "nodes": sub_nodes,
         "edges": sub_edges
     }
+    
+def find_objects_in_room(graph, room_name: str, target_class: str) -> list[dict]:
+    """
+    Given a scene graph, a room name, and a target object class,
+    return all nodes of that class that are located inside the given room.
+
+    Args:
+        graph (dict): Scene graph with 'nodes' and 'edges'.
+        room_name (str): Room class name to match (case-insensitive).
+        target_class (str): Target object class to search for.
+
+    Returns:
+        List[dict]: List of matching object nodes located in the specified room.
+    """
+    room_name = room_name.lower()
+    matching_nodes = []
+
+    for node in graph['nodes']:
+        if node['class_name'] != target_class:
+            continue
+
+        room_node = find_room_of_node(graph, node['id'])
+        if room_node and room_node['class_name'].lower() == room_name:
+            matching_nodes.append(node)
+
+    return matching_nodes
+
+def find_objects_on_surfaces_in_room(
+    graph: dict,
+    room_name: str,
+    surface_class: str,
+    target_classes: list[str],
+    relations: list[str]
+) -> list[dict]:
+    """
+    Find all object nodes in a room that are connected to a surface/container node
+    via specific relations (e.g., ON, INSIDE).
+
+    Args:
+        graph (dict): Scene graph with 'nodes' and 'edges'.
+        room_name (str): Name of the room to search in (e.g., 'bedroom').
+        surface_class (str): Class name of the surface/container (e.g., 'wallshelf').
+        target_classes (list[str]): List of target object class names (e.g., ['book', 'photoframe']).
+        relations (list[str]): List of relation types to include (e.g., ['ON', 'INSIDE']).
+
+    Returns:
+        list[dict]: List of matching object nodes.
+    """
+    # Step 1: Get all surface/container nodes of that class in the room
+    surface_nodes = find_objects_in_room(graph, room_name, surface_class)
+    surface_ids = {node['id'] for node in surface_nodes}
+
+    # Step 2: Build a map for quick node lookup
+    id_to_node = {node['id']: node for node in graph['nodes']}
+
+    # Step 3: Traverse edges to find matching object connections
+    matching_objects = []
+
+    for edge in graph['edges']:
+        if edge['relation_type'] not in relations:
+            continue
+        if edge['to_id'] not in surface_ids:
+            continue
+
+        obj_node = id_to_node.get(edge['from_id'])
+        if obj_node and obj_node['class_name'] in target_classes:
+            matching_objects.append(obj_node)
+
+    return matching_objects
