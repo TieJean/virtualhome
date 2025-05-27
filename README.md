@@ -41,6 +41,12 @@ virtualhome/
 │       └── Unity-based simulator client.  
 │           Use this for generating **rendered visual observations**.
 ```
+
+To start the example script, under virtualhome/demo, run:
+```bash
+python generate_scene_graphs.py
+python collect_data.py
+```
 ______________________________________________________________________
 
 <div align="center">
