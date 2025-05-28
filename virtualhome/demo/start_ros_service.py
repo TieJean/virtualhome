@@ -8,6 +8,7 @@ from unity_simulator.comm_unity import UnityCommunication
 from unity_simulator import utils_viz
 from ros_utils import *
 from utils_demo import *
+from graph_utils import *
 
 ## ROS Service Calls
 import rospy
@@ -19,11 +20,13 @@ from amrl_msgs.srv import (
     GetImageAtPoseSrv, 
     GetImageAtPoseSrvResponse, 
     PickObjectSrv, 
-    PickObjectSrvResponse
+    PickObjectSrvResponse,
+    GetVisibleObjectsSrv,
+    GetVisibleObjectsSrvResponse,
 )
 
 comm = None
-char_cam_indices = None
+cameras_select = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Virtual Home ROS Service')
@@ -31,9 +34,6 @@ def parse_args():
     return parser.parse_args()
 
 def observe():
-    _, ncameras = comm.camera_count()
-    cameras_select = list(range(ncameras))
-    cameras_select = [cameras_select[x] for x in char_cam_indices]
     (ok_img, imgs) = comm.camera_image(cameras_select, mode="normal")
     
     view_pil = display_grid_img([imgs[0], imgs[3], imgs[4], imgs[5]], nrows=2)
@@ -77,6 +77,33 @@ def handle_observe_request(req):
         back=ros_images["back"]
     )
     
+def handle_visible_objects_request(req):
+    global comm
+    rospy.loginfo("Received visible objects request")
+    
+    _, front_visible_objects = comm.get_visible_objects(cameras_select[0])
+    _, right_visible_objects = comm.get_visible_objects(cameras_select[3])
+    _, left_visible_objects = comm.get_visible_objects(cameras_select[4])
+    _, back_visible_objects = comm.get_visible_objects(cameras_select[5])
+    
+    # Aggregate all unique IDs
+    unique_ids = set()
+    for cam_view in [front_visible_objects, right_visible_objects, left_visible_objects, back_visible_objects]:
+        for obj_id in cam_view.keys():
+            unique_ids.add(int(obj_id))  # Cast to int in case it's str
+    nodes = extract_nodes_by_ids(graph["nodes"], unique_ids)
+    
+    # Format return values
+    ids = [int(node["id"]) for node in nodes]
+    classnames = [node["class_name"] for node in nodes]
+    prefabnames = [node["prefab_name"] for node in nodes]
+
+    return GetVisibleObjectsSrvResponse(
+        ids=ids,
+        classnames=classnames,
+        prefabnames=prefabnames
+    )
+    
 def handle_find_request(req):
     global comm
     rospy.loginfo("Received find request")
@@ -107,10 +134,15 @@ if __name__ == "__main__":
     comm.add_character('chars/Male2', initial_room='bathroom')
     s, nc = comm.camera_count()
     char_cam_indices = range(nc - 6, nc) # 0 should be ego centric
+    _, ncameras = comm.camera_count()
+    cameras_select = list(range(ncameras))
+    cameras_select = [cameras_select[x] for x in char_cam_indices]
     
     rospy.Service('/moma/navigate', GetImageAtPoseSrv, handle_navigate_request)
     rospy.loginfo("Ready to navigate")
     rospy.Service('/moma/observe', GetImageSrv, handle_observe_request)
     rospy.loginfo("Ready to observe")
+    rospy.Service('/moma/visible_objects', GetVisibleObjectsSrv, handle_visible_objects_request)
+    rospy.loginfo("Ready to return visible objects")
     
     rospy.spin()

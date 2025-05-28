@@ -258,9 +258,8 @@ def run_once(args, comm, scene_id: int):
         if not success:
             print("Failed to expand scene:", message)
             continue
-        # record_graph(args, comm, prefix, script)
-        record_graph_with_gt(args, comm, prefix, script)
-        import pdb; pdb.set_trace()
+        record_graph(args, comm, prefix, script)
+        # record_graph_with_gt(args, comm, prefix, script)
         subgraph_gt = extract_minimal_subgraph_by_classes(graph, args.target_classes)
         
         output_dir = os.path.join(args.data_dir, prefix, "0")
