@@ -6,6 +6,14 @@ import re
 import random
 from utils_demo import *
 
+def prepare_pano_character_camera(comm):
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20,  0, 0], field_view=60, name="pano_0")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 60, 0], field_view=60, name="pano_1")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 120, 0], field_view=60, name="pano_2")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 180, 0], field_view=60, name="pano_3")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 240, 0], field_view=60, name="pano_4")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 300, 0], field_view=60, name="pano_5")
+
 def viz_scene(comm, scene_id:int, savepath:str):
     view = get_scene_cameras(comm, [scene_id])
     view_pil = display_grid_img(view, nrows=1)

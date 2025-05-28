@@ -251,8 +251,8 @@ def run_once(args, comm, scene_id: int):
         script = [line.strip() for line in f if line.strip()]
     
     for i, graph in enumerate(graphs):
-        # prefix = f"{dataset_name}_{i}" # TODO
-        prefix = "test"
+        prefix = f"{dataset_name}_{i}" # TODO
+        # prefix = "test"
         comm.reset(scene_id)
         success, message = comm.expand_scene(graph)
         if not success:

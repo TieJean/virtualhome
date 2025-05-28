@@ -33,21 +33,24 @@ def postprocess_visibility_once(comm, data_dir: str, dataname: str):
             x, y, z = map(float, values[1:4])
             hip_positions.append([x, y, z])
     
+    s, nc_before = comm.camera_count()
+    prepare_pano_character_camera(comm)
     comm.add_character('chars/Female2', initial_room='bathroom')
-
-    # Set up cameras
-    _, nc = comm.camera_count()
-    char_cam_indices = range(nc - 6, nc)
-    cameras_select = [list(range(nc))[i] for i in char_cam_indices]
-
+    s, nc_after = comm.camera_count()
+    # 2 - is the ego centric view
+    # 5:8 - are right, left and back cameras
+    # 8:14 - are the panoramic cameras added thru `prepare_pano_character_camera`
+    cameras_select = list(range(nc_before, nc_after))
+    pano_camera_select = cameras_select[8:14]  # Panoramic cameras
+    
     # Setup directories
     image_dir = os.path.join(data_dir, "images")
-    right_image_dir = os.path.join(data_dir, "images_right")
-    left_image_dir = os.path.join(data_dir, "images_left")
-    back_image_dir = os.path.join(data_dir, "images_back")
-    for d in [image_dir, right_image_dir, left_image_dir, back_image_dir]:
+    pano_dirs = [
+        os.path.join(data_dir, f"pano_{i}") for i in range(len(pano_camera_select))
+    ]
+    for d in pano_dirs + [image_dir]:
         os.makedirs(d, exist_ok=True)
-        for root, _, files in os.walk(image_dir):
+        for root, _, files in os.walk(d):
             for file in files:
                 filepath = os.path.join(root, file)
                 os.remove(filepath)
@@ -61,28 +64,24 @@ def postprocess_visibility_once(comm, data_dir: str, dataname: str):
             continue
             # raise RuntimeError(f"Failed to move character to position {position} at frame {i}. Double-check the imported graph is correct.")
         
-        (ok_img, imgs) = comm.camera_image(cameras_select, mode="normal")
-        img, right_img, left_img, back_img = imgs[0], imgs[3], imgs[4], imgs[5]
+        ok_img, imgs = comm.camera_image(pano_camera_select, mode="normal")
+        assert len(imgs) == len(pano_camera_select)
+        
+        for cam_idx, pano_img in enumerate(imgs):
+            filename = f"{i:06d}.png"
+            cv2.imwrite(os.path.join(pano_dirs[cam_idx], filename), pano_img)
 
-        cv2.imwrite(os.path.join(image_dir, f"{i:06d}.png"), img)
-        cv2.imwrite(os.path.join(right_image_dir, f"{i:06d}.png"), right_img)
-        cv2.imwrite(os.path.join(left_image_dir, f"{i:06d}.png"), left_img)
-        cv2.imwrite(os.path.join(back_image_dir, f"{i:06d}.png"), back_img)
+            if cam_idx == 0:
+                # Also save pano_0 image to "images/"
+                cv2.imwrite(os.path.join(image_dir, filename), pano_img)
 
-        _, front_visible_objects = comm.get_visible_objects(cameras_select[0])
-        _, right_visible_objects = comm.get_visible_objects(cameras_select[3])
-        _, left_visible_objects = comm.get_visible_objects(cameras_select[4])
-        _, back_visible_objects = comm.get_visible_objects(cameras_select[5])
+        # Visibility annotations per pano view
+        visible_by_camera = {}
+        for cam_idx, cam_id in enumerate(pano_camera_select):
+            _, visible_objects = comm.get_visible_objects(cam_id)
+            visible_by_camera[f"pano_{cam_idx}"] = list(visible_objects.keys())
 
-        frame_data.append([
-            i,
-            {
-                "front": list(front_visible_objects.keys()),
-                "right": list(right_visible_objects.keys()),
-                "left": list(left_visible_objects.keys()),
-                "back": list(back_visible_objects.keys()),
-            }
-        ])
+        frame_data.append([i, visible_by_camera])
     
     # Save ground-truth annotations
     success, graph = comm.environment_graph()
