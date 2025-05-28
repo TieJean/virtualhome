@@ -26,6 +26,21 @@ Quick start for later runs:
 podman stop virtualhome_container && podman rm virtualhome_container && podman run --name virtualhome_container --device /dev/nvidia0 --device /dev/nvidiactl --device /dev/nvidia-uvm --device /dev/nvidia-uvm-tools --mount type=bind,source="$(pwd)"/unity_vol,target=/unity_vol/ --mount type=bind,source="$(pwd)"/unity_output,target=/Output/ -p 8080:8080 -it virtualhome 
 ```
 
+If you saw error: `Error: rootlessport listen tcp 0.0.0.0:8080: bind: address already in use`, ru:
+```
+lsof -i :8080
+```
+
+You'll see output like:
+```
+COMMAND     PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+your_app   12345  user   ...  TCP  ...           0   LISTEN 0.0.0.0:8080
+```
+Kill this process by running:
+```
+kill -9 <PID>
+```
+
 ## Important Files
 ```
 virtualhome/
