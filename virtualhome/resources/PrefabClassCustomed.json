@@ -2463,7 +2463,7 @@
         ]
     },
 
-    {"className":"Dish_bowl",
+    {"className":"dishbowl",
         "prefabs":
         [
             "Dish_bowl_1",
@@ -2484,7 +2484,7 @@
         ]
     },
 
-    {"className":"Plate",
+    {"className":"plate",
         "prefabs":
         [
             "Dish_plate_1",
@@ -2931,7 +2931,7 @@
         ]
     },
 
-    {"className":"Magazine",
+    {"className":"magazine",
         "prefabs":
         [
             "Magazine_4",
@@ -3962,7 +3962,7 @@
     },
 
 
-    {"className":"WallPictureFrame",
+    {"className":"wallpictureframe",
         "prefabs":
         [
             "WallPictureFrame_1",

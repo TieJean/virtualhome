@@ -59,8 +59,8 @@ def prepare_scene(args, comm, scene_id: int):
         print("Failed to expand scene:", message)
         return False
     
-    success, graph = comm.environment_graph()
     for target_class in args.target_classes:
+        success, graph = comm.environment_graph()
         graph = insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations=["ON"], n=3, verbose=True)
         success, message = comm.expand_scene(graph)
         if not success:
@@ -147,88 +147,6 @@ def record_graph(args, comm, prefix: str, script: list):
     
     return True
 
-def record_graph_with_gt(args, comm, prefix: str, script: list):
-    # First, generate all poses
-    record_graph(args, comm, prefix, script)
-
-    data_dir = os.path.join(args.data_dir, prefix)
-    simulation_data_dir = os.path.join(data_dir, "0")
-    
-    pose_path = os.path.join(simulation_data_dir, f"pd_{prefix}.txt")
-    if not os.path.isfile(pose_path):
-        raise FileNotFoundError(f"Required pose file not found: {pose_path}")
-    hip_positions = [] # In unity, hip is the root joint?
-    with open(pose_path, "r") as f:
-        lines = f.readlines()
-        for line in lines[1:]:
-            values = line.strip().split()
-            if len(values) < 4:
-                continue  # skip malformed lines
-            x, y, z = map(float, values[1:4])
-            hip_positions.append([x, y, z])
-            
-    comm.add_character('chars/Female2', initial_room='bathroom')
-
-    # Set up cameras
-    s, nc = comm.camera_count()
-    char_cam_indices = range(nc - 6, nc)
-    _, ncameras = comm.camera_count()
-    cameras_select = list(range(ncameras))
-    cameras_select = [cameras_select[x] for x in char_cam_indices]
-        
-    image_dir = os.path.join(data_dir, "images")
-    right_image_dir = os.path.join(data_dir, "images_right")
-    left_image_dir = os.path.join(data_dir, "images_left")
-    back_image_dir = os.path.join(data_dir, "images_back") 
-    for d in [image_dir, right_image_dir, left_image_dir, back_image_dir]:
-        os.makedirs(d, exist_ok=True)
-    
-    frame_data = []
-    for i, position in enumerate(tqdm(hip_positions, total=len(hip_positions))):
-        comm.move_character(0, position)
-        (ok_img, imgs) = comm.camera_image(cameras_select, mode="normal")
-        img, right_img, left_img, back_img = imgs[0], imgs[3], imgs[4], imgs[5]
-
-        cv2.imwrite(os.path.join(image_dir, f"{i:06d}.png"), img)
-        cv2.imwrite(os.path.join(right_image_dir, f"{i:06d}.png"), right_img)
-        cv2.imwrite(os.path.join(left_image_dir, f"{i:06d}.png"), left_img)
-        cv2.imwrite(os.path.join(back_image_dir, f"{i:06d}.png"), back_img)
-        
-        _, front_visible_objects = comm.get_visible_objects(cameras_select[0])  # 0 should be ego centric
-        _, right_visible_objects = comm.get_visible_objects(cameras_select[3])  # right camera
-        _, left_visible_objects = comm.get_visible_objects(cameras_select[4])  # left camera
-        _, back_visible_objects = comm.get_visible_objects(cameras_select[5])  # back camera
-        
-        frame_data.append([
-            i,
-            {
-                "front": list(front_visible_objects.keys()),
-                "right": list(right_visible_objects.keys()),
-                "left": list(left_visible_objects.keys()),
-                "back": list(back_visible_objects.keys()),
-            }
-        ])
-        
-    assert len(frame_data) == len(hip_positions), f"frame_data length {len(frame_data)} does not match hip_positions length {len(hip_positions)}"
-        
-    success, graph = comm.environment_graph()
-    gt_annotation_path = os.path.join(simulation_data_dir, "gt_annotations.json")
-    with open(gt_annotation_path, "w") as f:
-        json.dump({
-            "frames": frame_data,
-            "graph": graph
-        }, f, indent=2)
-    print(f"✅ Saved ground-truth annotations to {gt_annotation_path}")
-    
-    # Remove character from the saved scene
-    graph = remove_nodes_by_classes(graph, ["character"])
-    success, message = comm.expand_scene(graph)
-    if not success:
-        print("Failed to expand scene:", message)
-        return False
-    
-    return True
-
 def run_once(args, comm, scene_id: int):
     if not prepare_scene(args, comm, scene_id):
         print(f"Failed to prepare scene {scene_id}.")
@@ -259,7 +177,6 @@ def run_once(args, comm, scene_id: int):
             print("Failed to expand scene:", message)
             continue
         record_graph(args, comm, prefix, script)
-        # record_graph_with_gt(args, comm, prefix, script)
         subgraph_gt = extract_minimal_subgraph_by_classes(graph, args.target_classes)
         
         output_dir = os.path.join(args.data_dir, prefix, "0")
@@ -269,6 +186,20 @@ def run_once(args, comm, scene_id: int):
         graph_gt_path = os.path.join(output_dir, "graph_gt.json")
         with open(graph_gt_path, "w") as f:
             json.dump(subgraph_gt, f, indent=2)
+            
+        class_to_prefabs = {}
+        for class_name in args.target_classes:
+            prefab_names = [
+                node["prefab_name"]
+                for node in graph["nodes"]
+                if node["class_name"].lower() == class_name.lower()
+            ]
+            class_to_prefabs[class_name] = prefab_names
+        
+        class_prefabs_path = os.path.join(output_dir, "target_objects.txt")
+        with open(class_prefabs_path, "w") as f:
+            for cls, prefabs in class_to_prefabs.items():
+                f.write(','.join([cls] + prefabs) + "\n")
 
 if __name__ == "__main__":
     args = parse_args()

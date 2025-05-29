@@ -4945,6 +4945,11 @@
     ], 
     "magazine": [
         {
+            "destination": "bed", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
             "destination": "couch", 
             "relation": "ON", 
             "room": "null"
@@ -7730,6 +7735,11 @@
     ], 
     "textbook": [
         {
+            "destination": "bed", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
             "destination": "couch", 
             "relation": "ON", 
             "room": "null"
@@ -8353,9 +8363,9 @@
             "room": "null"
         }
     ], 
-    "bowl": [
+    "dishbowl": [
         {
-            "destination": "table_cloth", 
+            "destination": "tablecloth", 
             "relation": "ON", 
             "room": "null"
         }, 
@@ -8365,7 +8375,7 @@
             "room": "null"
         }, 
         {
-            "destination": "kitchen_counter", 
+            "destination": "kitchencounter", 
             "relation": "ON", 
             "room": "null"
         }, 
@@ -8392,11 +8402,6 @@
         {
             "destination": "cabinet", 
             "relation": "IN", 
-            "room": "null"
-        }, 
-        {
-            "destination": "sofa", 
-            "relation": "ON", 
             "room": "null"
         }, 
         {
@@ -8872,6 +8877,13 @@
             "room": "null"
         }
     ], 
+    "wallpictureframe": [
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        }
+    ],
     "oil": [
         {
             "destination": "cupboard", 
