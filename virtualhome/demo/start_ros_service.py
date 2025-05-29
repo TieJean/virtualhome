@@ -23,74 +23,78 @@ from amrl_msgs.srv import (
     PickObjectSrvResponse,
     GetVisibleObjectsSrv,
     GetVisibleObjectsSrvResponse,
+    FindObjectSrv,
+    FindObjectSrvResponse,
+    SemanticObjectDetectionSrv,
+    SemanticObjectDetectionSrvRequest,
+    SemanticObjectDetectionSrvResponse
 )
 
 comm = None
-cameras_select = None
+pano_camera_select = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Virtual Home ROS Service')
     parser.add_argument("--graph_path", type=str, required=True, help="Path to the scene graph")
     return parser.parse_args()
 
+### Helper Functions ###
+def detect_objects_owlv2(query_image: Image, query_cls: str) -> SemanticObjectDetectionSrvResponse:
+    """
+    Detect objects by class.
+    """
+    rospy.wait_for_service("/owlv2/semantic_object_detection")
+    try:
+        detect_service = rospy.ServiceProxy("/owlv2/semantic_object_detection", SemanticObjectDetectionSrv)
+        req = SemanticObjectDetectionSrvRequest()
+        req.query_image = query_image
+        req.query_text = query_cls
+        response = detect_service(req)
+        return response
+    except rospy.ServiceException as e:
+        print("Service call failed:", e)
+
 def observe():
-    (ok_img, imgs) = comm.camera_image(cameras_select, mode="normal")
+    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
     
-    view_pil = display_grid_img([imgs[0], imgs[3], imgs[4], imgs[5]], nrows=2)
+    view_pil = display_grid_img(imgs, nrows=2)
     view_pil.save("../../outputs/debug_observe.png")
     
-    ros_images = {}
-    ros_images["image"] = opencv_to_ros_image(imgs[0])
-    ros_images["right"] = opencv_to_ros_image(imgs[3])
-    ros_images["left"] = opencv_to_ros_image(imgs[4])
-    ros_images["back"] = opencv_to_ros_image(imgs[5])
+    ros_images = []
+    for img in imgs:
+        ros_img = opencv_to_ros_image(img)
+        ros_images.append(ros_img)
     
     return ros_images
 
+### Handle Service Requests ###
 def handle_navigate_request(req):
     global comm
     rospy.loginfo("Received navigate request")
     
     success = comm.move_character(0, [req.x, req.y, req.z])
-    
-    if False:
-        ros_images = observe()
-        return GetImageAtPoseSrvResponse(
-            success=success, 
-            image=ros_images["image"], 
-            right=ros_images["right"], 
-            left=ros_images["left"], 
-            back=ros_images["back"]
-        )
     return GetImageAtPoseSrvResponse(success=success)
 
 def handle_observe_request(req):
     global comm
     rospy.loginfo("Received observe request")
     
-    # Following `get_scene_cameras` function
     ros_images = observe()
     return GetImageSrvResponse(
-        image=ros_images["image"], 
-        right=ros_images["right"], 
-        left=ros_images["left"], 
-        back=ros_images["back"]
+        image=ros_images[0], 
+        pano_images=ros_images,
     )
     
 def handle_visible_objects_request(req):
     global comm
     rospy.loginfo("Received visible objects request")
     
-    _, front_visible_objects = comm.get_visible_objects(cameras_select[0])
-    _, right_visible_objects = comm.get_visible_objects(cameras_select[3])
-    _, left_visible_objects = comm.get_visible_objects(cameras_select[4])
-    _, back_visible_objects = comm.get_visible_objects(cameras_select[5])
-    
-    # Aggregate all unique IDs
     unique_ids = set()
-    for cam_view in [front_visible_objects, right_visible_objects, left_visible_objects, back_visible_objects]:
-        for obj_id in cam_view.keys():
-            unique_ids.add(int(obj_id))  # Cast to int in case it's str
+    for cam in pano_camera_select:
+        _, visible_objects = comm.get_visible_objects(cam)
+        for obj_id in visible_objects.keys():
+            unique_ids.add(int(obj_id))
+    
     nodes = extract_nodes_by_ids(graph["nodes"], unique_ids)
     
     # Format return values
@@ -107,7 +111,29 @@ def handle_visible_objects_request(req):
 def handle_find_request(req):
     global comm
     rospy.loginfo("Received find request")
-    # TODO
+    
+    target_node_id = None
+    for cam in pano_camera_select:
+        _, visible_objects = comm.get_visible_objects(cam)
+        for node_id, cls_name in visible_objects.items():
+            # TODO: need to use VLM to determine the right query_text
+            if cls_name.lower() == req.query_text.lower():
+                target_node_id = int(node_id)
+                break
+    success = (target_node_id is not None)
+    return FindObjectSrvResponse(
+        success=success,
+        id=target_node_id,
+    )
+    
+    ros_images = observe()
+    for ros_image in ros_images:
+        detection_response = detect_objects_owlv2(ros_image, req.query_text)
+        for detection in detection_response.bounding_boxes.bboxes:
+            xyxy = [int(x) for x in xyxy]
+            center_x = (xyxy[0] + xyxy[2]) // 2
+            center_y = (xyxy[1] + xyxy[3]) // 2 # TODO
+            
     
 def handle_pick_request(req):
     global comm
@@ -131,12 +157,13 @@ if __name__ == "__main__":
     if not success:
         print(f"Failed to load scene from {args.graph_path} to the simulator:", message)
         sys.exit(1)
-    comm.add_character('chars/Male2', initial_room='bathroom')
-    s, nc = comm.camera_count()
-    char_cam_indices = range(nc - 6, nc) # 0 should be ego centric
-    _, ncameras = comm.camera_count()
-    cameras_select = list(range(ncameras))
-    cameras_select = [cameras_select[x] for x in char_cam_indices]
+        
+    s, nc_before = comm.camera_count()
+    prepare_pano_character_camera(comm)
+    comm.add_character('chars/Female2', initial_room='bathroom')
+    s, nc_after = comm.camera_count()
+    cameras_select = list(range(nc_before, nc_after))
+    pano_camera_select = cameras_select[8:14]
     
     rospy.Service('/moma/navigate', GetImageAtPoseSrv, handle_navigate_request)
     rospy.loginfo("Ready to navigate")
@@ -144,5 +171,7 @@ if __name__ == "__main__":
     rospy.loginfo("Ready to observe")
     rospy.Service('/moma/visible_objects', GetVisibleObjectsSrv, handle_visible_objects_request)
     rospy.loginfo("Ready to return visible objects")
+    rospy.Service('/moma/find_object', FindObjectSrv, handle_find_request)
+    rospy.loginfo("Ready to find objects")
     
     rospy.spin()
