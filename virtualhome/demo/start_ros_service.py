@@ -121,6 +121,7 @@ def handle_find_request(req):
                 target_node_id = int(node_id)
                 break
     success = (target_node_id is not None)
+    rospy.loginfo(f"Find request for '{req.query_text}': success={success}, id={target_node_id}")
     return FindObjectSrvResponse(
         success=success,
         id=target_node_id,
@@ -138,7 +139,37 @@ def handle_find_request(req):
 def handle_pick_request(req):
     global comm
     rospy.loginfo("Received pick request")
-    # TODO
+    
+    query_text = req.query_text.lower()
+    
+    target_node_id = None
+    for cam in pano_camera_select:
+        _, visible_objects = comm.get_visible_objects(cam)
+        for node_id, cls_name in visible_objects.items():
+            # TODO: need to use VLM to determine the right query_text
+            if cls_name.lower() == query_text:
+                target_node_id = int(node_id)
+                break
+    if target_node_id is None:
+        return PickObjectSrvResponse(success=False)
+    
+    script = [f"<char0> [Grab] <{query_text}> ({target_node_id})"]
+    success, message = comm.render_script(script=script,
+                                        processing_time_limit=60,
+                                        find_solution=False,
+                                        image_width=640,
+                                        image_height=480,  
+                                        skip_animation=True,
+                                        recording=False,
+                                        save_pose_data=False)
+    
+    success, graph = comm.environment_graph()
+    target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])[0]
+    instance_uid = target_node["prefab_name"]
+    return PickObjectSrvResponse(
+        success=success,
+        instance_uid=instance_uid
+    )
 
 if __name__ == "__main__":
     rospy.init_node('virtualhome_ros', anonymous=True)
@@ -173,5 +204,6 @@ if __name__ == "__main__":
     rospy.loginfo("Ready to return visible objects")
     rospy.Service('/moma/find_object', FindObjectSrv, handle_find_request)
     rospy.loginfo("Ready to find objects")
-    
+    rospy.Service('/moma/pick_object', PickObjectSrv, handle_pick_request)
+    rospy.loginfo("Ready to pick objects")
     rospy.spin()
