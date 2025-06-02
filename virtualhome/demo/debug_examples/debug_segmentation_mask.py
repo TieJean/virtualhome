@@ -1,4 +1,5 @@
 import json
+import cv2
 import sys
 
 sys.path.append('../simulation')
@@ -64,7 +65,59 @@ def example(comm):
     view_pil = display_grid_img(normal_imgs + masked_imgs, nrows=4)
     view_pil.save("../../outputs/debug_cls_inst.png")
     
+def example2(comm):
+    with open("../../unity_output/scene4_754ab231d3_0/0/graph.json", "r") as f:
+        graph = json.load(f)
+    if graph is None:
+        raise ValueError("Graph is None, please check the file path or content.")
+    comm.reset(4)
+    success, message = comm.expand_scene(graph)
+    if not success:
+        raise RuntimeError(f"Failed to expand scene: {message}")
+    
+    s, nc_before = comm.camera_count()
+    prepare_pano_character_camera(comm)
+    comm.add_character('chars/Female2')
+    s, nc_after = comm.camera_count()
+    cameras_select = list(range(nc_before, nc_after))
+    pano_camera_select = cameras_select[8:14]
+    
+    position = [2.625752, 0.8725489, -10.35497]
+    success = comm.move_character(0, position)
+    if not success:
+        raise RuntimeError("Failed to move character to the specified position.")
+
+    # These images are in bgr
+    (ok_img, normal_imgs) = comm.camera_image(pano_camera_select, mode="normal")
+    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
+    cls_imgs = bgr_to_rgb_imgs(cls_imgs)
+    prefab_classes, class_list = load_prefab_metadata("../resources/PrefabClass.json")
+    
+    class_name = "book"
+    target_color = semantic_cls_to_rgb(class_name, class_list)
+    
+    masked_imgs = []
+    bbox_imgs = []
+    for img, cls_img in zip(normal_imgs, cls_imgs):
+        assert cls_img.dtype == np.uint8 and cls_img.shape[-1] == 3, "Expected RGB uint8 image"
+        match_mask = np.all(cls_img == target_color, axis=-1)
+        if not np.any(match_mask):
+            bbox_imgs.append(img)
+            continue
+        
+        ys, xs = np.where(match_mask)
+        x1, y1 = xs.min(), ys.min()
+        x2, y2 = xs.max(), ys.max()
+        
+        bbox_img = img.copy()
+        cv2.rectangle(bbox_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        bbox_imgs.append(bbox_img)
+        
+    view_pil = display_grid_img(bbox_imgs+normal_imgs, nrows=4)
+    view_pil.save("../../outputs/debug_bbox.png")
+    
 if __name__ == "__main__":
     comm = UnityCommunication(port="8080")
     comm.timeout_wait = 300 
-    example(comm)
+    # example(comm)
+    example2(comm)
