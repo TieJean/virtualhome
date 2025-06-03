@@ -23,7 +23,15 @@ if __name__ == "__main__":
                 break  # Assume only one match needed
             
     candidate_class_to_prefabs = {
-        k: v for k, v in class_to_prefabs.items() if len(v) > 2
+        k: v for k, v in class_to_prefabs.items() if len(v) > 1
     }
+    print(candidate_class_to_prefabs.keys())
+    # 'apple', 'sportsball', 'bananas', 'boardgame', 'book', 'box', 'broom', 
+    # 'carrot', 'cat', 'cellphone', 'crayons', 'chair', 'chefknife', 'cookingpot', 
+    # 'creamybuns', 'chips', 'cupcake', 'dishbowl', 'plate', 'donut', 'folder', 'fryingpan', 
+    # 'game', 'glasses', 'hairproduct', 'hanger', 'juice', 'keyboard', 'magazine', 'milk', 'mouse', 
+    # 'mug', 'napkin', 'notes', 'orchid', 'paper', 'pie', 'pillow', 'potato', 'pudding', 'radio', 
+    # 'rug', 'slippers', 'spoon', 'toy', 'toiletpaper', 'towel', 'wallpictureframe', 'waterglass', 
+    # 'wineglass', 'alcohol', 'beer', 'wine', 'vase'
     
     import pdb; pdb.set_trace()
