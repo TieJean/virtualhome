@@ -63,7 +63,7 @@ def prepare_scene(args, comm, scene_id: int):
     
     for target_class in args.target_classes:
         success, graph = comm.environment_graph()
-        graph = insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations=["ON"], n=2, verbose=True)
+        graph = insert_object_with_placement(graph, args.prefab_classes, args.class_placements, target_class, relations=["ON"], n=2, verbose=True)
         success, message = comm.expand_scene(graph)
         if not success:
             print("Failed to expand scene:", message)
@@ -93,8 +93,8 @@ def replace_objects(args, comm, verbose:bool = False):
     for target_class in args.target_classes:
         graph = insert_object_with_placement(
             graph, 
-            prefab_classes, 
-            class_placements, 
+            args.prefab_classes, 
+            args.class_placements, 
             target_class, 
             relations=["ON"], 
             prefab_candidates=class_to_prefabs[target_class],
@@ -215,12 +215,27 @@ if __name__ == "__main__":
         prefab_classes = {}
         for prefab_class in json.load(f)["prefabClasses"]:
             prefab_classes[prefab_class["className"].lower()] = prefab_class["prefabs"]
+    normalized_prefab_classes = {
+        class_name.replace("_", "").lower(): prefabs
+        for class_name, prefabs in prefab_classes.items()
+    }
         
     with open("../resources/object_script_placing_customed.json", "r") as f:
         class_placements = json.load(f)
+    # Normalize keys and destinations
+    normalized_class_placements = {}
+    for cls_name, placements in class_placements.items():
+        new_key = cls_name.replace("_", "").lower()
+        new_placements = []
+        for entry in placements:
+            new_entry = entry.copy()
+            if 'destination' in new_entry:
+                new_entry['destination'] = new_entry['destination'].replace("_", "").lower()
+            new_placements.append(new_entry)
+        normalized_class_placements[new_key] = new_placements
     
     args.prefab_classes = prefab_classes
-    args.class_placements = class_placements
+    args.class_placements = normalized_class_placements
     
     comm = UnityCommunication(port="8080")
     comm.timeout_wait = 300

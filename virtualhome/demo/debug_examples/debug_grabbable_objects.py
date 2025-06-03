@@ -28,7 +28,7 @@ if __name__ == "__main__":
     print(candidate_class_to_prefabs.keys())
     # 'apple', 'sportsball', 'bananas', 'boardgame', 'book', 'box', 'broom', 
     # 'carrot', 'cat', 'cellphone', 'crayons', 'chair', 'chefknife', 'cookingpot', 
-    # 'creamybuns', 'chips', 'cupcake', 'dishbowl', 'donut', 'folder', 'fryingpan', 
+    # 'cupcake', 'dishbowl', 'donut', 'folder', 'fryingpan', 
     # 'game', 'glasses', 'hairproduct', 'hanger', 'juice', 'keyboard', 'magazine', 'milk', 'mouse', 
     # 'napkin', 'notes', 'orchid', 'paper', 'pie', 'pillow', 'potato', 'pudding', 'radio', 
     # 'rug', 'slippers', 'spoon', 'toy', 'toiletpaper', 'towel', 'wallpictureframe', 'waterglass', 

@@ -2212,8 +2212,7 @@
     {"className":"CreamyBuns",
         "prefabs":
         [
-            "SMGP_PRE_Creamy_buns_1024",
-            "SMGP_PRE_Creamy_buns_1025"
+            "SMGP_PRE_Creamy_buns_1024"
 
         ]
     },
@@ -2221,9 +2220,7 @@
     {"className":"Chips",
         "prefabs":
         [
-            "SMGP_PRE_Potato_chips_1024",
-            "SMGP_PRE_Potato_chips_1025"
-               
+            "SMGP_PRE_Potato_chips_1024"
         ]
     },
 
