@@ -81,6 +81,7 @@ success, message = comm.render_script(script=script[:1],
                                       recording=True,
                                       save_pose_data=True,
                                       camera_mode=["observer_camera"],
+                                      image_synthesis=["normal", "seg_class"],
                                       file_name_prefix='relax_0')
 print("finish part I")
 input_path = os.path.abspath('../../unity_output/')

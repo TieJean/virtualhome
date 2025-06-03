@@ -10,8 +10,6 @@ from utils_demo import *
 from graph_utils import *
 from viz_utils import *
 import hashlib
-import re
-import cv2
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Collect data for virtual home')
@@ -118,6 +116,7 @@ def record_graph(args, comm, prefix: str, script: list):
     
     comm.add_character('chars/Female2', initial_room='bathroom')
     success, graph = comm.environment_graph()
+    print("prefix: ", prefix)
     success, message = comm.render_script(script=script,
                                         processing_time_limit=2000,
                                         find_solution=False,
@@ -127,6 +126,7 @@ def record_graph(args, comm, prefix: str, script: list):
                                         recording=True,
                                         save_pose_data=True,
                                         camera_mode=["FIRST_PERSON"],
+                                        image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
                                         file_name_prefix=prefix)
     
     if not success:
