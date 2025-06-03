@@ -51,7 +51,11 @@ def prepare_scene(args, comm, scene_id: int):
         print("Failed to expand scene:", message)
         return False
     
-    graph = remove_all_objects_on_surfaces(graph, ["desk", "wallshelf"])
+    graph = remove_all_objects_on_surfaces(
+        graph, 
+        # ["desk", "wallshelf", "kitchentable", "kitchencounter", "bathroomcounter"]
+        ["desk", "wallshelf"]
+    )
     success, message = comm.expand_scene(graph)
     if not success:
         print("Failed to expand scene:", message)
@@ -59,7 +63,7 @@ def prepare_scene(args, comm, scene_id: int):
     
     for target_class in args.target_classes:
         success, graph = comm.environment_graph()
-        graph = insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations=["ON"], n=3, verbose=True)
+        graph = insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations=["ON"], n=2, verbose=True)
         success, message = comm.expand_scene(graph)
         if not success:
             print("Failed to expand scene:", message)

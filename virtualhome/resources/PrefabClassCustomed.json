@@ -2466,20 +2466,8 @@
     {"className":"dishbowl",
         "prefabs":
         [
-            "Dish_bowl_1",
-            "Dish_bowl_2",
-            "Dish_bowl_3",
-            "Dish_bowl_4",
             "PRE_PRO_Bowl_01",
             "PRE_PRO_Bowl_02",
-            "PRE_PRO_Bowl_03",
-            "PRE_PRO_Bowl_04",
-            "PRE_PRO_Bowl_05",
-            "PRE_PRO_Bowl_06",
-            "PRE_PRO_Bowl_07",
-            "PRE_PRO_Bowl_08",
-            "PRE_PRO_Bowl_09",
-
             "FMGP_PRE_Wooden_bowl_1024"
         ]
     },
@@ -2487,19 +2475,7 @@
     {"className":"plate",
         "prefabs":
         [
-            "Dish_plate_1",
-            "Dish_plate_2",
-            "Dish_plate_3",
-            "PRE_PRO_Plate_01",
-            "PRE_PRO_Plate_02",
-            "PRE_PRO_Plate_03",
-            "PRE_PRO_Plate_04",
-            "PRE_PRO_Plate_05",
-            "PRE_PRO_Plate_06",
-            "PRE_PRO_Plate_07",
-            "PRE_PRO_Plate_08",
-            "PRE_PRO_Plate_09",
-            "PRE_PRO_Plate_10"
+            "PRE_PRO_Plate_01"
         ]
     },
 
@@ -3014,8 +2990,7 @@
     {"className":"Mug",
         "prefabs":
         [
-            "PRE_PRO_Mug_01",
-            "PRE_PRO_Mug_02"
+            "PRE_PRO_Mug_01"
         ]
     },
 
@@ -3206,23 +3181,7 @@
             "PRE_DEC_Pillow_01_07_02",
             "PRE_DEC_Pillow_01_07_03",
             "PRE_DEC_Pillow_01_07_04",
-            "PRE_DEC_Pillow_01_07_05",
-            "PRE_DEC_Pillow_01_01",
-            "PRE_DEC_Pillow_01_02",
-            "PRE_DEC_Pillow_01_03",
-            "PRE_DEC_Pillow_01_04",
-            "PRE_DEC_Pillow_01_05",
-            "PRE_DEC_Pillow_01_06",
-            "PRE_DEC_Pillow_01_07",
-            "PRE_DEC_Pillow_01_08",
-            "PRE_DEC_Pillow_01_09",
-            "PRE_DEC_Pillow_01_10",
-            "PRE_DEC_Pillow_01_11",
-            "PRE_DEC_Pillow_01_12",
-            "PRE_DEC_Pillow_01_13",
-            "PRE_DEC_Pillow_01_14",
-            "PRE_DEC_Pillow_01_15",
-            "HSHP_PRE_DEC_Pillow_01_01"
+            "PRE_DEC_Pillow_01_07_05"
         ]
     },
 

@@ -5789,6 +5789,16 @@
             "destination": "carpet", 
             "relation": "ON", 
             "room": "null"
+        },
+        {
+            "destination": "bed", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "sofa", 
+            "relation": "ON", 
+            "room": "null"
         }
     ], 
     "after_shave": [
@@ -8375,7 +8385,7 @@
             "room": "null"
         }, 
         {
-            "destination": "kitchencounter", 
+            "destination": "kitchen_counter", 
             "relation": "ON", 
             "room": "null"
         }, 
