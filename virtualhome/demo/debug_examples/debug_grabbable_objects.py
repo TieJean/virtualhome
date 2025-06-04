@@ -31,7 +31,7 @@ if __name__ == "__main__":
     # 'cupcake', 'dishbowl', 'donut', 'folder', 'fryingpan', 
     # 'game', 'glasses', 'hairproduct', 'hanger', 'juice', 'keyboard', 'magazine', 'milk', 'mouse', 
     # 'napkin', 'notes', 'orchid', 'paper', 'pie', 'pillow', 'potato', 'pudding', 'radio', 
-    # 'rug', 'slippers', 'spoon', 'toy', 'toiletpaper', 'towel', 'wallpictureframe', 'waterglass', 
-    # 'wineglass', 'alcohol', 'beer', 'wine', 'vase'
+    # 'slippers', 'spoon', 'toy', 'toiletpaper', 'towel', 'wallpictureframe', 'waterglass', 
+    # 'wineglass', 'alcohol', 'beer', 'wine'
     
     import pdb; pdb.set_trace()

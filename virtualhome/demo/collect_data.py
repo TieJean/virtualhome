@@ -54,7 +54,7 @@ def prepare_scene(args, comm, scene_id: int):
     graph = remove_all_objects_on_surfaces(
         graph, 
         # ["desk", "wallshelf", "kitchentable", "kitchencounter", "bathroomcounter"]
-        ["desk", "wallshelf"]
+        ["desk", "wallshelf", "kitchentable", "plate"]
     )
     success, message = comm.expand_scene(graph)
     if not success:
@@ -155,6 +155,7 @@ def run_once(args, comm, scene_id: int):
     if not prepare_scene(args, comm, scene_id):
         print(f"Failed to prepare scene {scene_id}.")
         return
+    import pdb; pdb.set_trace()
     
     graphs = []
     _, graph = comm.environment_graph()

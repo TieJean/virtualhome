@@ -1496,7 +1496,6 @@
     {"className":"Apple",
         "prefabs":
         [
-            "Apple_1",
             "FMGP_PRE_Apple_1024"
         ]
     },
@@ -1516,13 +1515,13 @@
     {"className":"Banana",
         "prefabs":
         [
+            "FMGP_PRE_Banana_1024"
         ]
     },
 
     {"className":"Bananas",
         "prefabs":
         [
-            "FMGP_PRE_Bananas_512",
             "FMGP_PRE_Bananas_1024"
         ]
     },

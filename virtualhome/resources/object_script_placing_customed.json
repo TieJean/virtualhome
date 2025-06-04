@@ -347,7 +347,7 @@
             "room": "null"
         }
     ], 
-    "food_oatmeal": [
+    "oatmeal": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -633,7 +633,7 @@
             "room": "null"
         }
     ], 
-    "food_kiwi": [
+    "kiwi": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -905,7 +905,7 @@
             "room": "null"
         }
     ], 
-    "food_peanut_butter": [
+    "peanut_butter": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -957,7 +957,7 @@
             "room": "null"
         }
     ], 
-    "food_onion": [
+    "onion": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -1324,7 +1324,7 @@
             "room": "null"
         }
     ], 
-    "food_lemon": [
+    "lemon": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -1386,7 +1386,7 @@
             "room": "null"
         }
     ], 
-    "food_jam": [
+    "jam": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -1455,7 +1455,7 @@
             "room": "null"
         }
     ], 
-    "food_carrot": [
+    "carrot": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -1643,7 +1643,7 @@
             "room": "null"
         }
     ], 
-    "food_steak": [
+    "steak": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -1710,7 +1710,7 @@
             "room": "null"
         }
     ], 
-    "food_hamburger": [
+    "hamburger": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -2026,7 +2026,7 @@
             "room": "null"
         }
     ], 
-    "food_food": [
+    "food": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -2261,7 +2261,7 @@
             "room": "null"
         }
     ], 
-    "food_bacon": [
+    "bacon": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -2333,7 +2333,7 @@
             "room": "null"
         }
     ], 
-    "food_banana": [
+    "banana": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -2679,7 +2679,7 @@
             "room": "null"
         }
     ], 
-    "food_butter": [
+    "butter": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -2763,7 +2763,7 @@
             "room": "null"
         }
     ], 
-    "food_fish": [
+    "fish": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -3454,7 +3454,7 @@
             "room": "null"
         }
     ], 
-    "food_dessert": [
+    "dessert": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -3849,7 +3849,7 @@
             "room": "null"
         }
     ], 
-    "food_salt": [
+    "salt": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -4203,7 +4203,7 @@
             "room": "null"
         }
     ], 
-    "food_vegetable": [
+    "vegetable": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -4413,7 +4413,7 @@
             "room": "null"
         }
     ], 
-    "food_cheese": [
+    "cheese": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -4685,7 +4685,7 @@
             "room": "null"
         }
     ], 
-    "food_cake": [
+    "cake": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -5005,7 +5005,7 @@
             "room": "null"
         }
     ], 
-    "food_fruit": [
+    "fruit": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -5057,7 +5057,7 @@
             "room": "null"
         }
     ], 
-    "food_orange": [
+    "orange": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -5529,7 +5529,7 @@
             "room": "null"
         }
     ], 
-    "food_snack": [
+    "snack": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -5670,7 +5670,7 @@
             "room": "null"
         }
     ], 
-    "food_cereal": [
+    "cereal": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -5775,6 +5775,11 @@
         }
     ], 
     "toy": [
+        {
+            "destination": "kitchen_table", 
+            "relation": "ON", 
+            "room": "null"
+        },
         {
             "destination": "couch", 
             "relation": "ON", 
@@ -6439,7 +6444,7 @@
             "room": "null"
         }
     ], 
-    "food_noodles": [
+    "noodles": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -6879,7 +6884,7 @@
             "room": "null"
         }
     ], 
-    "food_bread": [
+    "bread": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -7077,7 +7082,7 @@
             "room": "null"
         }
     ], 
-    "food_donut": [
+    "donut": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -7500,7 +7505,7 @@
             "room": "null"
         }
     ], 
-    "food_pizza": [
+    "pizza": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -7938,7 +7943,7 @@
             "room": "null"
         }
     ], 
-    "food_egg": [
+    "egg": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -8086,7 +8091,7 @@
             "room": "null"
         }
     ], 
-    "food_apple": [
+    "apple": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -8217,7 +8222,7 @@
             "room": "null"
         }
     ], 
-    "food_chicken": [
+    "chicken": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -8548,6 +8553,16 @@
     ], 
     "book": [
         {
+            "destination": "bathroom_counter", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_table", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "closet", 
             "relation": "IN", 
             "room": "null"
@@ -8680,7 +8695,7 @@
             "room": "null"
         }
     ], 
-    "food_ice_cream": [
+    "ice_cream": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -9111,7 +9126,7 @@
             "room": "null"
         }
     ], 
-    "food_potato": [
+    "potato": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -9455,7 +9470,7 @@
             "room": "null"
         }
     ], 
-    "food_turkey": [
+    "turkey": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -9522,7 +9537,7 @@
             "room": "null"
         }
     ], 
-    "food_rice": [
+    "rice": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -9725,7 +9740,7 @@
             "room": "null"
         }
     ], 
-    "food_sugar": [
+    "sugar": [
         {
             "destination": "table_cloth", 
             "relation": "ON", 
