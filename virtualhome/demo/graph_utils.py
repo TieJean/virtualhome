@@ -647,17 +647,7 @@ def get_connected_to_nodes(graph, from_id, relations=["ON", "INSIDE"]):
 
 def insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations, prefab_candidates: list = None, n=1, verbose=False):
     """
-    Insert up to n new objects of a given class into the scene graph.
-    Each object is placed on a different surface.
-
-    Args:
-        graph (dict): Scene graph to modify in place.
-        prefab_classes (dict): Mapping from class name to prefab list.
-        class_placements (dict): Mapping from class name to placement options.
-        target_class (str): The object class to insert (e.g., "book").
-        relations (list[str]): Allowed relations (e.g., ["ON", "IN"]).
-        n (int): Number of objects to insert.
-        verbose (bool): If True, print detailed steps.
+    Insert up to n new objects of a given class into the scene graph, each in a different room.
 
     Returns:
         dict: Modified graph
@@ -683,80 +673,66 @@ def insert_object_with_placement(graph, prefab_classes, class_placements, target
             print(f"❌ No placement rules for class '{target_class}' with relations {relations}")
         return graph
 
-    # Step 3: Collect valid surface candidates
+    # Step 3: Collect surface-node + room pairs
     all_surface_candidates = []
     for option in placement_options:
         surface_class = option["destination"]
         rel = option["relation"]
         candidates = [node for node in graph["nodes"] if node["class_name"] == surface_class]
         for node in candidates:
-            all_surface_candidates.append((node, rel))
+            room_node = find_room_of_node(graph, node["id"])
+            if not room_node:
+                continue  # skip if room not found
+            all_surface_candidates.append((node, room_node, rel))
 
-    # Remove surfaces already used within this call
-    used_surface_ids = set()
+    # Step 4: Filter to one surface per unique room
+    room_to_surface = {}
+    for surface_node, room_node, rel in all_surface_candidates:
+        room_id = room_node["id"]
+        if room_id not in room_to_surface:
+            room_to_surface[room_id] = (surface_node, rel, room_node)
 
-    # Step 4: Limit n to available unique surfaces and prefabs
-    available_surfaces = [
-        (node, rel) for (node, rel) in all_surface_candidates
-        if node["id"] not in used_surface_ids
-    ]
-    unique_surface_ids = {node["id"] for (node, _) in available_surfaces}
-    n_max = min(n, len(unique_surface_ids), len(prefab_candidates))
+    available_placements = list(room_to_surface.values())
+    n_max = min(n, len(available_placements), len(prefab_candidates))
+    if n > n_max and verbose:
+        print(f"⚠️ Reducing n from {n} to {n_max} due to limited rooms or prefabs.")
+    n = n_max
 
-    if n > n_max:
-        if verbose:
-            print(f"⚠️ Reducing n from {n} to {n_max} due to limited surfaces or prefabs.")
-        n = n_max
-
-    # Step 5: Randomize and place
+    # Step 5: Shuffle and insert
     random.shuffle(prefab_candidates)
-    random.shuffle(available_surfaces)
+    random.shuffle(available_placements)
 
     prefab_iter = iter(prefab_candidates)
-    surface_iter = iter(available_surfaces)
-
-    for _ in range(n):
+    for i in range(n):
         try:
             prefab_name = next(prefab_iter)
-            while True:
-                surface_node, relation_type = next(surface_iter)
-                if surface_node["id"] not in used_surface_ids:
-                    used_surface_ids.add(surface_node["id"])
-                    break
+            surface_node, rel, room_node = available_placements[i]
         except StopIteration:
-            break  # no more surfaces or prefabs
+            break
 
         new_id = max([node['id'] for node in graph['nodes']], default=0) + 1
         new_node = {
             "id": new_id,
             "prefab_name": prefab_name,
             "class_name": target_class,
-            "properties": ["GRABBABLE"],  # optional
+            "properties": ["GRABBABLE"],
         }
         graph['nodes'].append(new_node)
         graph['edges'].append({
             "from_id": new_id,
             "to_id": surface_node["id"],
-            "relation_type": relation_type
+            "relation_type": rel
         })
-        # Facing edge (toward room)
-        room_node = find_room_of_node(graph, surface_node["id"])
-        if room_node:
-            graph['edges'].append({
-                "from_id": new_id,
-                "to_id": room_node["id"],
-                "relation_type": "FACING"
-            })
-            if verbose:
-                print(f"   ↪️ Added FACING edge to room '{room_node['class_name']}' (id={room_node['id']})")
-        else:
-            if verbose:
-                print("   ⚠️ Could not find room for FACING edge.")
-        
+        graph['edges'].append({
+            "from_id": new_id,
+            "to_id": room_node["id"],
+            "relation_type": "FACING"
+        })
+
         inserted_ids.append(new_id)
 
         if verbose:
-            print(f"✅ Inserted {target_class} '{prefab_name}' (id={new_id}) {relation_type} {surface_node['class_name']} (id={surface_node['id']})")
+            print(f"✅ Inserted {target_class} '{prefab_name}' (id={new_id}) {rel} {surface_node['class_name']} (id={surface_node['id']}) in room {room_node['class_name']} (id={room_node['id']})")
 
     return graph
 

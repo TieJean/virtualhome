@@ -13,7 +13,8 @@ import hashlib
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Collect data for virtual home')
-    parser.add_argument('--script_dir', type=str, default="example_scripts", help='Directory containing scripts')
+    # parser.add_argument('--script_dir', type=str, default="example_scripts", help='Directory containing scripts')
+    parser.add_argument('--script_dir', type=str, default=None, help='Directory containing scripts')
     parser.add_argument("--graph_dir", type=str, default="example_graphs", help="Directory containing scene graphs")
     parser.add_argument('--target_classes', nargs='+', type=str, default=["book"], help='List of target ambiguous manipulable object classes')
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
@@ -63,7 +64,7 @@ def prepare_scene(args, comm, scene_id: int):
     
     for target_class in args.target_classes:
         success, graph = comm.environment_graph()
-        graph = insert_object_with_placement(graph, args.prefab_classes, args.class_placements, target_class, relations=["ON"], n=2, verbose=True)
+        graph = insert_object_with_placement(graph, args.prefab_classes, args.class_placements, target_class, relations=["ON"], n=3, verbose=True)
         success, message = comm.expand_scene(graph)
         if not success:
             print("Failed to expand scene:", message)
@@ -120,7 +121,15 @@ def record_graph(args, comm, prefix: str, script: list):
     
     comm.add_character('chars/Female2', initial_room='bathroom')
     success, graph = comm.environment_graph()
+    
+    if len(script) == 0:
+        script = generate_walk_find_script(graph, args.target_classes)
+        script_path = os.path.join(image_dir, "script_generated.txt")
+        with open(script_path, "w") as f:
+            for line in script:
+                f.write(line + "\n")
     print("prefix: ", prefix)
+    
     success, message = comm.render_script(script=script,
                                         processing_time_limit=2000,
                                         find_solution=False,
@@ -155,23 +164,25 @@ def run_once(args, comm, scene_id: int):
     if not prepare_scene(args, comm, scene_id):
         print(f"Failed to prepare scene {scene_id}.")
         return
-    import pdb; pdb.set_trace()
     
     graphs = []
     _, graph = comm.environment_graph()
     graphs.append(graph)
     
-    # for i in range(1, 6): # TODO
-    #     if not replace_objects(args, comm):
-    #         continue
-    #     _, graph = comm.environment_graph()
-    #     graphs.append(graph)
+    for i in range(1, 4): # TODO
+        if not replace_objects(args, comm):
+            continue
+        _, graph = comm.environment_graph()
+        graphs.append(graph)
     
     dataset_name = get_dataset_name(args.target_classes, scene_id)
     
-    script_path = os.path.join(args.script_dir, f"robot_scene_{scene_id}_script.txt")
-    with open(script_path, "r") as f:
-        script = [line.strip() for line in f if line.strip()]
+    if args.script_dir is not None:
+        script_path = os.path.join(args.script_dir, f"robot_scene_{scene_id}_script.txt")
+        with open(script_path, "r") as f:
+            script = [line.strip() for line in f if line.strip()]
+    else:
+        script = []
     
     for i, graph in enumerate(graphs):
         prefix = f"{dataset_name}_{i}" # TODO

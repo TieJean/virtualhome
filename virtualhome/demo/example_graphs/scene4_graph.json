@@ -788,6 +788,44 @@
       "states": []
     },
     {
+      "id": 32,
+      "category": "Furniture",
+      "class_name": "wallshelf",
+      "prefab_name": "PRE_FUR_Shelf_07",
+      "obj_transform": {
+        "position": [
+          0.001,
+          1.041,
+          -3.563
+        ],
+        "rotation": [
+          0.0,
+          -0.707106,
+          0.0,
+          0.7071076
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "bounding_box": {
+        "center": [
+          0.001,
+          0.967366,
+          -3.56300116
+        ],
+        "size": [
+          1.00000072,
+          0.1819556,
+          0.2722753
+        ]
+      },
+      "properties": [],
+      "states": []
+    },
+    {
       "id": 33,
       "category": "Furniture",
       "class_name": "wallshelf",
@@ -4641,6 +4679,44 @@
         "SURFACES",
         "MOVABLE"
       ],
+      "states": []
+    },
+    {
+      "id": 139,
+      "category": "Furniture",
+      "class_name": "wallshelf",
+      "prefab_name": "PRE_FUR_Shelf_05",
+      "obj_transform": {
+        "position": [
+          5.225,
+          1.194,
+          -6.04200029
+        ],
+        "rotation": [
+          0.0,
+          0.7071069,
+          0.0,
+          -0.707106769
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "bounding_box": {
+        "center": [
+          5.225,
+          1.120366,
+          -6.04200172
+        ],
+        "size": [
+          1.00000036,
+          0.1819556,
+          0.272273481
+        ]
+      },
+      "properties": [],
       "states": []
     },
     {
@@ -8820,6 +8896,44 @@
       "states": [
         "OFF"
       ]
+    },
+    {
+      "id": 252,
+      "category": "Furniture",
+      "class_name": "wallshelf",
+      "prefab_name": "PRE_FUR_Shelf_05",
+      "obj_transform": {
+        "position": [
+          2.4845,
+          1.064,
+          -11.043
+        ],
+        "rotation": [
+          0.0,
+          -0.707105041,
+          0.0,
+          0.7071085
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "bounding_box": {
+        "center": [
+          2.48449945,
+          0.990366,
+          -11.0430012
+        ],
+        "size": [
+          1.00000131,
+          0.1819556,
+          0.272277951
+        ]
+      },
+      "properties": [],
+      "states": []
     },
     {
       "id": 253,
@@ -13704,6 +13818,11 @@
       "relation_type": "INSIDE"
     },
     {
+      "from_id": 32,
+      "to_id": 11,
+      "relation_type": "INSIDE"
+    },
+    {
       "from_id": 33,
       "to_id": 11,
       "relation_type": "INSIDE"
@@ -14160,6 +14279,11 @@
     },
     {
       "from_id": 138,
+      "to_id": 111,
+      "relation_type": "INSIDE"
+    },
+    {
+      "from_id": 139,
       "to_id": 111,
       "relation_type": "INSIDE"
     },
@@ -14650,6 +14774,11 @@
     },
     {
       "from_id": 251,
+      "to_id": 214,
+      "relation_type": "INSIDE"
+    },
+    {
+      "from_id": 252,
       "to_id": 214,
       "relation_type": "INSIDE"
     },
@@ -15295,12 +15424,12 @@
     },
     {
       "from_id": 97,
-      "to_id": 98,
+      "to_id": 29,
       "relation_type": "ON"
     },
     {
       "from_id": 97,
-      "to_id": 29,
+      "to_id": 98,
       "relation_type": "ON"
     },
     {
@@ -15320,12 +15449,12 @@
     },
     {
       "from_id": 105,
-      "to_id": 106,
+      "to_id": 29,
       "relation_type": "ON"
     },
     {
       "from_id": 105,
-      "to_id": 29,
+      "to_id": 106,
       "relation_type": "ON"
     },
     {
@@ -15360,12 +15489,12 @@
     },
     {
       "from_id": 138,
-      "to_id": 196,
+      "to_id": 116,
       "relation_type": "ON"
     },
     {
       "from_id": 138,
-      "to_id": 116,
+      "to_id": 196,
       "relation_type": "ON"
     },
     {
@@ -15470,12 +15599,12 @@
     },
     {
       "from_id": 193,
-      "to_id": 138,
+      "to_id": 182,
       "relation_type": "ON"
     },
     {
       "from_id": 193,
-      "to_id": 182,
+      "to_id": 138,
       "relation_type": "ON"
     },
     {
@@ -15510,12 +15639,12 @@
     },
     {
       "from_id": 212,
-      "to_id": 138,
+      "to_id": 186,
       "relation_type": "ON"
     },
     {
       "from_id": 212,
-      "to_id": 186,
+      "to_id": 138,
       "relation_type": "ON"
     },
     {
@@ -16210,6 +16339,11 @@
     },
     {
       "from_id": 84,
+      "to_id": 109,
+      "relation_type": "FACING"
+    },
+    {
+      "from_id": 32,
       "to_id": 109,
       "relation_type": "FACING"
     },

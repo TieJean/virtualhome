@@ -11,7 +11,8 @@ from graph_utils import *
 from viz_utils import *
 
 scene_and_remove_ids = {
-    4: [31, 32, 34, 132, 139, 252]
+    # 4: [31, 32, 34, 132, 139, 252]
+    4: [31, 34, 132]
 }
 
 def parse_args():
