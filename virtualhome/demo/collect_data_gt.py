@@ -2,6 +2,7 @@ from tqdm import tqdm
 import os, json, argparse
 import sys
 import cv2
+import imageio.v3 as iio
 
 sys.path.append('../simulation')
 from unity_simulator.comm_unity import UnityCommunication
@@ -59,16 +60,35 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
         f for f in os.listdir(simulation_data_dir)
         if f.endswith('_normal.png')
     ])
+    depth_files = sorted([
+        f for f in os.listdir(simulation_data_dir)
+        if f.endswith('_depth.exr')
+    ])
+    assert len(seg_class_files) == len(hip_positions), (
+        f"Mismatch: {len(seg_class_files)} seg_class files vs {len(hip_positions)} hip positions"
+    )
     assert len(seg_class_files) == len(normal_files), (
         f"Mismatch: {len(seg_class_files)} seg_class files vs {len(normal_files)} normal files"
+    )
+    assert len(seg_class_files) == len(depth_files), (
+        f"Mismatch: {len(depth_files)} depth files vs {len(normal_files)} normal files"
     )
     assert len(seg_class_files) == len(hip_positions), (
         f"Mismatch: {len(seg_class_files)} seg_class files vs {len(hip_positions)} hip positions"
     )
     
     frame_data = []
-    for seg_cls_filename, normal_filename in tqdm(zip(seg_class_files, normal_files), total=len(seg_class_files), desc="Processing frames"):
+    for seg_cls_filename, normal_filename, depth_filename, position in tqdm(zip(seg_class_files, normal_files, depth_files, hip_positions), total=len(seg_class_files), desc="Processing frames"):
         idx = normal_files.index(normal_filename)
+        
+        success = comm.move_character(0, position)
+        if not success:
+            print(f"Failed to move character to position {position} at frame {idx}.")
+            continue
+        
+        depth_path = os.path.join(simulation_data_dir, depth_filename)
+        depth_img = iio.imread(depth_path)
+        assert depth_img.dtype in (np.float32, np.float64), f"Unexpected dtype: {depth_img.dtype}"
         
         # Save the normal image to the images directory with a zero-padded filename
         normal_path = os.path.join(simulation_data_dir, normal_filename)
@@ -84,9 +104,22 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
             raise ValueError(f"Failed to read image: {img_path}")
         # Convert to RGB
         rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
-        flat_pixels = rgb_img.reshape(-1, 3)
-        unique_colors = np.unique(flat_pixels, axis=0)
-        unique_colors = [tuple(color) for color in unique_colors if not np.all(color == 0)]
+        # Get scalar depth map
+        if depth_img.ndim == 3 and depth_img.shape[2] == 4:
+            depth_scalar_img = depth_img[..., 0]
+        else:
+            depth_scalar_img = depth_img
+        # Mask to only pixels where depth < 2.0
+        valid_mask = (depth_scalar_img < 2.0)
+        # Apply depth mask to RGB segmentation image
+        rgb_masked = rgb_img[valid_mask]
+        # Remove black pixels and get unique colors
+        non_black = rgb_masked[~np.all(rgb_masked == 0, axis=1)]
+        unique_colors = np.unique(non_black, axis=0)
+        
+        # flat_pixels = rgb_img.reshape(-1, 3)
+        # unique_colors = np.unique(flat_pixels, axis=0)
+        # unique_colors = [tuple(color) for color in unique_colors if not np.all(color == 0)]
 
         # Map each color to class name
         detected_classes = []

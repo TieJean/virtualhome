@@ -8553,6 +8553,11 @@
     ], 
     "book": [
         {
+            "destination": "kitchen_counter", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "bathroom_counter", 
             "relation": "ON", 
             "room": "null"

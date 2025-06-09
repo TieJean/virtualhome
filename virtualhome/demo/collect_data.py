@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument('--script_dir', type=str, default=None, help='Directory containing scripts')
     parser.add_argument("--graph_dir", type=str, default="example_graphs", help="Directory containing scene graphs")
     parser.add_argument('--target_classes', nargs='+', type=str, default=["book"], help='List of target ambiguous manipulable object classes')
+    parser.add_argument('-nobjects', type=int, default=3, help='Number of objects to place in the scene')
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     return parser.parse_args()
 
@@ -64,7 +65,7 @@ def prepare_scene(args, comm, scene_id: int):
     
     for target_class in args.target_classes:
         success, graph = comm.environment_graph()
-        graph = insert_object_with_placement(graph, args.prefab_classes, args.class_placements, target_class, relations=["ON"], n=3, verbose=True)
+        graph = insert_object_with_placement(graph, args.prefab_classes, args.class_placements, target_class, relations=["ON"], n=args.nobjects, verbose=True)
         success, message = comm.expand_scene(graph)
         if not success:
             print("Failed to expand scene:", message)
@@ -99,7 +100,7 @@ def replace_objects(args, comm, verbose:bool = False):
             target_class, 
             relations=["ON"], 
             prefab_candidates=class_to_prefabs[target_class],
-            n=3, 
+            n=args.nobjects, 
             verbose=verbose
         )
         success, message = comm.expand_scene(graph)
