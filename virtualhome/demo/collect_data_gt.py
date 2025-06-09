@@ -85,6 +85,11 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
         if not success:
             print(f"Failed to move character to position {position} at frame {idx}.")
             continue
+        # Visibility annotations per pano view
+        visible_by_camera = {}
+        for cam_idx, cam_id in enumerate(pano_camera_select):
+            _, visible_objects = comm.get_visible_objects(cam_id)
+            visible_by_camera[f"pano_{cam_idx}"] = list(visible_objects.keys())
         
         depth_path = os.path.join(simulation_data_dir, depth_filename)
         depth_img = iio.imread(depth_path)
@@ -110,7 +115,7 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
         else:
             depth_scalar_img = depth_img
         # Mask to only pixels where depth < 2.0
-        valid_mask = (depth_scalar_img < 2.0)
+        valid_mask = (depth_scalar_img < 2.5)
         # Apply depth mask to RGB segmentation image
         rgb_masked = rgb_img[valid_mask]
         # Remove black pixels and get unique colors
@@ -127,12 +132,6 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
             class_name = semantic_rgb_to_cls(color, class_list)
             detected_classes.append(class_name)
             
-        # Visibility annotations per pano view
-        visible_by_camera = {}
-        for cam_idx, cam_id in enumerate(pano_camera_select):
-            _, visible_objects = comm.get_visible_objects(cam_id)
-            visible_by_camera[f"pano_{cam_idx}"] = list(visible_objects.keys())
-        
         frame_data.append(
             [idx, visible_by_camera, detected_classes]
         )

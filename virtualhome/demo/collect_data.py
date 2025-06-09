@@ -187,7 +187,7 @@ def run_once(args, comm, scene_id: int):
     
     for i, graph in enumerate(graphs):
         prefix = f"{dataset_name}_{i}" # TODO
-        # prefix = "test"
+        prefix = "test"
         comm.reset(scene_id)
         success, message = comm.expand_scene(graph)
         if not success:
@@ -217,6 +217,8 @@ def run_once(args, comm, scene_id: int):
         with open(class_prefabs_path, "w") as f:
             for cls, prefabs in class_to_prefabs.items():
                 f.write(','.join([cls] + prefabs) + "\n")
+                
+        import pdb; pdb.set_trace()
 
 if __name__ == "__main__":
     args = parse_args()
