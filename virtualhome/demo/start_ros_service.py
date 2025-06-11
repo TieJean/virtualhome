@@ -27,7 +27,9 @@ from amrl_msgs.srv import (
     FindObjectSrvResponse,
     SemanticObjectDetectionSrv,
     SemanticObjectDetectionSrvRequest,
-    SemanticObjectDetectionSrvResponse
+    SemanticObjectDetectionSrvResponse,
+    ChangeVirtualHomeGraphSrv,
+    ChangeVirtualHomeGraphSrvResponse,
 )
 
 comm = None
@@ -35,7 +37,7 @@ pano_camera_select = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Virtual Home ROS Service')
-    parser.add_argument("--graph_path", type=str, required=True, help="Path to the scene graph")
+    # parser.add_argument("--graph_path", type=str, required=True, help="Path to the scene graph")
     return parser.parse_args()
 
 ### Helper Functions ###
@@ -70,7 +72,7 @@ def observe():
 ### Handle Service Requests ###
 def handle_navigate_request(req):
     global comm
-    rospy.loginfo("Received navigate request")
+    rospy.loginfo(f"Received navigate request: ({req.x}, {req.y}, {req.z})")
     
     success = comm.move_character(0, [req.x, req.y, req.z])
     return GetImageAtPoseSrvResponse(success=success)
@@ -95,6 +97,7 @@ def handle_visible_objects_request(req):
         for obj_id in visible_objects.keys():
             unique_ids.add(int(obj_id))
     
+    success, graph = comm.environment_graph()
     nodes = extract_nodes_by_ids(graph["nodes"], unique_ids)
     
     # Format return values
@@ -122,6 +125,12 @@ def handle_find_request(req):
                 break
     success = (target_node_id is not None)
     rospy.loginfo(f"Find request for '{req.query_text}': success={success}, id={target_node_id}")
+    if not success:
+        ok_img, imgs = comm.camera_image(pano_camera_select, mode="normal")
+        view_pil = display_grid_img(imgs, nrows=2)
+        view_pil.save("../../outputs/debug_find_object.png")
+        # import pdb; pdb.set_trace()
+        
     return FindObjectSrvResponse(
         success=success,
         id=target_node_id,
@@ -170,6 +179,35 @@ def handle_pick_request(req):
         success=success,
         instance_uid=instance_uid
     )
+    
+def handle_virtualhome_scene_request(req):
+    global comm, pano_camera_select
+    rospy.loginfo(f"Received change virtual home graph request: {req.graph_path}")
+    
+    with open(req.graph_path, "r") as f:
+        graph = json.load(f)
+    
+    if graph is None:
+        import pdb; pdb.set_trace()
+        return ChangeVirtualHomeGraphSrvResponse(success=False)
+    
+    if req.scene_id is not None:
+        comm.reset(req.scene_id)
+    else:
+        comm.reset()
+    success, message = comm.expand_scene(graph)
+    if not success:
+        import pdb; pdb.set_trace()
+        return ChangeVirtualHomeGraphSrvResponse(success=False)
+    
+    s, nc_before = comm.camera_count()
+    prepare_pano_character_camera(comm)
+    comm.add_character('chars/Female2', initial_room='bathroom')
+    s, nc_after = comm.camera_count()
+    cameras_select = list(range(nc_before, nc_after))
+    pano_camera_select = cameras_select[8:14]
+    
+    return ChangeVirtualHomeGraphSrvResponse(success=success)
 
 if __name__ == "__main__":
     rospy.init_node('virtualhome_ros', anonymous=True)
@@ -178,24 +216,17 @@ if __name__ == "__main__":
     
     comm = UnityCommunication()
     comm.timeout_wait = 300
-    with open(args.graph_path, "r") as f:
-        graph = json.load(f)
-    if graph is None:
-        raise ValueError(f"Failed to load graph from {args.graph_path}")
+    # with open(args.graph_path, "r") as f:
+        # graph = json.load(f)
+    # if graph is None:
+        # raise ValueError(f"Failed to load graph from {args.graph_path}")
     
-    comm.reset()
-    success, message = comm.expand_scene(graph)
-    if not success:
-        print(f"Failed to load scene from {args.graph_path} to the simulator:", message)
-        sys.exit(1)
+    # comm.reset()
+    # success, message = comm.expand_scene(graph)
+    # if not success:
+        # print(f"Failed to load scene from {args.graph_path} to the simulator:", message)
+        # sys.exit(1)
         
-    s, nc_before = comm.camera_count()
-    prepare_pano_character_camera(comm)
-    comm.add_character('chars/Female2', initial_room='bathroom')
-    s, nc_after = comm.camera_count()
-    cameras_select = list(range(nc_before, nc_after))
-    pano_camera_select = cameras_select[8:14]
-    
     rospy.Service('/moma/navigate', GetImageAtPoseSrv, handle_navigate_request)
     rospy.loginfo("Ready to navigate")
     rospy.Service('/moma/observe', GetImageSrv, handle_observe_request)
@@ -206,4 +237,7 @@ if __name__ == "__main__":
     rospy.loginfo("Ready to find objects")
     rospy.Service('/moma/pick_object', PickObjectSrv, handle_pick_request)
     rospy.loginfo("Ready to pick objects")
+    rospy.Service('/moma/change_virtualhome_graph', ChangeVirtualHomeGraphSrv, handle_virtualhome_scene_request)
+    rospy.loginfo("Ready to change virtual home graph")
+    
     rospy.spin()

@@ -241,7 +241,7 @@ def run(args):
         if not graph:
             raise ValueError(f"Graph data is empty for {dataname}. Please ensure the graph is generated before post-processing.")
         
-        comm.reset()
+        comm.reset(4)
         success, message = comm.expand_scene(graph)
         if not success:
             raise RuntimeError(f"Failed to expand scene for {dataname}: {message}")

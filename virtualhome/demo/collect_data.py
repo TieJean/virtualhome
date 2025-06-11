@@ -2,6 +2,7 @@ from tqdm import tqdm
 import sys, os
 import json
 import argparse
+import copy
 
 sys.path.append('../simulation')
 from unity_simulator.comm_unity import UnityCommunication
@@ -168,13 +169,13 @@ def run_once(args, comm, scene_id: int):
     
     graphs = []
     _, graph = comm.environment_graph()
-    graphs.append(graph)
+    graphs.append(copy.deepcopy(graph))
     
     for i in range(1, 4): # TODO
         if not replace_objects(args, comm):
             continue
         _, graph = comm.environment_graph()
-        graphs.append(graph)
+        graphs.append(copy.deepcopy(graph))
     
     dataset_name = get_dataset_name(args.target_classes, scene_id)
     
@@ -184,10 +185,10 @@ def run_once(args, comm, scene_id: int):
             script = [line.strip() for line in f if line.strip()]
     else:
         script = []
-    
+
     for i, graph in enumerate(graphs):
         prefix = f"{dataset_name}_{i}" # TODO
-        prefix = "test"
+        # prefix = "test"
         comm.reset(scene_id)
         success, message = comm.expand_scene(graph)
         if not success:
@@ -218,8 +219,6 @@ def run_once(args, comm, scene_id: int):
             for cls, prefabs in class_to_prefabs.items():
                 f.write(','.join([cls] + prefabs) + "\n")
                 
-        import pdb; pdb.set_trace()
-
 if __name__ == "__main__":
     args = parse_args()
     
