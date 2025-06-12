@@ -13,6 +13,7 @@ import atexit
 from sys import platform
 import sys
 import pdb
+import imageio.v3 as iio
 from . import communication
 
 from requests.adapters import HTTPAdapter
@@ -348,7 +349,10 @@ class UnityCommunication(object):
         params = {'mode': mode, 'image_width': image_width, 'image_height': image_height}
         response = self.post_command({'id': str(time.time()), 'action': 'camera_image',
                                       'intParams': camera_indexes, 'stringParams': [json.dumps(params)]})
-        return response['success'], _decode_image_list(response['message_list'])
+        if mode == "depth":
+            return response['success'], _decode_depth_image_list(response['message_list'])
+        else:
+            return response['success'], _decode_image_list(response['message_list'])
 
     def instance_colors(self):
         """
@@ -525,6 +529,21 @@ def _decode_image_list(img_string_list):
         image_list.append(_decode_image(img_string))
     return image_list
 
+def _decode_depth_image(img_string):
+    img_bytes = base64.b64decode(img_string)
+
+    # Try decoding with imageio
+    try:
+        img_file = iio.imread(io.BytesIO(img_bytes), extension=".exr")
+        return img_file
+    except Exception as e:
+        raise RuntimeError(f"Failed to decode image using imageio: {e}")
+    
+def _decode_depth_image_list(img_string_list):
+    image_list = []
+    for img_string in img_string_list:
+        image_list.append(_decode_depth_image(img_string))
+    return image_list
 
 class UnityEngineException(Exception):
     """

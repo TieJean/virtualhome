@@ -113,58 +113,60 @@ def handle_visible_objects_request(req):
         prefabnames=prefabnames
     )
     
+def find_target_node_id(query_text):
+    depth_thresh = 3.0
+    
+    target_node_id = None
+    
+    for _ in range(6):
+        ok_img, normal_imgs = comm.camera_image(cameras_select[2:3], mode="normal")
+        ok_img, cls_imgs = comm.camera_image(cameras_select[2:3], mode="seg_class")
+        ok_img, depth_imgs = comm.camera_image(cameras_select[2:3], mode="depth")
+        normal_img = normal_imgs[0]
+        cls_img = cls_imgs[0]
+        
+        depth_img = depth_imgs[0]
+        if depth_img.ndim == 3 and depth_img.shape[2] == 4:
+            depth_scalar_img = depth_img[..., 0]
+        else:
+            depth_scalar_img = depth_img
+        valid_mask = (depth_scalar_img < depth_thresh)
+        bgr_masked = cls_img[valid_mask]
+        
+        target_color = semantic_cls_to_bgr(query_text, class_list)
+        match_mask = np.all(bgr_masked == target_color, axis=-1)
+        display_grid_img(normal_imgs, nrows=1).save("../../outputs/debug.png")
+        if np.any(match_mask):
+            _, visible_objects = comm.get_visible_objects(cameras_select[2])
+            for node_id, cls_name in visible_objects.items():
+                if cls_name.lower() == query_text.lower():
+                    target_node_id = int(node_id)
+                    rospy.loginfo(f"Found target node ID: {target_node_id}")
+                    return target_node_id 
+    
+        script = ["<char0> [TurnRight]", "<char0> [TurnRight]"]
+        success, message = comm.render_script(script=script,
+                                    processing_time_limit=30,
+                                    find_solution=False,
+                                    image_width=640,
+                                    image_height=480,  
+                                    skip_animation=True,
+                                    recording=False,
+                                    save_pose_data=False)
+        if not success:
+            rospy.logerr(f"Failed to turn character: {message}")
+            return FindObjectSrvResponse(success=False, id=None)
+        
+    return target_node_id
+    
 def handle_find_request(req):
     global comm
     rospy.loginfo("Received find request")
     
-    target_node_id = None
-    for cam in pano_camera_select:
-        _, visible_objects = comm.get_visible_objects(cam)
-        for node_id, cls_name in visible_objects.items():
-            # TODO: need to use VLM to determine the right query_text
-            if cls_name.lower() == req.query_text.lower():
-                target_node_id = int(node_id)
-                break
-    success = (target_node_id is not None)
-    rospy.loginfo(f"Find request for '{req.query_text}': success={success}, id={target_node_id}")
+    target_node_id = find_target_node_id(req.query_text)
     
-    if not success:
-        ok_img, imgs = comm.camera_image(pano_camera_select, mode="normal")
-        view_pil = display_grid_img(imgs, nrows=2)
-        view_pil.save("../../outputs/debug_find_object.png")
-        
-        for _ in range(6):
-            ok_img, normal_imgs = comm.camera_image(cameras_select[2:3], mode="normal")
-            ok_img, cls_imgs = comm.camera_image(cameras_select[2:3], mode="seg_class")
-            normal_img = normal_imgs[0]
-            cls_img = cls_imgs[0]
-            
-            target_color = semantic_cls_to_bgr(req.query_text, class_list)
-            match_mask = np.all(cls_img == target_color, axis=-1)
-            
-            display_grid_img(normal_imgs, nrows=1).save("../../outputs/debug.png")
-            import pdb; pdb.set_trace()
-            if np.any(match_mask):
-                _, visible_objects = comm.get_visible_objects(cameras_select[2])
-                import pdb; pdb.set_trace()
-                
-            script = ["<char0> [TurnRight]", "<char0> [TurnRight]"]
-            success, message = comm.render_script(script=script,
-                                        processing_time_limit=30,
-                                        find_solution=False,
-                                        image_width=640,
-                                        image_height=480,  
-                                        skip_animation=True,
-                                        recording=False,
-                                        save_pose_data=False)
-            if not success:
-                rospy.logerr(f"Failed to turn character: {message}")
-                return FindObjectSrvResponse(success=False, id=None)
-        import pdb; pdb.set_trace()
-        
-        
     return FindObjectSrvResponse(
-        success=success,
+        success=target_node_id is not None,
         id=target_node_id,
     )
     
@@ -182,15 +184,8 @@ def handle_pick_request(req):
     rospy.loginfo("Received pick request")
     
     query_text = req.query_text.lower()
+    target_node_id = find_target_node_id(query_text)
     
-    target_node_id = None
-    for cam in pano_camera_select:
-        _, visible_objects = comm.get_visible_objects(cam)
-        for node_id, cls_name in visible_objects.items():
-            # TODO: need to use VLM to determine the right query_text
-            if cls_name.lower() == query_text:
-                target_node_id = int(node_id)
-                break
     if target_node_id is None:
         rospy.logwarn(f"Object '{query_text}' not found in visible objects.")
         return PickObjectSrvResponse(success=False)
