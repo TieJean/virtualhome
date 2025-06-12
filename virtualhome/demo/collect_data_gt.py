@@ -115,7 +115,7 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
         else:
             depth_scalar_img = depth_img
         # Mask to only pixels where depth < 2.0
-        valid_mask = (depth_scalar_img < 2.5)
+        valid_mask = (depth_scalar_img < 3.0)
         # Apply depth mask to RGB segmentation image
         rgb_masked = rgb_img[valid_mask]
         # Remove black pixels and get unique colors
@@ -156,15 +156,16 @@ def postprocess_visibility_once(comm, data_dir: str, dataname: str):
     if not os.path.isfile(pose_path):
         raise FileNotFoundError(f"Missing pose file: {pose_path}")
     
-    hip_positions = []
+    positions = []
     with open(pose_path, "r") as f:
         lines = f.readlines()
         for line in lines[1:]:
             values = line.strip().split()
             if len(values) < 4:
                 continue
-            x, y, z = map(float, values[1:4])
-            hip_positions.append([x, y, z])
+            x1, y1, z1 = map(float, values[1+5*3:4+5*3])
+            x2, y2, z2 = map(float, values[1+6*3:4+6*3])
+            positions.append([(x1+x2)/2, (y1+y2)/2, ((z1+z2)/2)])
     
     s, nc_before = comm.camera_count()
     prepare_pano_character_camera(comm)
@@ -190,7 +191,7 @@ def postprocess_visibility_once(comm, data_dir: str, dataname: str):
 
     # Capture and annotate
     frame_data = []
-    for i, position in enumerate(tqdm(hip_positions, total=len(hip_positions))):
+    for i, position in enumerate(tqdm(positions, total=len(positions))):
         success = comm.move_character(0, position)
         if not success:
             print(f"Failed to move character to position {position} at frame {i}.")

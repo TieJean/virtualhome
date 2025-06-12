@@ -875,6 +875,21 @@ def semantic_cls_to_rgb(class_name: str, class_list: list):
     b = (idx % BINS_PER_CHANNEL) * CHANNEL_GAP
     return (r, g, b)
 
+def semantic_cls_to_bgr(class_name: str, class_list: list):
+    BINS_PER_CHANNEL = 9
+    CHANNEL_GAP = 255 // (BINS_PER_CHANNEL - 1)  # 36
+
+    name = class_name.replace(" ", "").replace("_", "").lower()
+    try:
+        idx = class_list.index(name)
+    except ValueError:
+        raise ValueError(f"Class '{class_name}' not found.")
+
+    r = ((idx // (BINS_PER_CHANNEL * BINS_PER_CHANNEL)) % BINS_PER_CHANNEL) * CHANNEL_GAP
+    g = ((idx // BINS_PER_CHANNEL) % BINS_PER_CHANNEL) * CHANNEL_GAP
+    b = (idx % BINS_PER_CHANNEL) * CHANNEL_GAP
+    return (b, g, r)
+
 def semantic_rgb_to_cls(rgb: tuple, class_list: list):
     # Reconstruct index → class name list
     BINS_PER_CHANNEL = 9

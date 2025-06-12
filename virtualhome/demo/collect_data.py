@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument('--script_dir', type=str, default=None, help='Directory containing scripts')
     parser.add_argument("--graph_dir", type=str, default="example_graphs", help="Directory containing scene graphs")
     parser.add_argument('--target_classes', nargs='+', type=str, default=["book"], help='List of target ambiguous manipulable object classes')
+    parser.add_argument('--clean_surfaces', nargs='+', type=str, default=["desk", "wallshelf", "kitchentable", "plate"], help='List of surfaces to clean')
     parser.add_argument('-nobjects', type=int, default=3, help='Number of objects to place in the scene')
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     return parser.parse_args()
@@ -56,8 +57,9 @@ def prepare_scene(args, comm, scene_id: int):
     
     graph = remove_all_objects_on_surfaces(
         graph, 
+        args.clean_surfaces,
         # ["desk", "wallshelf", "kitchentable", "kitchencounter", "bathroomcounter"]
-        ["desk", "wallshelf", "kitchentable", "plate"]
+        # ["desk", "wallshelf", "kitchentable", "plate"]
     )
     success, message = comm.expand_scene(graph)
     if not success:
@@ -176,7 +178,7 @@ def run_once(args, comm, scene_id: int):
             continue
         _, graph = comm.environment_graph()
         graphs.append(copy.deepcopy(graph))
-    
+    import pdb; pdb.set_trace()
     dataset_name = get_dataset_name(args.target_classes, scene_id)
     
     if args.script_dir is not None:

@@ -63,8 +63,6 @@ def record_graph(comm, prefix: str, script: list, target_classes: list):
     
     return True
 
-
-
 def inspect(comm):
     script_path = "/robodata/taijing/benchmarks/virtualhome/unity_output/scene4_754ab231d3_0/script_generated.txt"
     with open(script_path, "r") as f:

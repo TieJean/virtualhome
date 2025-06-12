@@ -33,6 +33,8 @@ from amrl_msgs.srv import (
 )
 
 comm = None
+class_list = None
+cameras_select = None
 pano_camera_select = None
 
 def parse_args():
@@ -125,11 +127,41 @@ def handle_find_request(req):
                 break
     success = (target_node_id is not None)
     rospy.loginfo(f"Find request for '{req.query_text}': success={success}, id={target_node_id}")
+    
     if not success:
         ok_img, imgs = comm.camera_image(pano_camera_select, mode="normal")
         view_pil = display_grid_img(imgs, nrows=2)
         view_pil.save("../../outputs/debug_find_object.png")
-        # import pdb; pdb.set_trace()
+        
+        for _ in range(6):
+            ok_img, normal_imgs = comm.camera_image(cameras_select[2:3], mode="normal")
+            ok_img, cls_imgs = comm.camera_image(cameras_select[2:3], mode="seg_class")
+            normal_img = normal_imgs[0]
+            cls_img = cls_imgs[0]
+            
+            target_color = semantic_cls_to_bgr(req.query_text, class_list)
+            match_mask = np.all(cls_img == target_color, axis=-1)
+            
+            display_grid_img(normal_imgs, nrows=1).save("../../outputs/debug.png")
+            import pdb; pdb.set_trace()
+            if np.any(match_mask):
+                _, visible_objects = comm.get_visible_objects(cameras_select[2])
+                import pdb; pdb.set_trace()
+                
+            script = ["<char0> [TurnRight]", "<char0> [TurnRight]"]
+            success, message = comm.render_script(script=script,
+                                        processing_time_limit=30,
+                                        find_solution=False,
+                                        image_width=640,
+                                        image_height=480,  
+                                        skip_animation=True,
+                                        recording=False,
+                                        save_pose_data=False)
+            if not success:
+                rospy.logerr(f"Failed to turn character: {message}")
+                return FindObjectSrvResponse(success=False, id=None)
+        import pdb; pdb.set_trace()
+        
         
     return FindObjectSrvResponse(
         success=success,
@@ -160,6 +192,7 @@ def handle_pick_request(req):
                 target_node_id = int(node_id)
                 break
     if target_node_id is None:
+        rospy.logwarn(f"Object '{query_text}' not found in visible objects.")
         return PickObjectSrvResponse(success=False)
     
     script = [f"<char0> [Grab] <{query_text}> ({target_node_id})"]
@@ -175,13 +208,17 @@ def handle_pick_request(req):
     success, graph = comm.environment_graph()
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])[0]
     instance_uid = target_node["prefab_name"]
+    
+    if not success:
+        import pdb; pdb.set_trace()
+    
     return PickObjectSrvResponse(
         success=success,
         instance_uid=instance_uid
     )
     
 def handle_virtualhome_scene_request(req):
-    global comm, pano_camera_select
+    global comm, cameras_select, pano_camera_select
     rospy.loginfo(f"Received change virtual home graph request: {req.graph_path}")
     
     with open(req.graph_path, "r") as f:
@@ -213,6 +250,7 @@ if __name__ == "__main__":
     rospy.init_node('virtualhome_ros', anonymous=True)
     
     args = parse_args()
+    prefab_classes, class_list = load_prefab_metadata("../resources/PrefabClass.json")
     
     comm = UnityCommunication()
     comm.timeout_wait = 300

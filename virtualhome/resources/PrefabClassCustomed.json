@@ -1730,7 +1730,6 @@
         "prefabs":
         [
             "PRE_PRO_Box_01",
-            "PRE_PRO_Box_02",
             "FMGP_PRE_Wooden_box_1024",
             "mH_MovingBoxClosed01",
             "mH_MovingBoxOpen01",
@@ -2233,8 +2232,6 @@
     {"className":"Cupcake",
         "prefabs":
         [
-            "Cupcake_1",
-            "Cupcake_2",
             "DHP_PRE_Pink_cupcake_1024",
             "DHP_PRE_Rainbow_cupcake_1024"
         ]
