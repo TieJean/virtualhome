@@ -42,15 +42,16 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
     if not os.path.isfile(pose_path):
         raise FileNotFoundError(f"Missing pose file: {pose_path}")
     
-    hip_positions = []
+    positions = []
     with open(pose_path, "r") as f:
         lines = f.readlines()
         for line in lines[1:]:
             values = line.strip().split()
             if len(values) < 4:
                 continue
-            x, y, z = map(float, values[1:4])
-            hip_positions.append([x, y, z])
+            x1, y1, z1 = map(float, values[1+5*3:4+5*3])
+            x2, y2, z2 = map(float, values[1+6*3:4+6*3])
+            positions.append([(x1+x2)/2, (y1+y2)/2, ((z1+z2)/2)])
             
     seg_class_files = sorted([
         f for f in os.listdir(simulation_data_dir)
@@ -64,8 +65,8 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
         f for f in os.listdir(simulation_data_dir)
         if f.endswith('_depth.exr')
     ])
-    assert len(seg_class_files) == len(hip_positions), (
-        f"Mismatch: {len(seg_class_files)} seg_class files vs {len(hip_positions)} hip positions"
+    assert len(seg_class_files) == len(positions), (
+        f"Mismatch: {len(seg_class_files)} seg_class files vs {len(positions)} hip positions"
     )
     assert len(seg_class_files) == len(normal_files), (
         f"Mismatch: {len(seg_class_files)} seg_class files vs {len(normal_files)} normal files"
@@ -73,12 +74,12 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
     assert len(seg_class_files) == len(depth_files), (
         f"Mismatch: {len(depth_files)} depth files vs {len(normal_files)} normal files"
     )
-    assert len(seg_class_files) == len(hip_positions), (
-        f"Mismatch: {len(seg_class_files)} seg_class files vs {len(hip_positions)} hip positions"
+    assert len(seg_class_files) == len(positions), (
+        f"Mismatch: {len(seg_class_files)} seg_class files vs {len(positions)} hip positions"
     )
     
     frame_data = []
-    for seg_cls_filename, normal_filename, depth_filename, position in tqdm(zip(seg_class_files, normal_files, depth_files, hip_positions), total=len(seg_class_files), desc="Processing frames"):
+    for seg_cls_filename, normal_filename, depth_filename, position in tqdm(zip(seg_class_files, normal_files, depth_files, positions), total=len(seg_class_files), desc="Processing frames"):
         idx = normal_files.index(normal_filename)
         
         success = comm.move_character(0, position)
@@ -87,9 +88,22 @@ def postprocess_visibility_from_segcls_once(comm, data_dir: str, dataname: str):
             continue
         # Visibility annotations per pano view
         visible_by_camera = {}
-        for cam_idx, cam_id in enumerate(pano_camera_select):
-            _, visible_objects = comm.get_visible_objects(cam_id)
+        for cam_idx in range(6):
+            _, visible_objects = comm.get_visible_objects(cameras_select[2])
             visible_by_camera[f"pano_{cam_idx}"] = list(visible_objects.keys())
+            
+            # Turn character 60 degrees to the right
+            script = ["<char0> [TurnRight]", "<char0> [TurnRight]"]
+            success, message = comm.render_script(script=script,
+                                        processing_time_limit=30,
+                                        find_solution=False,
+                                        image_width=640,
+                                        image_height=480,  
+                                        skip_animation=True,
+                                        recording=False,
+                                        save_pose_data=False)
+            if not success:
+                raise RuntimeError(f"Failed to turn character: {message}")
         
         depth_path = os.path.join(simulation_data_dir, depth_filename)
         depth_img = iio.imread(depth_path)
