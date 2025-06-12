@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--graph_dir", type=str, default="example_graphs", help="Directory containing scene graphs")
     parser.add_argument('--target_classes', nargs='+', type=str, default=["book"], help='List of target ambiguous manipulable object classes')
     parser.add_argument('--clean_surfaces', nargs='+', type=str, default=["desk", "wallshelf", "kitchentable", "plate"], help='List of surfaces to clean')
-    parser.add_argument('-nobjects', type=int, default=3, help='Number of objects to place in the scene')
+    parser.add_argument('--nobjects', type=int, default=3, help='Number of objects to place in the scene')
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     return parser.parse_args()
 
@@ -178,7 +178,7 @@ def run_once(args, comm, scene_id: int):
             continue
         _, graph = comm.environment_graph()
         graphs.append(copy.deepcopy(graph))
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     dataset_name = get_dataset_name(args.target_classes, scene_id)
     
     if args.script_dir is not None:
@@ -250,7 +250,7 @@ if __name__ == "__main__":
             new_placements.append(new_entry)
         normalized_class_placements[new_key] = new_placements
     
-    args.prefab_classes = prefab_classes
+    args.prefab_classes = {k.replace("_", "").lower(): v for k, v in prefab_classes.items()}
     args.class_placements = normalized_class_placements
     
     comm = UnityCommunication(port="8080")

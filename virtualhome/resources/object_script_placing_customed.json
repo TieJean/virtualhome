@@ -1165,6 +1165,21 @@
     ], 
     "folder": [
         {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "kitchen_table", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "nightstand", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
             "destination": "couch", 
             "relation": "ON", 
             "room": "null"
@@ -4956,6 +4971,21 @@
         }, 
         {
             "destination": "bookshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "kitchen_table", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "bathroom_counter", 
             "relation": "ON", 
             "room": "null"
         }, 

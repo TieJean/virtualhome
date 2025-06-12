@@ -2099,14 +2099,6 @@
     {"className":"Clothes_shirt",
         "prefabs":
         [
-            "MOD_PRO_Shirt_01",
-            "MOD_PRO_Shirt_02",
-            "MOD_PRO_Shirt_03",
-            "MOD_PRO_Shirt_04",
-            "MOD_PRO_Shirt_05",
-            "MOD_PRO_Shirt_06",
-            "MOD_PRO_Shirt_07",
-            "MOD_PRO_Shirt_08",
             "PRE_PRO_Shirt_01",
             "PRE_PRO_Shirt_02",
             "PRE_PRO_Shirt_03",
@@ -2905,9 +2897,7 @@
         [
             "Magazine_4",
             "Magazine_5",
-            "Magazine_7",
             "Magazine_7a",
-            "Magazine_7b",
             "Magazine_7c",
             "Magazine_7d",
             "Magazine_7e",
@@ -2918,7 +2908,6 @@
             "Magazine_7j",
             "Magazine_7k",
             "Magazine_7l",
-            "Magazine_7m",
             "Magazine_7n",
             "Magazine_7o",
             "Magazine_7p"
