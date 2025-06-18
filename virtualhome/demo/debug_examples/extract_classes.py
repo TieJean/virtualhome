@@ -9,7 +9,7 @@ import tqdm
 def parse_args():
     parser = argparse.ArgumentParser(description="Extract classes from a graph JSON file.")
     parser.add_argument("--data_dir", type=str, required=True, help="Path to the directory that contains all image files.")
-    parser.add_argument("--depth_thresh", type=float, default=5.0, help="Depth threshold for filtering objects.")
+    parser.add_argument("--depth_thresh", type=float, default=20.0, help="Depth threshold for filtering objects.")
     return parser.parse_args()
 
 def load_prefab_metadata(prefab_path: str = "../resources/PrefabClass.json") -> dict:
@@ -85,7 +85,7 @@ def extract_classes(args):
         # Convert to RGB
         rgb_img = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
         
-        valid_mask = (depth_scalar_img < 3.0)
+        valid_mask = (depth_scalar_img < args.depth_thresh)
         # Apply depth mask to RGB segmentation image
         rgb_masked = rgb_img[valid_mask]
         # Remove black pixels and get unique colors
@@ -95,6 +95,9 @@ def extract_classes(args):
         for color in unique_colors:
             class_name = semantic_rgb_to_cls(color, args.class_list)
             detected_classes.append(class_name)
+            
+        print("Detected classes in this image:", detected_classes)
+        exit(0)
 
     return list(set(detected_classes))
 
