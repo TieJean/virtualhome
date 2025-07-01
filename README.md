@@ -47,6 +47,12 @@ cd virtualhome/demo
 python unity_demo.py
 ```
 
+To run the data collection pipeline:
+```
+python collect_data.py --target_classes magazine --clean_surfaces wallshelf desk --seed 41
+python collect_data_gt.py --datanames <unity_output_1>  <unity_output_2> ....
+```
+
 ## Important Files
 ```
 virtualhome/
