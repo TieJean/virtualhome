@@ -41,6 +41,12 @@ Kill this process by running:
 kill -9 <PID>
 ```
 
+To verify everything is started correctly, run:
+```bash
+cd virtualhome/demo
+python unity_demo.py
+```
+
 ## Important Files
 ```
 virtualhome/

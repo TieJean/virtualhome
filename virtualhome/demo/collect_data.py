@@ -173,13 +173,16 @@ def run_once(args, comm, scene_id: int):
     _, graph = comm.environment_graph()
     graphs.append(copy.deepcopy(graph))
     
-    for i in range(1, 4): # TODO
+    for i in range(1, 2): # TODO
         if not replace_objects(args, comm):
             continue
         _, graph = comm.environment_graph()
         graphs.append(copy.deepcopy(graph))
-    # import pdb; pdb.set_trace()
-    dataset_name = get_dataset_name(args.target_classes, scene_id)
+    
+    if args.nobjects == 1 and len(args.target_classes) == 1:
+        dataset_name = f"scene{scene_id}_{args.target_classes[0]}"
+    else:
+        dataset_name = get_dataset_name(args.target_classes, scene_id)
     
     if args.script_dir is not None:
         script_path = os.path.join(args.script_dir, f"robot_scene_{scene_id}_script.txt")
