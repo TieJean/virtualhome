@@ -1,6 +1,11 @@
 import argparse
 import json
 import sys
+from PIL import ImageDraw
+
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate
 
 # Simulation
 sys.path.append('../simulation')
@@ -31,11 +36,13 @@ from amrl_msgs.srv import (
     ChangeVirtualHomeGraphSrv,
     ChangeVirtualHomeGraphSrvResponse,
 )
+from geometry_msgs.msg import Point
 
 comm = None
 class_list = None
 cameras_select = None
 pano_camera_select = None
+vlm = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Virtual Home ROS Service')
@@ -164,49 +171,203 @@ def _get_query_text(txt: str) -> str:
         return "toy"
     elif "book" in txt:
         return "book"
-    elif "folder" in txt:
+    elif "folder" in txt or "binder" in txt:
         return "folder"
     elif "magazine" in txt:
         return "magazine"
     else:
         raise ValueError(f"Unknown query text: {txt}")
     
+def _find_instance(query_text: str, query_cls: str, ref_image):
+    """
+    Find the instance UID of the object based on the query text.
+    """
+    global comm, vlm
+    
+    messages = []
+    messages += [
+        SystemMessage(content=(
+           "You are a visual object-matching assistant. "
+            "The user is looking for a specific object and will provide (1) a text description and (2) a reference image of the object as previously observed. "
+            "Next, you will be shown several current camera views. Each view contains **red bounding boxes** labeled `Instance: {i}`. "
+            "Your job is to determine whether any of the labeled instances match the reference object. "
+            "If a match exists, reply with the **single most confident** instance ID (e.g., 0, 1, 2, ...). "
+            "If no match is present, reply with **-1**. "
+            "**Do not explain or justify your choice — reply with the integer only.**"
+        ))
+    ]
+    messages += [
+        HumanMessage(content=(
+            f"The user is searching for: {query_text}. "
+            "If any of the candidate instances match this object, reply with the matching instance ID. "
+            "If none of them match, reply with -1. "
+            "This is the reference image showing where the user last saw the object:"
+        ))
+    ]
+    
+    # Step 1: Encode reference image
+    encoded_img = ros_image_to_base64(ref_image)
+    ref_img_msg = [get_vlm_img_message(encoded_img)]
+    
+    messages += [HumanMessage(content=ref_img_msg)]
+    
+    # Step 2: Get images from simulator
+    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
+    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
+    (ok_img, inst_imgs) = comm.camera_image(pano_camera_select, mode="seg_inst")
+
+    # Step 3: Save for debug
+    view_pil = display_grid_img(imgs + cls_imgs + inst_imgs, nrows=3)
+    view_pil.save("../../outputs/debug_find_instance.png")
+
+    # Step 4: Get scene graph
+    success, graph = comm.environment_graph()
+    
+    # Step 5: Parse object color map 
+    success, instance_colors = comm.instance_colors()
+    
+    # Step 6: Find IDs of all matching "book" objects
+    target_ids = []
+    for node in graph["nodes"]:
+        if query_cls.lower() == node.get("class_name", "").lower():
+            target_ids.append(str(node["id"]))
+            
+    # Step 7: Convert instance colors to uint8
+    target_bgr_colors = []
+    for uid in target_ids:
+        rgb = instance_colors.get(uid)
+        if rgb:
+            bgr_uint8 = bgr_uint8 = (
+                int(round(rgb[2] * 255)),  # B
+                int(round(rgb[1] * 255)),  # G
+                int(round(rgb[0] * 255))   # R
+            ) 
+            target_bgr_colors.append(bgr_uint8)
+
+    print("Target instance IDs:", target_ids)
+    print("Target colors:", target_bgr_colors)
+    
+    messages += [
+        HumanMessage(content=(
+            "Now, you will be shown several camera views: "
+        ))
+    ]
+    
+    # Step 8: Iterate over inst_imgs and draw boxes
+    any_box_drawn = False  # <-- Add this
+    for i, (rgb_img, inst_img) in enumerate(zip(imgs, inst_imgs)):
+        img_vis = rgb_img.copy()
+
+        for uid, color in zip(target_ids, target_bgr_colors):
+            mask = cv2.inRange(inst_img, np.array(color), np.array(color))  # exact match
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            if contours:
+                any_box_drawn = True  # <-- Set if any contour found
+                
+            for cnt in contours:
+                x, y, w, h = cv2.boundingRect(cnt)
+
+                # Draw bounding box
+                cv2.rectangle(img_vis, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
+                # Add label using node ID
+                label = f"Instance ID: {uid}"
+                cv2.putText(
+                    img_vis,
+                    label,
+                    (x, y - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (0, 0, 255),
+                    1,
+                    cv2.LINE_AA
+                )
+        
+        encoded_img = opencv_image_to_base64(img_vis)
+        encoded_img = [get_vlm_img_message(encoded_img)]
+        messages += [HumanMessage(content=encoded_img)]
+        cv2.imwrite(f"../../outputs/seg_debug_view_{i}.png", img_vis)
+        
+    # Early return if no bounding boxes were drawn
+    if not any_box_drawn:
+        return None
+        
+    chat_prompt = ChatPromptTemplate.from_messages(messages)
+    chained_model = chat_prompt | vlm
+    
+    instance_id = None
+    for attempt in range(2):
+        response = chained_model.invoke({})
+        try:
+            instance_id = int(response.content.strip())
+            break  # Success
+        except Exception as e:
+            if attempt == 1:
+                raise ValueError(f"Invalid response from model: {response.content}") from e
+    
+    if instance_id == -1:
+        instance_id = None
+    
+    return instance_id
+    
 def handle_find_request(req):
     global comm
     rospy.loginfo("Received find request")
     
-    query_text = _get_query_text(req.query_text.lower())
-    target_node_id = find_target_node_id(query_text)
-    # target_node_id = find_target_node_id(req.query_text)
+    find_success = False
+    target_node_id = None
+    target_position = None
+    
+    if req.ref_image:
+        query_cls = _get_query_text(req.query_text.lower())
+        target_node_id = _find_instance(req.query_text, query_cls, req.ref_image)
+    else:
+        query_text = _get_query_text(req.query_text.lower())
+        target_node_id = find_target_node_id(query_text)
+    
+    success, graph = comm.environment_graph()
     
     if target_node_id is None:
         (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
         view_pil = display_grid_img(imgs, nrows=2)
         view_pil.save("../../outputs/debug_find.png")
         print("\033[93m[WARNING] Object not found in visible objects.\033[0m")
+        
+    find_success = target_node_id is not None
+    target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
+    if target_node is None or len(target_node) == 0:
+        find_success = False
+    position = target_node[0]["obj_transform"]["position"]
+    target_position = Point(position[0], position[1], position[2])
     
     return FindObjectSrvResponse(
-        success=target_node_id is not None,
+        success=find_success,
         id=target_node_id,
+        position=target_position
     )
-    
-    ros_images = observe()
-    for ros_image in ros_images:
-        detection_response = detect_objects_owlv2(ros_image, req.query_text)
-        for detection in detection_response.bounding_boxes.bboxes:
-            xyxy = [int(x) for x in xyxy]
-            center_x = (xyxy[0] + xyxy[2]) // 2
-            center_y = (xyxy[1] + xyxy[3]) // 2 # TODO
-            
     
 def handle_pick_request(req):
     global comm
     rospy.loginfo("Received pick request")
     
+    target_node_id = None
     query_text = _get_query_text(req.query_text.lower())
-    target_node_id = find_target_node_id(query_text)
-    # query_text = req.query_text.lower()
-    # target_node_id = find_target_node_id(query_text)
+    if req.instance_id is not None:
+        _, graph = comm.environment_graph()
+        target_node_id = int(req.instance_id)
+        target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
+        if len(target_node) != 1:
+            return PickObjectSrvResponse(
+                success=False,
+            )
+        target_node = target_node[0]
+        if target_node["class_name"].lower() != query_text.lower():
+            return PickObjectSrvResponse(
+                success=False,
+            )
+    else:
+        target_node_id = find_target_node_id(query_text)
     
     if target_node_id is None:
         rospy.logwarn(f"Object '{query_text}' not found in visible objects.")
@@ -271,16 +432,8 @@ if __name__ == "__main__":
     
     comm = UnityCommunication()
     comm.timeout_wait = 300
-    # with open(args.graph_path, "r") as f:
-        # graph = json.load(f)
-    # if graph is None:
-        # raise ValueError(f"Failed to load graph from {args.graph_path}")
     
-    # comm.reset()
-    # success, message = comm.expand_scene(graph)
-    # if not success:
-        # print(f"Failed to load scene from {args.graph_path} to the simulator:", message)
-        # sys.exit(1)
+    vlm = ChatOpenAI(model="o3", temperature=1, api_key=os.environ.get("OPENAI_API_KEY"))
         
     rospy.Service('/moma/navigate', GetImageAtPoseSrv, handle_navigate_request)
     rospy.loginfo("Ready to navigate")
