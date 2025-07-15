@@ -67,9 +67,9 @@ def detect_objects_owlv2(query_image: Image, query_cls: str) -> SemanticObjectDe
 
 def observe():
     (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
-    
-    view_pil = display_grid_img(imgs, nrows=2)
-    view_pil.save("../../outputs/debug_observe.png")
+    if ok_img:
+        view_pil = display_grid_img(imgs, nrows=2)
+        view_pil.save("../../outputs/debug_observe.png")
     
     ros_images = []
     for img in imgs:
@@ -332,7 +332,7 @@ def handle_find_request(req):
         (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
         view_pil = display_grid_img(imgs, nrows=2)
         view_pil.save("../../outputs/debug_find.png")
-        print("\033[93m[WARNING] Object not found in visible objects.\033[0m")
+        rospy.logwarn(f"Object '{query_text}' not found in visible objects.")
         
     find_success = target_node_id is not None
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
