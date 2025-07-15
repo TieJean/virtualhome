@@ -158,12 +158,32 @@ def find_target_node_id(query_text):
             return FindObjectSrvResponse(success=False, id=None)
         
     return target_node_id
+
+def _get_query_text(txt: str) -> str:
+    if "toy" in txt:
+        return "toy"
+    elif "book" in txt:
+        return "book"
+    elif "folder" in txt:
+        return "folder"
+    elif "magazine" in txt:
+        return "magazine"
+    else:
+        raise ValueError(f"Unknown query text: {txt}")
     
 def handle_find_request(req):
     global comm
     rospy.loginfo("Received find request")
     
-    target_node_id = find_target_node_id(req.query_text)
+    query_text = _get_query_text(req.query_text.lower())
+    target_node_id = find_target_node_id(query_text)
+    # target_node_id = find_target_node_id(req.query_text)
+    
+    if target_node_id is None:
+        (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
+        view_pil = display_grid_img(imgs, nrows=2)
+        view_pil.save("../../outputs/debug_find.png")
+        print("\033[93m[WARNING] Object not found in visible objects.\033[0m")
     
     return FindObjectSrvResponse(
         success=target_node_id is not None,
@@ -183,8 +203,10 @@ def handle_pick_request(req):
     global comm
     rospy.loginfo("Received pick request")
     
-    query_text = req.query_text.lower()
+    query_text = _get_query_text(req.query_text.lower())
     target_node_id = find_target_node_id(query_text)
+    # query_text = req.query_text.lower()
+    # target_node_id = find_target_node_id(query_text)
     
     if target_node_id is None:
         rospy.logwarn(f"Object '{query_text}' not found in visible objects.")
