@@ -319,12 +319,11 @@ def handle_find_request(req):
     target_node_id = None
     target_position = None
     
+    query_cls = _get_query_text(req.query_text.lower())
     if req.ref_image:
-        query_cls = _get_query_text(req.query_text.lower())
         target_node_id = _find_instance(req.query_text, query_cls, req.ref_image)
     else:
-        query_text = _get_query_text(req.query_text.lower())
-        target_node_id = find_target_node_id(query_text)
+        target_node_id = find_target_node_id(query_cls)
     
     success, graph = comm.environment_graph()
     
@@ -332,7 +331,8 @@ def handle_find_request(req):
         (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
         view_pil = display_grid_img(imgs, nrows=2)
         view_pil.save("../../outputs/debug_find.png")
-        rospy.logwarn(f"Object '{query_text}' not found in visible objects.")
+        rospy.logwarn(f"Object '{query_cls}' not found in visible objects.")
+        return FindObjectSrvResponse(success=False)
         
     find_success = target_node_id is not None
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
