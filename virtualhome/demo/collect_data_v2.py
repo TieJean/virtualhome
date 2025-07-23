@@ -158,8 +158,8 @@ def run_once(args, comm, script: List[str], prefix: str):
         return False
     
     time.sleep(1)  # Ensure the scene is ready after placing objects
-    _, graph = comm.environment_graph()
-    script = generate_walk_find_script(graph, [args.target_class])
+    # _, graph = comm.environment_graph()
+    # script = generate_walk_find_script(graph, [args.target_class])
     
     if not _record_graph(comm, args.data_dir, prefix, script):
         return False
@@ -193,8 +193,9 @@ if __name__ == "__main__":
     
     prefab_classes = {
         "book": ["Book_13", "Book_18", "Book_27"],
-        "toy": ["Toy_5", "Toy_6", "Toy_4"],
-        "pillow": ["PRE_DEC_Pillow_01_01_01", "PRE_DEC_Pillow_01_04_05", "PRE_DEC_Pillow_01_07_03"]
+        "toy": ["Toy_10", "Toy_5", "Toy_2"],
+        "folder": ["Folder_1", "Folder_2", "Folder_3"],
+        "magazine": ["Magazine_7l", "Magazine_7p", "Magazine_4"],
     }
     args.prefab_classes = {k.replace("_", "").lower(): v for k, v in prefab_classes.items()}
     
