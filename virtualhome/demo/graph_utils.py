@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Dict, List, Tuple
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -668,6 +669,145 @@ def get_connected_to_nodes(graph, from_id, relations=["ON", "INSIDE"]):
     return to_nodes
 
 import random
+
+
+def place_all_objects(
+    graph: dict,
+    prefab_dict: Dict[str, List[str]],        # {target_class: [prefab …]}
+    class_placements: dict,
+    relations: Tuple[str, ...] = ("ON", "INSIDE"),
+    verbose: bool = False,
+):
+    """
+    Try to place *every* prefab from *every* target class.
+
+    Parameters
+    ----------
+    graph : dict
+        Scene graph (mutated in place).
+    prefab_dict : dict[str, list[str]]
+        Mapping target_class -> prefab candidates.
+    class_placements : dict
+        Placement‑rule lookup (same schema you used before).
+    relations : tuple[str]
+        Which relation types to consider.
+    verbose : bool
+        Print progress.
+
+    Returns
+    -------
+    placed_any : bool
+    graph       : dict
+    inserted_ids: list[int]
+    skipped     : dict[str, list[str]]   # {target_class: skipped_prefabs}
+    """
+    inserted_ids: List[int] = []
+    skipped: Dict[str, List[str]] = defaultdict(list)
+    used_surface_ids: set[int] = set()          # never reuse within this call
+
+    # 0. Flatten → [(target_class, prefab_name), …] then shuffle -------------
+    tasks: List[Tuple[str, str]] = []
+    for t_cls, prefabs in prefab_dict.items():
+        if not prefabs:               # empty list → nothing to do
+            continue
+        random.shuffle(prefabs)       # shuffle within each class
+        tasks.extend((t_cls, p) for p in prefabs)
+
+    if not tasks:
+        if verbose:
+            print("❌ Nothing to place (empty prefab_dict).")
+        return False, graph, inserted_ids, dict(skipped)
+
+    random.shuffle(tasks)             # shuffle across classes
+
+    # 1. Cache placement rules per class -------------------------------------
+    rule_cache = {
+        t_cls: [
+            r for r in class_placements.get(t_cls, [])
+            if r["relation"] in relations
+        ]
+        for t_cls, _ in tasks
+    }
+
+    next_id = 1 + max((n["id"] for n in graph["nodes"]), default=1000)
+
+    # 2. Placement loop ------------------------------------------------------
+    for target_class, prefab_name in tasks:
+        rules = rule_cache[target_class]
+        if not rules:
+            skipped[target_class].append(prefab_name)
+            if verbose:
+                print(f"⚠️ '{target_class}' has no placement rules with {relations} — "
+                      f"skipping prefab '{prefab_name}'.")
+            continue
+
+        rules_try = random.sample(rules, len(rules))
+        placed = False
+
+        for rule in rules_try:
+            surf_class, relation = rule["destination"], rule["relation"]
+
+            # candidate surfaces of that class that are still unused
+            surface_pool = [
+                n for n in graph["nodes"]
+                if n["class_name"] == surf_class and n["id"] not in used_surface_ids
+            ]
+            if not surface_pool:
+                continue
+
+            surface_node = random.choice(surface_pool)
+            room_node = find_room_of_node(graph, surface_node["id"])
+
+            # create the object ------------------------------------------------
+            obj_id = next_id
+            next_id += 1
+
+            graph["nodes"].append({
+                "id": obj_id,
+                "prefab_name": prefab_name,
+                "class_name": target_class,
+                "properties": ["GRABBABLE"],
+            })
+            graph["edges"].append({
+                "from_id": obj_id,
+                "to_id": surface_node["id"],
+                "relation_type": relation,
+            })
+            if room_node:
+                graph["edges"].append({
+                    "from_id": obj_id,
+                    "to_id": room_node["id"],
+                    "relation_type": "FACING",
+                })
+
+            inserted_ids.append(obj_id)
+            used_surface_ids.add(surface_node["id"])
+            placed = True
+
+            if verbose:
+                room_part = (
+                    f" in room {room_node['class_name']} (id={room_node['id']})"
+                    if room_node else " (room unknown)"
+                )
+                print(f"✅ Inserted {target_class} '{prefab_name}' (id={obj_id}) "
+                      f"{relation} {surface_node['class_name']} (id={surface_node['id']}){room_part}")
+            break  # done with this prefab
+
+        if not placed:
+            skipped[target_class].append(prefab_name)
+            if verbose:
+                print(f"⚠️ Skipped '{prefab_name}' ({target_class}): "
+                      "no unoccupied surface matched any rule.")
+
+    # 3. Summary -------------------------------------------------------------
+    if verbose:
+        total_skipped = sum(len(v) for v in skipped.values())
+        print(f"── Global placement summary: placed {len(inserted_ids)}, skipped {total_skipped}.")
+        if total_skipped:
+            for cls, lst in skipped.items():
+                print(f"   {cls}: {', '.join(lst)}")
+
+    return bool(inserted_ids), graph, inserted_ids, dict(skipped)
 
 def place_objects(
     graph,

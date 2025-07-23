@@ -22,11 +22,9 @@ def parse_args():
     parser.add_argument('--script_dir', type=str, default="example_scripts", help='Directory containing scripts')
     parser.add_argument('--scene_ids', nargs='+', type=int, default=[4], help='List of scene IDs to collect data from')
     parser.add_argument("--graph_dir", type=str, default="example_graphs", help="Directory containing scene graphs")
-    parser.add_argument('--target_class', type=str, required=True, help='target manipulable object classes')
     parser.add_argument('--clean_surfaces', nargs='+', type=str, default=[], help='List of surfaces to clean')
     parser.add_argument('--clean_classes', nargs='+', type=str, default=["pillow", "book", "toy", "magazine", "folder"], help='List of target classes to replace')
     parser.add_argument('--clean_ids', nargs='+', type=int, default=[], help='List of target IDs to replace')
-    parser.add_argument('--nobjects', type=int, default=3, help='Number of objects to place in the scene')
     parser.add_argument('--n_runs_per_scene', type=int, default=6, help="Number of runs per scene")
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
@@ -48,7 +46,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
     success, graph = comm.environment_graph()
     
     success, message = comm.render_script(script=script,
-                                        processing_time_limit=2000,
+                                        processing_time_limit=4000,
                                         find_solution=False,
                                         image_width=640,
                                         image_height=480,  
@@ -59,8 +57,6 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
                                         image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
                                         file_name_prefix=prefix)
     
-    import pdb; pdb.set_trace()
-    
     if not success:
         print("Failed to render script:", message)
         return False
@@ -70,6 +66,18 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
     # Save the agent graph and environment graph
     agent_graph_path = os.path.join(output_dir, "agent_graph.json") # This is necessary to obtain ground truth
     graph_path = os.path.join(output_dir, "graph.json")
+    isinstance_colors_path = os.path.join(output_dir, "instance_colors.json")
+    
+    success, instance_colors = comm.instance_colors()
+    if not success:
+        print("Failed to get instance colors:", instance_colors)
+        return False
+    try:
+        with open(isinstance_colors_path, 'w') as f:
+            json.dump(instance_colors, f, indent=2)
+    except Exception as e:
+        print(f"Failed to save instance colors: {e}")
+        return False
     
     success, agent_graph = comm.environment_graph()
     try:
@@ -104,11 +112,14 @@ def _replace_objects(args, comm, scene_id, verbose: bool = False):
     time.sleep(1)  # Ensure the scene is ready
     
     _, graph = comm.environment_graph()
-    success, graph, _, _ = place_objects(graph, 
-                                         args.prefab_classes.get(args.target_class, []),
-                                         args.class_placements, 
-                                         args.target_class,
-                                         verbose=verbose,)
+    # success, graph, _, _ = place_objects(graph, 
+    #                                      args.prefab_classes.get(args.target_class, []),
+    #                                      args.class_placements, 
+    #                                      args.target_class,
+    #                                      verbose=verbose,)
+    success, graph, _, _ = place_all_objects(graph, args.prefab_classes, args.class_placements, verbose=verbose)
+    
+    
     if not success:
         print("Failed to place objects:", message)
         return False
@@ -129,7 +140,7 @@ def _prepare_scene(args, comm, scene_id: int):
         raise RuntimeError(f"Failed to expand scene: {message}")
     
     _, graph = comm.environment_graph()
-    graph = remove_nodes_by_classes(graph, [args.target_class])
+    graph = remove_nodes_by_classes(graph, [args.prefab_classes.keys()])
     success, message = comm.expand_scene(graph)
     if not success:
         raise RuntimeError(f"Failed to expand scene: {message}")
@@ -176,9 +187,9 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
         raise ValueError(f"No script found for scene {scene_id} in {robot_script_path}")
     
     for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
-        run_once(args, comm, script, prefix=f"scene{scene_id}_{args.target_class}{args.nobjects}_{i_run}")
+        run_once(args, comm, script, prefix=f"scene{scene_id}_{i_run:02d}")
+        # run_once(args, comm, script, prefix=f"scene{scene_id}_{args.target_class}{args.nobjects}_{i_run}")
         time.sleep(5)  # Ensure there's a delay between runs
-        # run_once(args, comm, script, prefix=f"test_{i_run}")
     
 if __name__ == "__main__":
     args = parse_args()
@@ -189,7 +200,7 @@ if __name__ == "__main__":
     np.random.seed(args.seed)
     
     comm = UnityCommunication(port=args.port)
-    comm.timeout_wait = 2000
+    comm.timeout_wait = 4000
     
     prefab_classes = {
         "book": ["Book_13", "Book_18", "Book_27"],
