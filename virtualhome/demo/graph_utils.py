@@ -7,6 +7,7 @@ import re
 import random
 from utils_demo import *
 import json
+import csv
 
 def prepare_pano_character_camera(comm):
     s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20,  0, 0], field_view=60, name="pano_0")
@@ -679,7 +680,7 @@ def place_all_objects(
     verbose: bool = False,
 ):
     """
-    Try to place *every* prefab from *every* target class.
+    Place every prefab from every target class.
 
     Parameters
     ----------
@@ -688,22 +689,29 @@ def place_all_objects(
     prefab_dict : dict[str, list[str]]
         Mapping target_class -> prefab candidates.
     class_placements : dict
-        Placement‑rule lookup (same schema you used before).
+        Placement‑rule lookup (same schema as before).
     relations : tuple[str]
-        Which relation types to consider.
+        Placement relations to consider (e.g. ("ON","INSIDE")).
     verbose : bool
-        Print progress.
+        Print progress to console.
+    savepath : str | None
+        If provided, write a CSV log with one row per successful insertion.
+        CSV columns:
+        obj_cls,obj_prefab_name,obj_node_id,
+        surface,cls,surface_prefab_name,surface_id,
+        room_cls,room_prefab_name,room_id
 
     Returns
     -------
     placed_any : bool
     graph       : dict
     inserted_ids: list[int]
-    skipped     : dict[str, list[str]]   # {target_class: skipped_prefabs}
+    skipped     : dict[str, list[str]]
     """
     inserted_ids: List[int] = []
     skipped: Dict[str, List[str]] = defaultdict(list)
-    used_surface_ids: set[int] = set()          # never reuse within this call
+    used_surface_ids: set[int] = set()
+    placement_log: List[List[str | int]] = []
 
     # 0. Flatten → [(target_class, prefab_name), …] then shuffle -------------
     tasks: List[Tuple[str, str]] = []
@@ -747,7 +755,6 @@ def place_all_objects(
         for rule in rules_try:
             surf_class, relation = rule["destination"], rule["relation"]
 
-            # candidate surfaces of that class that are still unused
             surface_pool = [
                 n for n in graph["nodes"]
                 if n["class_name"] == surf_class and n["id"] not in used_surface_ids
@@ -758,7 +765,7 @@ def place_all_objects(
             surface_node = random.choice(surface_pool)
             room_node = find_room_of_node(graph, surface_node["id"])
 
-            # create the object ------------------------------------------------
+            # create new object node
             obj_id = next_id
             next_id += 1
 
@@ -784,6 +791,19 @@ def place_all_objects(
             used_surface_ids.add(surface_node["id"])
             placed = True
 
+            placement_log.append([
+                target_class,                     # obj_cls
+                prefab_name,                      # obj_prefab_name
+                obj_id,                           # obj_node_id
+                surf_class,                       # surface (class from rule)
+                surface_node["class_name"],       # cls (actual surface node class)
+                surface_node.get("prefab_name", "N/A"),  # surface_prefab_name
+                surface_node["id"],               # surface_id
+                room_node["class_name"] if room_node else "N/A",   # room_cls
+                room_node.get("prefab_name", "N/A") if room_node else "N/A",  # room_prefab_name
+                room_node["id"] if room_node else -1,              # room_id
+            ])
+
             if verbose:
                 room_part = (
                     f" in room {room_node['class_name']} (id={room_node['id']})"
@@ -799,7 +819,22 @@ def place_all_objects(
                 print(f"⚠️ Skipped '{prefab_name}' ({target_class}): "
                       "no unoccupied surface matched any rule.")
 
-    # 3. Summary -------------------------------------------------------------
+    # # ── write CSV log if requested ──────────────────────────────────────────
+    # if placement_log is not None:
+    #     header = [
+    #         "obj_cls", "obj_prefab_name", "obj_node_id",
+    #         "surface", "cls", "surface_prefab_name", "surface_id",
+    #         "room_cls", "room_prefab_name", "room_id"
+    #     ]
+    #     os.makedirs(os.path.dirname(savepath), exist_ok=True)
+    #     with open(savepath, "w", newline="") as f:
+    #         writer = csv.writer(f)
+    #         writer.writerow(header)
+    #         writer.writerows(placement_log)
+    #     if verbose:
+    #         print(f"📄 Placement log written to {savepath}")
+
+    # ── summary ─────────────────────────────────────────────────────────────
     if verbose:
         total_skipped = sum(len(v) for v in skipped.values())
         print(f"── Global placement summary: placed {len(inserted_ids)}, skipped {total_skipped}.")
@@ -807,7 +842,7 @@ def place_all_objects(
             for cls, lst in skipped.items():
                 print(f"   {cls}: {', '.join(lst)}")
 
-    return bool(inserted_ids), graph, inserted_ids, dict(skipped)
+    return bool(inserted_ids), graph, placement_log
 
 def place_objects(
     graph,

@@ -45,17 +45,20 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
     comm.add_character('chars/Female2', initial_room='bathroom')
     success, graph = comm.environment_graph()
     
-    success, message = comm.render_script(script=script,
-                                        processing_time_limit=6000,
-                                        find_solution=False,
-                                        image_width=640,
-                                        image_height=480,  
-                                        skip_animation=False,
-                                        recording=True,
-                                        save_pose_data=True,
-                                        camera_mode=["FIRST_PERSON"],
-                                        image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
-                                        file_name_prefix=prefix)
+    batch_size = 10
+    for start in range(0, len(script), batch_size):
+        sub_script = script[start:start + batch_size]
+        success, message = comm.render_script(script=sub_script,
+                                            processing_time_limit=6000,
+                                            find_solution=False,
+                                            image_width=640,
+                                            image_height=480,  
+                                            skip_animation=False,
+                                            recording=True,
+                                            save_pose_data=True,
+                                            camera_mode=["FIRST_PERSON"],
+                                            image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
+                                            file_name_prefix=prefix)
     
     if not success:
         print("Failed to render script:", message)
@@ -107,28 +110,28 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
     )
     return True
 
-def _replace_objects(args, comm, scene_id, verbose: bool = False):
+def _replace_objects(args, 
+                     comm, 
+                     scene_id, 
+                     verbose: bool = False):
     _prepare_scene(args, comm, scene_id)
     time.sleep(1)  # Ensure the scene is ready
     
     _, graph = comm.environment_graph()
-    # success, graph, _, _ = place_objects(graph, 
-    #                                      args.prefab_classes.get(args.target_class, []),
-    #                                      args.class_placements, 
-    #                                      args.target_class,
-    #                                      verbose=verbose,)
-    success, graph, _, _ = place_all_objects(graph, args.prefab_classes, args.class_placements, verbose=verbose)
-    
+    success, graph, placement_log = place_all_objects(graph, 
+                                             args.prefab_classes, 
+                                             args.class_placements, 
+                                             verbose=verbose)
     
     if not success:
         print("Failed to place objects:", message)
-        return False
+        return False, None
     success, message = comm.expand_scene(graph)
     if not success:
         print("Failed to expand scene after placing objects:", message)
-        return False
+        return False, None
     
-    return True
+    return True, placement_log
     
 def _prepare_scene(args, comm, scene_id: int):
     comm.reset(scene_id)
@@ -165,7 +168,8 @@ def _prepare_scene(args, comm, scene_id: int):
 
 def run_once(args, comm, script: List[str], prefix: str):
     print(f"Running script with prefix: {prefix}")
-    if not _replace_objects(args, comm, scene_id, verbose=True):
+    success, placement_log = _replace_objects(args, comm, scene_id, verbose=True)
+    if not success:
         return False
     
     time.sleep(1)  # Ensure the scene is ready after placing objects
@@ -174,6 +178,20 @@ def run_once(args, comm, script: List[str], prefix: str):
     
     if not _record_graph(comm, args.data_dir, prefix, script):
         return False
+    
+    obj_placement_savepath = os.path.join(args.data_dir, prefix, "0", "object_placement.csv")
+    
+    header = [
+        "obj_cls", "obj_prefab_name", "obj_node_id",
+        "surface", "cls", "surface_prefab_name", "surface_id",
+        "room_cls", "room_prefab_name", "room_id"
+    ]
+    os.makedirs(os.path.dirname(obj_placement_savepath), exist_ok=True)
+    with open(obj_placement_savepath, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(placement_log)
+    placement_log
     
     return True
     
@@ -200,7 +218,7 @@ if __name__ == "__main__":
     np.random.seed(args.seed)
     
     comm = UnityCommunication(port=args.port)
-    comm.timeout_wait = 6000
+    comm.timeout_wait = 60000
     
     prefab_classes = {
         "book": ["Book_13", "Book_18", "Book_27"],
