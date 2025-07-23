@@ -46,7 +46,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
     success, graph = comm.environment_graph()
     
     success, message = comm.render_script(script=script,
-                                        processing_time_limit=4000,
+                                        processing_time_limit=6000,
                                         find_solution=False,
                                         image_width=640,
                                         image_height=480,  
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     np.random.seed(args.seed)
     
     comm = UnityCommunication(port=args.port)
-    comm.timeout_wait = 4000
+    comm.timeout_wait = 6000
     
     prefab_classes = {
         "book": ["Book_13", "Book_18", "Book_27"],

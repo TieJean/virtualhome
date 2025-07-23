@@ -3,6 +3,10 @@ import os
 import subprocess
 from glob import glob
 from tqdm import tqdm
+import cv2    
+import tempfile, shutil  
+import json
+import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Convert Unity output PNGs to MP4 videos using ffmpeg.")
@@ -24,7 +28,88 @@ def parse_args():
 def collect_sorted_images(folder, suffix):
     return sorted(glob(os.path.join(folder, f'*{suffix}.png')))
 
-def make_video_ffmpeg(image_paths, out_path, fps=10):
+def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, out_path, fps=5):
+    def _draw_bounding_box(image, instance_mask, instance_colors):
+        CLASS_PALETTE = {
+            "book":     (  0,   0, 255),   # red
+            "folder":   (  0, 255,   0),   # green
+            "toy":      (255,   0,   0),   # blue
+            "magazine": (  0, 255, 255),   # yellow
+        }
+        TARGET_CLASSES = set(CLASS_PALETTE.keys())
+        
+        if instance_mask.ndim == 2:  # single channel
+            instance_mask = cv2.cvtColor(instance_mask, cv2.COLOR_GRAY2BGR)
+        elif instance_mask.shape[2] == 4:  # BGRA
+            instance_mask = instance_mask[:, :, :3]
+
+        out = image.copy()
+
+        for node in graph["nodes"]:
+            cls_name = node.get("class_name", "").lower()
+            if cls_name not in TARGET_CLASSES:
+                continue
+
+            uid = str(node["id"])
+            rgb_f = instance_colors.get(uid)
+            if rgb_f is None:
+                continue
+
+            # Convert Unity RGB float [0‑1] -> uint8 BGR
+            bgr_uint8 = (
+                int(round(rgb_f[2] * 255)),  # B
+                int(round(rgb_f[1] * 255)),  # G
+                int(round(rgb_f[0] * 255)),  # R
+            )
+
+            # Binary mask of this instance
+            mask = cv2.inRange(instance_mask, np.array(bgr_uint8), np.array(bgr_uint8))
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            if not contours:
+                continue
+
+            color = CLASS_PALETTE.get(cls_name, (255, 255, 255))  # fallback white
+            for cnt in contours:
+                x, y, w, h = cv2.boundingRect(cnt)
+                if w < 4 or h < 4:        # ignore tiny specks
+                    continue
+                cv2.rectangle(out, (x, y), (x + w, y + h), color, 2)
+                cv2.putText(
+                    out,
+                    cls_name,
+                    (x, y - 6),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    color,
+                    1,
+                    cv2.LINE_AA,
+                )
+
+        return out
+    
+    """
+    Draw bounding‑boxes (via your `_draw_bounding_box`) on each normal/instance
+    pair and encode them into a video.  Uses `make_video_ffmpeg` unchanged.
+    """
+    if not normal_paths or not inst_paths or len(normal_paths) != len(inst_paths):
+        print(f"[Warning] Bounding‑box video skipped for {out_path} (frame mismatch).")
+        return
+
+    tmp_dir = tempfile.mkdtemp()              # store annotated PNGs here
+    try:
+        for idx, (n_path, i_path) in enumerate(zip(normal_paths, inst_paths)):
+            img_normal = cv2.imread(n_path)                           # BGR
+            img_inst   = cv2.imread(i_path, cv2.IMREAD_UNCHANGED)     # seg‑inst
+            drawn      = _draw_bounding_box(img_normal, img_inst, instance_colors)
+            cv2.imwrite(os.path.join(tmp_dir, f"frame_{idx:04d}_bbox.png"), drawn)
+
+        annotated_frames = sorted(glob(os.path.join(tmp_dir, "frame_*.png")))
+        make_video_ffmpeg(annotated_frames, out_path, fps=fps)        # ← untouched
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+def make_video_ffmpeg(image_paths, out_path, fps=5):
     if not image_paths:
         print(f"[Warning] No images found for {out_path}")
         return
@@ -37,8 +122,18 @@ def make_video_ffmpeg(image_paths, out_path, fps=10):
         print(f"[Error] Unexpected filename format: {sample_name}")
         return
 
-    prefix = parts[0]  # e.g., frame
-    suffix = parts[-1].replace('.png', '')  # e.g., normal
+    # prefix = parts[0]  # e.g., frame
+    # suffix = parts[-1].replace('.png', '')  # e.g., normal
+    # pattern = os.path.join(folder, f"{prefix}_%04d_{suffix}.png")
+    
+    # ── derive pattern:  frame_%04d_seg_inst.png  (works with seg_class etc.) ──
+    try:
+        prefix, _, remainder = sample_name.split('_', 2)  # "frame", "0000", "seg_inst.png"
+    except ValueError:
+        print(f"[Error] Unexpected filename format: {sample_name}")
+        return
+
+    suffix = remainder.rsplit('.', 1)[0]                  # "seg_inst"  (or "normal")
     pattern = os.path.join(folder, f"{prefix}_%04d_{suffix}.png")
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -74,6 +169,23 @@ def process_dataname(unity_output_dir, dataname):
         img_paths = collect_sorted_images(frame_dir, suffix)
         out_path = os.path.join(output_dir, f"{dataname}{suffix}.mp4")
         make_video_ffmpeg(img_paths, out_path)
+
+    normal_paths = collect_sorted_images(frame_dir, '_normal')
+    inst_paths   = collect_sorted_images(frame_dir, '_seg_inst')
+    
+    instance_colors_path = os.path.join(frame_dir, 'instance_colors.json')
+    with open(instance_colors_path, 'r') as f:
+        instance_colors = json.load(f)
+    if not instance_colors:
+        raise ValueError(f"No instance colors found in {instance_colors_path}")
+    agent_graph_path = os.path.join(frame_dir, 'agent_graph.json')
+    with open(agent_graph_path, 'r') as f:
+        agent_graph = json.load(f)
+    if not agent_graph:
+        raise ValueError(f"No agent graph found in {agent_graph_path}")
+        
+    bbox_out = os.path.join(output_dir, f"{dataname}_normal_bbox.mp4")
+    make_bbox_video(normal_paths, inst_paths, instance_colors, agent_graph, bbox_out, fps=5)
 
 def main():
     args = parse_args()
