@@ -226,7 +226,7 @@ def _find_instance(query_text: str, query_cls: str, ref_image):
     # Step 5: Parse object color map 
     success, instance_colors = comm.instance_colors()
     
-    # Step 6: Find IDs of all matching "book" objects
+    # Step 6: Find IDs of all matching the target class objects
     target_ids = []
     for node in graph["nodes"]:
         if query_cls.lower() == node.get("class_name", "").lower():
