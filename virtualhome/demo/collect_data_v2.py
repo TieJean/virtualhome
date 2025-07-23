@@ -41,28 +41,16 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
             filepath = os.path.join(root, file)
             os.remove(filepath)
             
-    comm.add_character('chars/Female2', initial_room='bathroom')
-    success, graph = comm.environment_graph()
-    
     if robot_initial_state is not None:
-        success, message = comm.move_character(0, robot_initial_state["initial_position"])
-        if not success:
-            print("Failed to move character to initial position:", message)
-            return False
-        script = [f"<char0> [LookAt] <{robot_initial_state['initial_lookat']['obj_name']}> ({robot_initial_state['initial_lookat']['node_id']})"]
-        success, message = comm.render_script(script=script,
-                                            processing_time_limit=30,
-                                            find_solution=False,
-                                            image_width=640,
-                                            image_height=480,  
-                                            skip_animation=True,
-                                            recording=False,
-                                            save_pose_data=False)
-        if not success:
-            print("Failed to look at initial lookat:", message)
-            return False
-        
-    import pdb; pdb.set_trace()
+        comm.add_character('chars/Female2', position=robot_initial_state["initial_position"], initial_room="bathroom")
+    else:
+        comm.add_character('chars/Female2', initial_room="bathroom")
+    time.sleep(5) # NOTE this is necessary to ensure a fixed starting pose
+    
+    success, graph = comm.environment_graph()
+    if not success:
+        print("Failed to get environment graph:", graph)
+        return False
     
     batch_size = 10
     for start in range(0, len(script), batch_size):
@@ -195,7 +183,7 @@ def run_once(args, comm, script: List[str], robot_initial_state, prefix: str):
     # _, graph = comm.environment_graph()
     # script = generate_walk_find_script(graph, [args.target_class])
     
-    if not _record_graph(comm, args.data_dir, prefix, script):
+    if not _record_graph(comm, args.data_dir, prefix, script, robot_initial_state):
         return False
     
     obj_placement_savepath = os.path.join(args.data_dir, prefix, "0", "object_placement.csv")

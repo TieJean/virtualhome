@@ -1,3 +1,4 @@
+<char0> [LookAt] <bathroomcounter> (298)
 <char0> [Walk] <washingmachine> (367)
 <char0> [LookAt] <bathroomcounter> (298)
 <char0> [LookAt] <sink> (299)
