@@ -174,6 +174,80 @@ def make_video_ffmpeg(image_paths, out_path, fps=5):
         print(f"Saved video to {out_path}")
     except subprocess.CalledProcessError:
         print(f"[Error] ffmpeg failed for {out_path}")
+        
+def stitch_bbox_videos(video_paths, output_path, grid_cols=4):
+    import math
+
+    # Open all video captures
+    caps = [cv2.VideoCapture(p) for p in video_paths]
+    n_videos = len(caps)
+    if n_videos == 0:
+        print(f"No videos to stitch for {output_path}")
+        return
+
+    # Video properties (use the first video for shape/fps)
+    width = int(caps[0].get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = caps[0].get(cv2.CAP_PROP_FPS)
+
+    # Determine max frame count among all videos
+    frame_counts = [int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) for cap in caps]
+    max_frames = max(frame_counts)
+
+    # Calculate grid size
+    grid_rows = math.ceil(n_videos / grid_cols)
+    grid_w = width * grid_cols
+    grid_h = height * grid_rows
+
+    # Output writer
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out_writer = cv2.VideoWriter(output_path, fourcc, fps, (grid_w, grid_h))
+
+    # For each frame index up to max_frames:
+    for frame_idx in range(max_frames):
+        frames = []
+        for vid_i, cap in enumerate(caps):
+            # If frame_idx < this video's length, read frame
+            if frame_idx < frame_counts[vid_i]:
+                ret, frame = cap.read()
+                if not ret or frame is None:
+                    frame = np.zeros((height, width, 3), dtype=np.uint8)
+                elif frame.shape[2] == 4:
+                    frame = frame[..., :3]  # Remove alpha
+            else:
+                # This video finished: black frame
+                frame = np.zeros((height, width, 3), dtype=np.uint8)
+            frames.append(frame)
+        # Pad if needed
+        while len(frames) < grid_rows * grid_cols:
+            frames.append(np.zeros((height, width, 3), dtype=np.uint8))
+        # Build the grid
+        grid_img = []
+        for i in range(grid_rows):
+            row = np.concatenate(frames[i*grid_cols:(i+1)*grid_cols], axis=1)
+            grid_img.append(row)
+        grid_img = np.concatenate(grid_img, axis=0)
+        out_writer.write(grid_img)
+    out_writer.release()
+    for cap in caps:
+        cap.release()
+    print(f"Saved stitched video to {output_path}")
+
+def visualize_all_bbox_videos(datanames, unity_output_dir, output_dir='../../outputs/'):
+    # Collect bbox video paths from all datanames
+    video_paths = []
+    for dataname in datanames:
+        bbox_path = os.path.join(unity_output_dir, dataname, 'videos', f"{dataname}_normal_bbox.mp4")
+        if os.path.isfile(bbox_path):
+            video_paths.append(bbox_path)
+        else:
+            print(f"[Warning] No bbox video found for {dataname} at {bbox_path}")
+    if not video_paths:
+        print("No bbox videos found to stitch.")
+        return
+    output_path = os.path.join(output_dir, "stitched_bbox_grid.mp4")
+    stitch_bbox_videos(video_paths, output_path)
 
 def process_dataname(unity_output_dir, dataname):
     scene_folder = os.path.join(unity_output_dir, dataname)
@@ -225,6 +299,8 @@ def main():
 
     for dataname in tqdm(args.datanames, desc="Processing datanames"):
         process_dataname(args.unity_output_dir, dataname)
+        
+    visualize_all_bbox_videos(args.datanames, args.unity_output_dir)
 
 if __name__ == "__main__":
     main()

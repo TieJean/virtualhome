@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
     return parser.parse_args()
 
-def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
+def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_initial_state = None) -> bool:
     image_dir = os.path.join(save_dir, prefix)
     if not os.path.exists(image_dir):
         os.makedirs(image_dir)
@@ -41,9 +41,28 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
             filepath = os.path.join(root, file)
             os.remove(filepath)
             
-    # TODO start with fixed position
     comm.add_character('chars/Female2', initial_room='bathroom')
     success, graph = comm.environment_graph()
+    
+    if robot_initial_state is not None:
+        success, message = comm.move_character(0, robot_initial_state["initial_position"])
+        if not success:
+            print("Failed to move character to initial position:", message)
+            return False
+        script = [f"<char0> [LookAt] <{robot_initial_state['initial_lookat']['obj_name']}> ({robot_initial_state['initial_lookat']['node_id']})"]
+        success, message = comm.render_script(script=script,
+                                            processing_time_limit=30,
+                                            find_solution=False,
+                                            image_width=640,
+                                            image_height=480,  
+                                            skip_animation=True,
+                                            recording=False,
+                                            save_pose_data=False)
+        if not success:
+            print("Failed to look at initial lookat:", message)
+            return False
+        
+    import pdb; pdb.set_trace()
     
     batch_size = 10
     for start in range(0, len(script), batch_size):
@@ -166,7 +185,7 @@ def _prepare_scene(args, comm, scene_id: int):
     if not success:
         raise RuntimeError(f"Failed to expand scene: {message}")
 
-def run_once(args, comm, script: List[str], prefix: str):
+def run_once(args, comm, script: List[str], robot_initial_state, prefix: str):
     print(f"Running script with prefix: {prefix}")
     success, placement_log = _replace_objects(args, comm, scene_id, verbose=True)
     if not success:
@@ -204,9 +223,14 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
     if script is None or len(script) == 0:
         raise ValueError(f"No script found for scene {scene_id} in {robot_script_path}")
     
+    robot_initial_state_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_initial_state.json")
+    with open(robot_initial_state_path, "r") as f:
+        robot_initial_state = json.load(f)
+    if robot_initial_state is None or "initial_position" not in robot_initial_state or "initial_lookat" not in robot_initial_state:
+        raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
+    
     for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
-        run_once(args, comm, script, prefix=f"scene{scene_id}_{i_run:02d}")
-        # run_once(args, comm, script, prefix=f"scene{scene_id}_{args.target_class}{args.nobjects}_{i_run}")
+        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}")
         time.sleep(5)  # Ensure there's a delay between runs
     
 if __name__ == "__main__":
