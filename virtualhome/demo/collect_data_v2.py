@@ -1,0 +1,208 @@
+
+from tqdm import tqdm
+import sys, os
+import json
+import argparse
+import copy
+from typing import List, Dict, Any
+import random
+import numpy as np
+import time
+
+sys.path.append('../simulation')
+from unity_simulator.comm_unity import UnityCommunication
+from unity_simulator import utils_viz
+from utils_demo import *
+from graph_utils import *
+from viz_utils import *
+import hashlib
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Collect data for virtual home')
+    parser.add_argument('--script_dir', type=str, default="example_scripts", help='Directory containing scripts')
+    parser.add_argument('--scene_ids', nargs='+', type=int, default=[4], help='List of scene IDs to collect data from')
+    parser.add_argument("--graph_dir", type=str, default="example_graphs", help="Directory containing scene graphs")
+    parser.add_argument('--target_class', type=str, required=True, help='target manipulable object classes')
+    parser.add_argument('--clean_surfaces', nargs='+', type=str, default=[], help='List of surfaces to clean')
+    parser.add_argument('--clean_classes', nargs='+', type=str, default=["pillow", "book", "toy", "magazine", "folder"], help='List of target classes to replace')
+    parser.add_argument('--clean_ids', nargs='+', type=int, default=[], help='List of target IDs to replace')
+    parser.add_argument('--nobjects', type=int, default=3, help='Number of objects to place in the scene')
+    parser.add_argument('--n_runs_per_scene', type=int, default=6, help="Number of runs per scene")
+    parser.add_argument('--seed', type=int, default=40, help='Random seed')
+    parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
+    return parser.parse_args()
+
+def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
+    image_dir = os.path.join(save_dir, prefix)
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+        
+    # Clear previous images
+    for root, _, files in os.walk(image_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            os.remove(filepath)
+            
+    # TODO start with fixed position
+    comm.add_character('chars/Female2', initial_room='bathroom')
+    success, graph = comm.environment_graph()
+    
+    success, message = comm.render_script(script=script,
+                                        processing_time_limit=2000,
+                                        find_solution=False,
+                                        image_width=640,
+                                        image_height=480,  
+                                        skip_animation=False,
+                                        recording=True,
+                                        save_pose_data=True,
+                                        camera_mode=["FIRST_PERSON"],
+                                        image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
+                                        file_name_prefix=prefix)
+    
+    import pdb; pdb.set_trace()
+    
+    if not success:
+        print("Failed to render script:", message)
+        return False
+    
+    output_dir = os.path.join(save_dir, prefix, "0")
+    
+    # Save the agent graph and environment graph
+    agent_graph_path = os.path.join(output_dir, "agent_graph.json") # This is necessary to obtain ground truth
+    graph_path = os.path.join(output_dir, "graph.json")
+    
+    success, agent_graph = comm.environment_graph()
+    try:
+        with open(agent_graph_path, 'w') as f:
+            json.dump(agent_graph, f, indent=2)
+    except Exception as e:
+        print(f"Failed to save agent graph: {e}")
+        return False
+    
+    graph = remove_nodes_by_classes(agent_graph, ["character"])
+    success, message = comm.expand_scene(graph)
+    if not success:
+        print("Failed to expand scene:", message)
+        return False
+    success, graph = comm.environment_graph()
+    try:
+        with open(graph_path, 'w') as f:
+            json.dump(graph, f, indent=2)
+    except Exception as e:
+        print(f"Failed to save environment graph: {e}")
+        return False
+    
+    utils_viz.generate_video(
+        input_path=args.data_dir, 
+        prefix=prefix, 
+        output_path=os.path.join(args.data_dir, prefix)
+    )
+    return True
+
+def _replace_objects(args, comm, scene_id, verbose: bool = False):
+    _prepare_scene(args, comm, args.target_class, scene_id)
+    time.sleep(1)  # Ensure the scene is ready
+    
+    _, graph = comm.environment_graph()
+    success, graph, inserted_ids = place_objects(graph, 
+                                                 args.prefab_classes.get(args.target_class, []),
+                                                 args.class_placements, 
+                                                 args.target_class)
+    if not success:
+        print("Failed to place objects:", message)
+        return False
+    success, message = comm.expand_scene(graph)
+    if not success:
+        print("Failed to expand scene after placing objects:", message)
+        return False
+    
+    return True
+    
+def _prepare_scene(args, comm, target_class: str, scene_id: int):
+    comm.reset(scene_id)
+    
+    _, graph = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, args.clean_classes)
+    success, message = comm.expand_scene(graph)
+    if not success:
+        raise RuntimeError(f"Failed to expand scene: {message}")
+    
+    _, graph = comm.environment_graph()
+    graph = remove_nodes_by_classes(graph, [target_class])
+    success, message = comm.expand_scene(graph)
+    if not success:
+        raise RuntimeError(f"Failed to expand scene: {message}")
+    
+    _, graph = comm.environment_graph()
+    graph = remove_nodes_by_ids(graph, args.clean_ids)
+    success, message = comm.expand_scene(graph)
+    if not success:
+        raise RuntimeError(f"Failed to expand scene: {message}")
+    
+    graph = remove_all_objects_on_surfaces(graph, args.clean_surfaces)
+    success, message = comm.expand_scene(graph)
+    if not success:
+        raise RuntimeError(f"Failed to expand scene: {message}")
+
+def run_once(args, comm, script: List[str], prefix: str):
+    print(f"Running script with prefix: {prefix}")
+    if not _replace_objects(args, comm, scene_id):
+        return False
+    
+    if not _record_graph(comm, args.data_dir, prefix, script):
+        return False
+    
+    return True
+    
+
+def collect_data_in_one_scene(args, comm, scene_id: int):
+    
+    _prepare_scene(args, comm, args.target_class, scene_id)
+    
+    robot_script_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_script.txt")
+    with open(robot_script_path, "r") as f:
+        script = [line.strip() for line in f if line.strip()]
+    if script is None or len(script) == 0:
+        raise ValueError(f"No script found for scene {scene_id} in {robot_script_path}")
+    
+    # script = script[:16]
+    print(script)
+    
+    for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
+        run_once(args, comm, script, prefix=f"scene{scene_id}_{args.target_class}{args.nobjects}_{i_run}")
+        time.sleep(5)  # Ensure there's a delay between runs
+        # run_once(args, comm, script, prefix=f"test_{i_run}")
+    
+if __name__ == "__main__":
+    args = parse_args()
+    args.data_dir = os.path.abspath('../../unity_output/')
+    os.makedirs(args.data_dir, exist_ok=True)
+    
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    
+    comm = UnityCommunication(port=args.port)
+    comm.timeout_wait = 2000
+    
+    prefab_classes = {
+        "book": ["Book_6", "Book_27", "Book_13"],
+    }
+    args.prefab_classes = {k.replace("_", "").lower(): v for k, v in prefab_classes.items()}
+    
+    with open("../resources/object_script_placing_customed.json", "r") as f:
+        class_placements = json.load(f)
+    # Normalize keys and destinations
+    normalized_class_placements = {}
+    for cls_name, placements in class_placements.items():
+        new_key = cls_name.replace("_", "").lower()
+        new_placements = []
+        for entry in placements:
+            new_entry = entry.copy()
+            if 'destination' in new_entry:
+                new_entry['destination'] = new_entry['destination'].replace("_", "").lower()
+            new_placements.append(new_entry)
+        normalized_class_placements[new_key] = new_placements
+    args.class_placements = normalized_class_placements
+    
+    for scene_id in args.scene_ids:
+        collect_data_in_one_scene(args, comm, scene_id)

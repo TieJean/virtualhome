@@ -21,6 +21,7 @@ def parse_args():
     parser.add_argument('--clean_surfaces', nargs='+', type=str, default=["desk", "wallshelf", "kitchentable", "plate"], help='List of surfaces to clean')
     parser.add_argument('--nobjects', type=int, default=3, help='Number of objects to place in the scene')
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
+    parser.add_argument('--port', type=int, required=True, help='Port for Unity communication')
     return parser.parse_args()
 
 def get_dataset_name(ambiguous_objects, scene_id):
@@ -255,6 +256,8 @@ if __name__ == "__main__":
     
     args.prefab_classes = {k.replace("_", "").lower(): v for k, v in prefab_classes.items()}
     args.class_placements = normalized_class_placements
+    
+    import pdb; pdb.set_trace()
     
     comm = UnityCommunication(port="8080")
     comm.timeout_wait = 300

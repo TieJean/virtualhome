@@ -167,7 +167,7 @@ def find_target_node_id(query_text):
     return target_node_id
 
 def _get_query_text(txt: str) -> str:
-    if "toy" in txt:
+    if "toy" in txt or "action figure" in txt or "transformer" in txt or "robot" in txt:
         return "toy"
     elif "book" in txt:
         return "book"
@@ -337,7 +337,7 @@ def handle_find_request(req):
     find_success = target_node_id is not None
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
     if target_node is None or len(target_node) == 0:
-        find_success = False
+        return FindObjectSrvResponse(success=False)
     position = target_node[0]["obj_transform"]["position"]
     target_position = Point(position[0], position[1], position[2])
     

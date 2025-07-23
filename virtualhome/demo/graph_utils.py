@@ -645,6 +645,68 @@ def get_connected_to_nodes(graph, from_id, relations=["ON", "INSIDE"]):
                 to_nodes.append(to_node)
     return to_nodes
 
+def place_objects(graph, prefab_candidates, class_placements, target_class: str, relations: list = ["ON", "INSIDE"]):
+    inserted_ids = []
+    
+    if not prefab_candidates:
+        print(f"❌ No prefab candidates provided for class '{target_class}'")
+        return False, graph
+    
+    placement_rules = [
+        p for p in class_placements.get(target_class, [])
+        if p["relation"] in relations
+    ]
+    if not placement_rules:
+        print(f"❌ No placement rules for class '{target_class}' with relations {relations}")
+        return False, graph
+    
+    random.shuffle(prefab_candidates)
+    
+    next_node_id = 1 + max((n["id"] for n in graph["nodes"]), default=1000)
+    for prefab_name in prefab_candidates:
+        # random rule → (surface class, relation)
+        rule = random.choice(placement_rules)
+        surface_class = rule["destination"]
+        relation     = rule["relation"]
+
+        # pick a random existing surface node of that class
+        surface_nodes = [n for n in graph["nodes"] if n["class_name"] == surface_class]
+        if not surface_nodes:
+            # no valid surface in current scene – skip this prefab
+            continue
+        surface_node = random.choice(surface_nodes)
+
+        # optional: find the room (if you need the FACING edge)
+        room_node = find_room_of_node(graph, surface_node["id"])
+
+        # build and insert the new node
+        new_id = next_node_id
+        next_node_id += 1
+
+        graph["nodes"].append(
+            {
+                "id": new_id,
+                "prefab_name": prefab_name,
+                "class_name": target_class,
+                "properties": ["GRABBABLE"],
+            }
+        )
+        # relation edge: object ↔ surface
+        graph["edges"].append(
+            {"from_id": new_id, "to_id": surface_node["id"], "relation_type": relation}
+        )
+
+        # optional FACING edge (only if room was found)
+        if room_node:
+            graph["edges"].append(
+                {"from_id": new_id, "to_id": room_node["id"], "relation_type": "FACING"}
+            )
+
+        inserted_ids.append(new_id)
+
+    return bool(inserted_ids), graph, inserted_ids
+    
+
 def insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations, prefab_candidates: list = None, n=1, verbose=False):
     """
     Insert up to n new objects of a given class into the scene graph, each in a different room.
