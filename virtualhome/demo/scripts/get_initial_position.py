@@ -19,6 +19,13 @@ def print_initial_position(pose_path):
         if len(values) < 4:
             print("First pose line missing values.")
             return
+        
+        names = lines[0].strip().split()
+        for i in range(56):
+            name = names[i]
+            x,y,z = map(float, values[1+3*i:4+3*i])
+            print(f"Pose {name}: ({x:.2f}, {y:.2f}, {z:.2f})")
+        
         x1, y1, z1 = map(float, values[1+5*3:4+5*3])
         x2, y2, z2 = map(float, values[1+6*3:4+6*3])
         x = (x1 + x2) / 2
