@@ -7,6 +7,10 @@ import cv2
 import tempfile, shutil  
 import json
 import numpy as np
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from graph_utils import *
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Convert Unity output PNGs to MP4 videos using ffmpeg.")
@@ -28,8 +32,9 @@ def parse_args():
 def collect_sorted_images(folder, suffix):
     return sorted(glob(os.path.join(folder, f'*{suffix}.png')))
 
-def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, out_path, fps=5):
-    def _draw_bounding_box(image, instance_mask, instance_colors):
+def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, cls_paths, class_list, out_path, fps=5):
+    
+    def _draw_bounding_box(image, instance_mask, class_mask, instance_colors, class_colors):
         CLASS_PALETTE = {
             "book":     (  0,   0, 255),   # red
             "folder":   (  0, 255,   0),   # green
@@ -42,6 +47,11 @@ def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, out_path, 
             instance_mask = cv2.cvtColor(instance_mask, cv2.COLOR_GRAY2BGR)
         elif instance_mask.shape[2] == 4:  # BGRA
             instance_mask = instance_mask[:, :, :3]
+            
+        if class_mask.ndim == 2:  # single channel
+            class_mask = cv2.cvtColor(class_mask, cv2.COLOR_GRAY2BGR)
+        elif class_mask.shape[2] == 4:  # BGRA
+            class_mask = class_mask[:, :, :3]
 
         out = image.copy()
 
@@ -62,8 +72,13 @@ def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, out_path, 
                 int(round(rgb_f[0] * 255)),  # R
             )
 
-            # Binary mask of this instance
-            mask = cv2.inRange(instance_mask, np.array(bgr_uint8), np.array(bgr_uint8))
+            # Binary mask for instance color
+            mask_instance = cv2.inRange(instance_mask, np.array(bgr_uint8), np.array(bgr_uint8))
+            # Binary mask for class color
+            bgr_class = class_colors[cls_name]
+            mask_class = cv2.inRange(class_mask, np.array(bgr_class), np.array(bgr_class))
+            # Final mask: only pixels where both match
+            mask = cv2.bitwise_and(mask_instance, mask_class)
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             if not contours:
@@ -92,16 +107,21 @@ def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, out_path, 
     Draw bounding‑boxes (via your `_draw_bounding_box`) on each normal/instance
     pair and encode them into a video.  Uses `make_video_ffmpeg` unchanged.
     """
-    if not normal_paths or not inst_paths or len(normal_paths) != len(inst_paths):
+    if not normal_paths or not inst_paths or not cls_paths or len(normal_paths) != len(inst_paths) or len(normal_paths) != len(cls_paths):
         print(f"[Warning] Bounding‑box video skipped for {out_path} (frame mismatch).")
         return
 
+    class_colors = {}
+    for cls_name in ["book", "folder", "toy", "magazine"]:
+        class_colors[cls_name] = semantic_cls_to_bgr(cls_name, class_list)
+
     tmp_dir = tempfile.mkdtemp()              # store annotated PNGs here
     try:
-        for idx, (n_path, i_path) in enumerate(zip(normal_paths, inst_paths)):
+        for idx, (n_path, i_path, c_path) in enumerate(zip(normal_paths, inst_paths, cls_paths)):
             img_normal = cv2.imread(n_path)                           # BGR
             img_inst   = cv2.imread(i_path, cv2.IMREAD_UNCHANGED)     # seg‑inst
-            drawn      = _draw_bounding_box(img_normal, img_inst, instance_colors)
+            img_cls    = cv2.imread(c_path, cv2.IMREAD_UNCHANGED)     # seg‑class
+            drawn      = _draw_bounding_box(img_normal, img_inst, img_cls, instance_colors, class_colors)
             cv2.imwrite(os.path.join(tmp_dir, f"frame_{idx:04d}_bbox.png"), drawn)
 
         annotated_frames = sorted(glob(os.path.join(tmp_dir, "frame_*.png")))
@@ -170,7 +190,10 @@ def process_dataname(unity_output_dir, dataname):
         out_path = os.path.join(output_dir, f"{dataname}{suffix}.mp4")
         make_video_ffmpeg(img_paths, out_path)
 
+    _, class_list = load_prefab_metadata("../resources/PrefabClass.json")
+
     normal_paths = collect_sorted_images(frame_dir, '_normal')
+    cls_paths    = collect_sorted_images(frame_dir, '_seg_class')
     inst_paths   = collect_sorted_images(frame_dir, '_seg_inst')
     
     instance_colors_path = os.path.join(frame_dir, 'instance_colors.json')
@@ -185,7 +208,14 @@ def process_dataname(unity_output_dir, dataname):
         raise ValueError(f"No agent graph found in {agent_graph_path}")
         
     bbox_out = os.path.join(output_dir, f"{dataname}_normal_bbox.mp4")
-    make_bbox_video(normal_paths, inst_paths, instance_colors, agent_graph, bbox_out, fps=5)
+    make_bbox_video(normal_paths, 
+                    inst_paths, 
+                    instance_colors, 
+                    agent_graph, 
+                    cls_paths, 
+                    class_list,
+                    bbox_out, 
+                    fps=5)
 
 def main():
     args = parse_args()
