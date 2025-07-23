@@ -100,14 +100,15 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str]) -> bool:
     return True
 
 def _replace_objects(args, comm, scene_id, verbose: bool = False):
-    _prepare_scene(args, comm, args.target_class, scene_id)
+    _prepare_scene(args, comm, scene_id)
     time.sleep(1)  # Ensure the scene is ready
     
     _, graph = comm.environment_graph()
-    success, graph, inserted_ids = place_objects(graph, 
-                                                 args.prefab_classes.get(args.target_class, []),
-                                                 args.class_placements, 
-                                                 args.target_class)
+    success, graph, _, _ = place_objects(graph, 
+                                         args.prefab_classes.get(args.target_class, []),
+                                         args.class_placements, 
+                                         args.target_class,
+                                         verbose=verbose,)
     if not success:
         print("Failed to place objects:", message)
         return False
@@ -118,7 +119,7 @@ def _replace_objects(args, comm, scene_id, verbose: bool = False):
     
     return True
     
-def _prepare_scene(args, comm, target_class: str, scene_id: int):
+def _prepare_scene(args, comm, scene_id: int):
     comm.reset(scene_id)
     
     _, graph = comm.environment_graph()
@@ -128,7 +129,19 @@ def _prepare_scene(args, comm, target_class: str, scene_id: int):
         raise RuntimeError(f"Failed to expand scene: {message}")
     
     _, graph = comm.environment_graph()
-    graph = remove_nodes_by_classes(graph, [target_class])
+    graph = remove_nodes_by_classes(graph, [args.target_class])
+    success, message = comm.expand_scene(graph)
+    if not success:
+        raise RuntimeError(f"Failed to expand scene: {message}")
+    
+    _, graph = comm.environment_graph()
+    graph = remove_all_objects_on_surfaces(graph, args.clean_surfaces)
+    success, message = comm.expand_scene(graph)
+    if not success:
+        raise RuntimeError(f"Failed to expand scene: {message}")
+    
+    _, graph = comm.environment_graph()
+    graph = remove_all_objects_on_surfaces_by_ids(graph, args.clean_ids)
     success, message = comm.expand_scene(graph)
     if not success:
         raise RuntimeError(f"Failed to expand scene: {message}")
@@ -138,16 +151,15 @@ def _prepare_scene(args, comm, target_class: str, scene_id: int):
     success, message = comm.expand_scene(graph)
     if not success:
         raise RuntimeError(f"Failed to expand scene: {message}")
-    
-    graph = remove_all_objects_on_surfaces(graph, args.clean_surfaces)
-    success, message = comm.expand_scene(graph)
-    if not success:
-        raise RuntimeError(f"Failed to expand scene: {message}")
 
 def run_once(args, comm, script: List[str], prefix: str):
     print(f"Running script with prefix: {prefix}")
-    if not _replace_objects(args, comm, scene_id):
+    if not _replace_objects(args, comm, scene_id, verbose=True):
         return False
+    
+    time.sleep(1)  # Ensure the scene is ready after placing objects
+    _, graph = comm.environment_graph()
+    script = generate_walk_find_script(graph, [args.target_class])
     
     if not _record_graph(comm, args.data_dir, prefix, script):
         return False
@@ -157,16 +169,11 @@ def run_once(args, comm, script: List[str], prefix: str):
 
 def collect_data_in_one_scene(args, comm, scene_id: int):
     
-    _prepare_scene(args, comm, args.target_class, scene_id)
-    
     robot_script_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_script.txt")
     with open(robot_script_path, "r") as f:
         script = [line.strip() for line in f if line.strip()]
     if script is None or len(script) == 0:
         raise ValueError(f"No script found for scene {scene_id} in {robot_script_path}")
-    
-    # script = script[:16]
-    print(script)
     
     for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
         run_once(args, comm, script, prefix=f"scene{scene_id}_{args.target_class}{args.nobjects}_{i_run}")
@@ -185,7 +192,9 @@ if __name__ == "__main__":
     comm.timeout_wait = 2000
     
     prefab_classes = {
-        "book": ["Book_6", "Book_27", "Book_13"],
+        "book": ["Book_13", "Book_18", "Book_27"],
+        "toy": ["Toy_5", "Toy_6", "Toy_4"],
+        "pillow": ["PRE_DEC_Pillow_01_01_01", "PRE_DEC_Pillow_01_04_05", "PRE_DEC_Pillow_01_07_03"]
     }
     args.prefab_classes = {k.replace("_", "").lower(): v for k, v in prefab_classes.items()}
     

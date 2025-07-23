@@ -1,1 +1,1 @@
-ython collect_data_v2.py --target_class book --clean_surfaces wallshelf kitchentable desk --clean_ids 31 34 132 --port 8080
+python collect_data_v2.py --target_class book --clean_surfaces wallshelf kitchentable desk --clean_ids 31 34 132 --port 8080

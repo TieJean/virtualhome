@@ -467,6 +467,28 @@ def remove_all_objects_on_surfaces(graph, surface_class_names, verbose=False):
         
     return graph
 
+def remove_all_objects_on_surfaces_by_ids(graph, surface_ids, verbose=False):
+    # Step 2: Find ON edges where to_id is a surface
+    on_edges = [e for e in graph['edges'] if e['relation_type'] == 'ON' and e['to_id'] in surface_ids]
+    object_ids = {e['from_id'] for e in on_edges}
+
+    if verbose and object_ids:
+        print(f"🧹 Preparing to remove {len(object_ids)} object nodes from surfaces...")
+
+    # Step 3: Clean up all nodes with those IDs
+    graph['nodes'] = [n for n in graph['nodes'] if n['id'] not in object_ids]
+
+    # Step 4: Remove all edges involving those IDs
+    graph['edges'] = [
+        e for e in graph['edges']
+        if e['from_id'] not in object_ids and e['to_id'] not in object_ids
+    ]
+
+    if verbose and object_ids:
+        print(f"✅ Removed objects: {sorted(object_ids)}")
+        
+    return graph
+
 def get_node_parents(graph, node_id):
     return [edge['from_id'] for edge in graph['edges'] if edge['to_id'] == node_id]
 
@@ -645,66 +667,147 @@ def get_connected_to_nodes(graph, from_id, relations=["ON", "INSIDE"]):
                 to_nodes.append(to_node)
     return to_nodes
 
-def place_objects(graph, prefab_candidates, class_placements, target_class: str, relations: list = ["ON", "INSIDE"]):
+def place_objects(
+    graph,
+    prefab_candidates,
+    class_placements,
+    target_class: str,
+    relations=("ON", "INSIDE"),
+    verbose: bool = False,
+):
+    """
+    Attempt to place *every* prefab in `prefab_candidates` into the graph.
+    For each prefab, try all allowed placement rules (random order) until one
+    finds at least one matching surface node in the scene. Reuse of surfaces
+    across multiple prefabs is allowed.
+
+    Parameters
+    ----------
+    graph : dict
+        Scene graph with "nodes" and "edges".
+    prefab_candidates : list[str]
+        Prefab asset names to place (one node per prefab).
+    class_placements : dict
+        Mapping: target_class -> list of {destination: <surface_class>, relation: <str>, ...}.
+    target_class : str
+        Class name to assign to all inserted nodes.
+    relations : iterable[str]
+        Which relation types from the rules are considered valid (e.g., ("ON","INSIDE")).
+    verbose : bool
+        Print placement outcomes.
+
+    Returns
+    -------
+    placed_any : bool
+        True if at least one prefab was placed.
+    graph : dict
+        Modified graph (mutated in place, also returned for convenience).
+    inserted_ids : list[int]
+        IDs of successfully placed nodes.
+    skipped : list[str]
+        Prefab names we could not place (no valid surfaces in the scene).
+    """
     inserted_ids = []
-    
+    skipped = []
+
+    # --- 1. Input checks ------------------------------------------------------
     if not prefab_candidates:
-        print(f"❌ No prefab candidates provided for class '{target_class}'")
-        return False, graph
-    
+        if verbose:
+            print(f"❌ No prefab candidates provided for class '{target_class}'.")
+        return False, graph, inserted_ids, skipped
+
     placement_rules = [
-        p for p in class_placements.get(target_class, [])
-        if p["relation"] in relations
+        rule for rule in class_placements.get(target_class, [])
+        if rule["relation"] in relations
     ]
     if not placement_rules:
-        print(f"❌ No placement rules for class '{target_class}' with relations {relations}")
-        return False, graph
-    
+        if verbose:
+            print(f"❌ No placement rules for class '{target_class}' with relations {tuple(relations)}.")
+        return False, graph, inserted_ids, skipped
+
+    # --- 2. Shuffle prefabs (random insertion order) -------------------------
+    prefab_candidates = list(prefab_candidates)  # copy in case caller reuses list
     random.shuffle(prefab_candidates)
-    
+
+    # --- 3. Node ID seed ------------------------------------------------------
     next_node_id = 1 + max((n["id"] for n in graph["nodes"]), default=1000)
+
+    # --- 4. Place each prefab -------------------------------------------------
     for prefab_name in prefab_candidates:
-        # random rule → (surface class, relation)
-        rule = random.choice(placement_rules)
-        surface_class = rule["destination"]
-        relation     = rule["relation"]
+        # Try all rules, shuffled each prefab for diversity
+        rules_try = random.sample(placement_rules, k=len(placement_rules))
 
-        # pick a random existing surface node of that class
-        surface_nodes = [n for n in graph["nodes"] if n["class_name"] == surface_class]
-        if not surface_nodes:
-            # no valid surface in current scene – skip this prefab
-            continue
-        surface_node = random.choice(surface_nodes)
+        placed = False
+        chosen_surface_node = None
+        chosen_rule = None
+        chosen_room_node = None
 
-        # optional: find the room (if you need the FACING edge)
-        room_node = find_room_of_node(graph, surface_node["id"])
+        for rule in rules_try:
+            surface_class = rule["destination"]
+            relation = rule["relation"]
 
-        # build and insert the new node
-        new_id = next_node_id
-        next_node_id += 1
+            # All existing surfaces of that class
+            surface_nodes = [n for n in graph["nodes"] if n["class_name"] == surface_class]
+            if not surface_nodes:
+                continue  # try next rule
 
-        graph["nodes"].append(
-            {
-                "id": new_id,
-                "prefab_name": prefab_name,
-                "class_name": target_class,
-                "properties": ["GRABBABLE"],
-            }
-        )
-        # relation edge: object ↔ surface
-        graph["edges"].append(
-            {"from_id": new_id, "to_id": surface_node["id"], "relation_type": relation}
-        )
+            # Pick a random specific surface node instance
+            surface_node = random.choice(surface_nodes)
 
-        # optional FACING edge (only if room was found)
-        if room_node:
-            graph["edges"].append(
-                {"from_id": new_id, "to_id": room_node["id"], "relation_type": "FACING"}
+            # Optional: room context
+            room_node = find_room_of_node(graph, surface_node["id"])
+
+            # We have a winner — insert the object
+            new_id = next_node_id
+            next_node_id += 1
+
+            graph["nodes"].append(
+                {
+                    "id": new_id,
+                    "prefab_name": prefab_name,
+                    "class_name": target_class,
+                    "properties": ["GRABBABLE"],
+                }
             )
+            graph["edges"].append(
+                {"from_id": new_id, "to_id": surface_node["id"], "relation_type": relation}
+            )
+            if room_node:
+                graph["edges"].append(
+                    {"from_id": new_id, "to_id": room_node["id"], "relation_type": "FACING"}
+                )
 
-        inserted_ids.append(new_id)
+            inserted_ids.append(new_id)
+            placed = True
+            chosen_surface_node = surface_node
+            chosen_rule = rule
+            chosen_room_node = room_node
+            break  # stop trying rules for this prefab
 
-    return bool(inserted_ids), graph, inserted_ids
+        if not placed:
+            skipped.append(prefab_name)
+            if verbose:
+                print(f"⚠️ Skipped '{prefab_name}': no valid surfaces for any placement rule.")
+        elif verbose:
+            # Verbose success message (mirrors your old helper’s style)
+            surface_str = f"{chosen_surface_node['class_name']} (id={chosen_surface_node['id']})"
+            relation = chosen_rule["relation"]
+            if chosen_room_node:
+                room_str = f" in room {chosen_room_node['class_name']} (id={chosen_room_node['id']})"
+            else:
+                room_str = " (room unknown)"
+            print(f"✅ Inserted {target_class} '{prefab_name}' (id={inserted_ids[-1]}) "
+                  f"{relation} {surface_str}{room_str}")
+
+    # --- 5. Summary -----------------------------------------------------------
+    if verbose:
+        placed_cnt = len(inserted_ids)
+        skip_cnt = len(skipped)
+        print(f"── Placement summary for '{target_class}': placed {placed_cnt}, skipped {skip_cnt}.")
+        if skip_cnt:
+            print("   Skipped prefabs:", ", ".join(skipped))
+
+    return bool(inserted_ids), graph, inserted_ids, skipped
     
 
 def insert_object_with_placement(graph, prefab_classes, class_placements, target_class, relations, prefab_candidates: list = None, n=1, verbose=False):
