@@ -1,1 +1,1 @@
-python collect_data_v2.py --clean_surfaces wallshelf kitchentable desk --clean_ids 31 34 132 108 --port 18080 --n_runs_per_scene 1
+python collect_data_v2.py --clean_surfaces wallshelf kitchentable desk --clean_ids 31 34 132 108 --n_runs_per_scene 12

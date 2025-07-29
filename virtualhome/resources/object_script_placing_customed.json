@@ -8593,11 +8593,6 @@
             "room": "null"
         },
         {
-            "destination": "kitchen_table", 
-            "relation": "ON", 
-            "room": "null"
-        },
-        {
             "destination": "closet", 
             "relation": "IN", 
             "room": "null"
