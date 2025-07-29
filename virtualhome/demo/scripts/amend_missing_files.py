@@ -2,6 +2,8 @@ import os
 import argparse
 import re
 from glob import glob
+import shutil
+from typing import List
 
 SUFFIXES = ['normal', 'seg_class', 'seg_inst']
 
@@ -29,10 +31,6 @@ def check_gaps(folder, suffix):
     else:
         print(f"{suffix:<10}: ❌ missing frames: {missing}")
         
-import os
-import shutil
-from typing import List
-
 def fill_missing_frames(folder: str, suffixes: List[str], prefix: str = "Action", depth_ext: str = ".exr"):
     """
     For each suffix in ['normal', 'seg_class', 'seg_inst', 'depth'], find missing frames.
@@ -78,6 +76,86 @@ def fill_missing_frames(folder: str, suffixes: List[str], prefix: str = "Action"
 
     return missing
 
+def get_pose_file(folder):
+    """Find the pose file in the given folder."""
+    matches = glob(os.path.join(folder, "pd_*.txt"))
+    if not matches:
+        raise FileNotFoundError("No pose file matching 'pd_*.txt' found in folder.")
+    return matches[0]  # Assume only one
+
+def check_pose_gaps(filepath):
+    """
+    Given a file where each row starts with an integer index,
+    return a list of missing indices in the sequence.
+    """
+    indices = []
+    with open(filepath, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line[0].isalpha():  # skip header
+                continue
+            try:
+                idx = int(line.split()[0])
+                indices.append(idx)
+            except (ValueError, IndexError):
+                continue
+    if not indices:
+        print("No index found in file.")
+        return []
+
+    indices = sorted(indices)
+    missing = [i for i in range(indices[0], indices[-1] + 1) if i not in indices]
+    if missing:
+        print(f"Missing indices: {missing}")
+    else:
+        print(f"No missing indices. Range: [{indices[0]}, {indices[-1]}], Total: {len(indices)}")
+    return missing
+
+def fill_missing_poses(pose_file):
+    """
+    Detect missing indices in the pose file.
+    Fill missing i with a copy of line for i-1.
+    Overwrite the file in-place.
+    """
+    # Read all lines
+    with open(pose_file, "r") as f:
+        lines = [line.rstrip("\n") for line in f]
+    header, data_lines = lines[0], lines[1:]
+
+    # Parse indices and build index->line mapping
+    index_to_line = {}
+    indices = []
+    for line in data_lines:
+        idx = int(line.split()[0])
+        indices.append(idx)
+        index_to_line[idx] = line
+
+    # Detect missing
+    min_idx, max_idx = indices[0], indices[-1]
+    missing = [i for i in range(min_idx, max_idx + 1) if i not in indices]
+    if not missing:
+        print("No missing indices in pose file.")
+        return
+
+    print(f"Filling missing indices: {missing}")
+
+    # Build amended lines
+    amended_lines = [header]
+    for i in range(min_idx, max_idx + 1):
+        if i in index_to_line:
+            amended_lines.append(index_to_line[i])
+        else:
+            # Copy previous pose
+            prev_line = index_to_line[i - 1]
+            # Replace index with current i
+            amended_line = f"{i} " + " ".join(prev_line.split()[1:])
+            amended_lines.append(amended_line)
+
+    # Overwrite file
+    with open(pose_file, "w") as f:
+        f.write("\n".join(amended_lines) + "\n")
+    print(f"Pose file {os.path.basename(pose_file)} amended and saved.")
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -93,6 +171,14 @@ def main():
     
     for suffix in SUFFIXES:
         check_gaps(args.folder, suffix)
-
+        
+    pose_file = get_pose_file(args.folder)
+    check_pose_gaps(pose_file)
+    
+    missing_filled = fill_missing_poses(pose_file)
+    print("Filled missing:", missing_filled)
+    
+    check_pose_gaps(pose_file)
+    
 if __name__ == "__main__":
     main()

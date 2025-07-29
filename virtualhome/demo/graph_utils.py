@@ -795,8 +795,7 @@ def place_all_objects(
                 target_class,                     # obj_cls
                 prefab_name,                      # obj_prefab_name
                 obj_id,                           # obj_node_id
-                surf_class,                       # surface (class from rule)
-                surface_node["class_name"],       # cls (actual surface node class)
+                surface_node["class_name"],       # surface_cls (actual surface node class)
                 surface_node.get("prefab_name", "N/A"),  # surface_prefab_name
                 surface_node["id"],               # surface_id
                 room_node["class_name"] if room_node else "N/A",   # room_cls
