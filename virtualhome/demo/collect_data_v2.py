@@ -114,7 +114,6 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
         prefix=prefix, 
         output_path=os.path.join(args.data_dir, prefix)
     )
-    import pdb; pdb.set_trace()
     return True
 
 def _replace_objects(args, 
@@ -190,7 +189,7 @@ def run_once(args, comm, script: List[str], robot_initial_state, prefix: str):
     
     header = [
         "obj_cls", "obj_prefab_name", "obj_node_id",
-        "surface", "cls", "surface_prefab_name", "surface_id",
+        "surface_cls", "surface_prefab_name", "surface_id",
         "room_cls", "room_prefab_name", "room_id"
     ]
     os.makedirs(os.path.dirname(obj_placement_savepath), exist_ok=True)

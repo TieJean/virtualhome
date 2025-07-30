@@ -167,7 +167,7 @@ def find_target_node_id(query_text):
     return target_node_id
 
 def _get_query_text(txt: str) -> str:
-    if "toy" in txt or "action figure" in txt or "transformer" in txt or "robot" in txt:
+    if "toy" in txt or "action figure" in txt or "transformer" in txt or "robot" in txt or "plush" in txt or "animal" in txt or "teddy" in txt:
         return "toy"
     elif "book" in txt:
         return "book"
