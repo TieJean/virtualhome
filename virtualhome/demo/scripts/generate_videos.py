@@ -27,6 +27,11 @@ def parse_args():
         required=True, 
         help="List of dataname folders to process (e.g., scene4_754ab231d3_0)"
     )
+    parser.add_argument(
+        "--make_stitched_video",
+        action='store_true',
+        help="If set, will create a stitched video of all bbox videos."
+    )
     return parser.parse_args()
 
 def collect_sorted_images(folder, suffix):
@@ -300,7 +305,8 @@ def main():
     for dataname in tqdm(args.datanames, desc="Processing datanames"):
         process_dataname(args.unity_output_dir, dataname)
         
-    visualize_all_bbox_videos(args.datanames, args.unity_output_dir)
+    if args.make_stitched_video:
+        visualize_all_bbox_videos(args.datanames, args.unity_output_dir)
 
 if __name__ == "__main__":
     main()

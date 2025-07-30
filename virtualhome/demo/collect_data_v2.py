@@ -67,9 +67,8 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
                                             image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
                                             file_name_prefix=prefix)
     
-    if not success:
-        print("Failed to render script:", message)
-        return False
+        if not success:
+            raise RuntimeError(f"Failed to render script: {message}")
     
     output_dir = os.path.join(save_dir, prefix, "0")
     
@@ -115,6 +114,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
         prefix=prefix, 
         output_path=os.path.join(args.data_dir, prefix)
     )
+    import pdb; pdb.set_trace()
     return True
 
 def _replace_objects(args, 
