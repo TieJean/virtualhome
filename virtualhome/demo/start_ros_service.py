@@ -169,11 +169,11 @@ def find_target_node_id(query_text):
 def _get_query_text(txt: str) -> str:
     if "toy" in txt or "action figure" in txt or "transformer" in txt or "robot" in txt or "plush" in txt or "animal" in txt or "teddy" in txt:
         return "toy"
-    elif "book" in txt:
+    elif "book" in txt or "biography" in txt or "novel" in txt:
         return "book"
-    elif "folder" in txt or "binder" in txt:
+    elif "folder" in txt or "binder" in txt or "doc" in txt:
         return "folder"
-    elif "magazine" in txt:
+    elif "magazine" in txt or "issue" in txt or "mag" in txt:
         return "magazine"
     else:
         raise ValueError(f"Unknown query text: {txt}")
