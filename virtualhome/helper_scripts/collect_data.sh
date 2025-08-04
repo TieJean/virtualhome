@@ -1,1 +1,34 @@
-python collect_data_v2.py --clean_surfaces wallshelf kitchentable desk --clean_ids 31 34 132 108 --n_runs_per_scene 12
+python collect_data_v2.py --scene_ids 14 --clean_surfaces wallshelf kitchentable desk --clean_ids 31 34 132 108 --n_runs_per_scene 16
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_00/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_01/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_02/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_03/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_04/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_05/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_06/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_07/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_08/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_09/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_10/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_11/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_12/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_13/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_14/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_15/0
+python collect_data_v2.py --scene_ids 10 --clean_surfaces wallshelf kitchentable desk --clean_ids 480 136 --n_runs_per_scene 16
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_00/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_01/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_02/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_03/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_04/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_05/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_06/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_07/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_08/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_09/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_10/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_11/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_12/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_13/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_14/0
+python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_15/0

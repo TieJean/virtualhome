@@ -1175,6 +1175,11 @@
             "room": "null"
         }, 
         {
+            "destination": "nightstand", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
             "destination": "couch", 
             "relation": "ON", 
             "room": "null"

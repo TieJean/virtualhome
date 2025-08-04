@@ -52,6 +52,36 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
         print("Failed to get environment graph:", graph)
         return False
     
+    
+    placement_script, placement_log, _ = generate_random_placement_scripts(graph, 
+                                      args.prefab_classes, 
+                                      args.class_placements, 
+                                      relations=("ON"),
+                                      verbose=False)
+    success, message = comm.render_script(script=placement_script,
+                                    processing_time_limit=30,
+                                    find_solution=False,
+                                    image_width=640,
+                                    image_height=480,  
+                                    skip_animation=True,
+                                    recording=False,
+                                    save_pose_data=False)
+    import pdb; pdb.set_trace()
+    
+    script =['<char0> [Walk] <kitchen> (11)', '<char0> [Walk] <kitchentable> (131)','<char0> [Walk] <kitchen> (11)', '<char0> [Walk] <kitchentable> (135)', '<char0> [Walk] <kitchen> (11)', '<char0> [Walk] <kitchencounter> (146)', '<char0> [Walk] <livingroom> (183)', '<char0> [Walk] <coffeetable> (215)', '<char0> [Walk] <livingroom> (183)', '<char0> [Walk] <wallshelf> (213)', '<char0> [Walk] <livingroom> (183)', '<char0> [Walk] <wallshelf> (209)', '<char0> [Walk] <livingroom> (183)', '<char0> [Walk] <wallshelf> (212)', '<char0> [Walk] <bedroom> (241)', '<char0> [Walk] <desk> (281)', '<char0> [Walk] <bathroom> (285)', '<char0> [Walk] <wallshelf> (320)', '<char0> [Walk] <bedroom> (346)', '<char0> [Walk] <desk> (393)', '<char0> [Walk] <livingroom> (183)', '<char0> [Walk] <sofa> (214)']
+    
+    success, message = comm.render_script(script=script,
+                                            processing_time_limit=6000,
+                                            find_solution=False,
+                                            image_width=640,
+                                            image_height=480,  
+                                            skip_animation=False,
+                                            recording=True,
+                                            save_pose_data=True,
+                                            camera_mode=["FIRST_PERSON"],
+                                            image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
+                                            file_name_prefix=prefix)
+    import pdb; pdb.set_trace()
     batch_size = 10
     for start in range(0, len(script), batch_size):
         sub_script = script[start:start + batch_size]
@@ -67,6 +97,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
                                             image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
                                             file_name_prefix=prefix)
     
+        import pdb; pdb.set_trace()
         if not success:
             raise RuntimeError(f"Failed to render script: {message}")
     
@@ -135,25 +166,29 @@ def _replace_objects(args,
     success, message = comm.expand_scene(graph)
     if not success:
         print("Failed to expand scene after placing objects:", message)
-        remove_ids = []
-        if isinstance(message, dict) and "unplaced" in message:
-            for item in message["unplaced"]:
-                # Extract the node id after the dot, e.g., 'folder.730' -> 730
-                try:
-                    node_id = int(item.split(".")[-1])
-                    remove_ids.append(node_id)
-                except Exception:
-                    pass
-            graph = remove_nodes_by_ids(graph, remove_ids)
-            success, message = comm.expand_scene(graph)
-            # Remove entries from placement_log whose node id is in remove_ids
-            placement_log = [entry for entry in placement_log if entry[2] not in remove_ids]
-            if not success:
-                print("Failed to expand scene after removing unplaced objects:", message)
-                return False, None
-        else:
-            print("Failed to expand scene after placing objects:", message)
-            return False, None
+        return False, None
+    
+    # script, placement_log, _ = generate_random_placement_scripts(graph, 
+    #                                   args.prefab_classes, 
+    #                                   args.class_placements, 
+    #                                   relations=("ON"),
+    #                                   verbose=verbose)
+    
+    # comm.add_character('chars/Female2')
+    # success, message = comm.render_script(script=script,
+    #                                 processing_time_limit=30,
+    #                                 find_solution=False,
+    #                                 image_width=640,
+    #                                 image_height=480,  
+    #                                 skip_animation=True,
+    #                                 recording=False,
+    #                                 save_pose_data=False)
+    # success, agent_graph = comm.environment_graph()
+    # graph = remove_nodes_by_classes(agent_graph, ["character"])
+    # success, message = comm.expand_scene(graph)
+    # if not success:
+    #     print("Failed to expand scene:", message)
+    #     return False
     
     return True, placement_log
     
@@ -197,6 +232,8 @@ def run_once(args, comm, script: List[str], robot_initial_state, prefix: str):
         return False
     
     time.sleep(1)  # Ensure the scene is ready after placing objects
+    _, graph = comm.environment_graph()
+    script = generate_walk_find_script(graph, ["toy", "book", "magazine", "folder"],)
     
     if not _record_graph(comm, args.data_dir, prefix, script, robot_initial_state):
         return False
@@ -220,20 +257,22 @@ def run_once(args, comm, script: List[str], robot_initial_state, prefix: str):
 
 def collect_data_in_one_scene(args, comm, scene_id: int):
     
-    robot_script_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_script.txt")
-    with open(robot_script_path, "r") as f:
-        script = [line.strip() for line in f if line.strip()]
-    if script is None or len(script) == 0:
-        raise ValueError(f"No script found for scene {scene_id} in {robot_script_path}")
+    # robot_script_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_script.txt")
+    # with open(robot_script_path, "r") as f:
+    #     script = [line.strip() for line in f if line.strip()]
+    # if script is None or len(script) == 0:
+    #     raise ValueError(f"No script found for scene {scene_id} in {robot_script_path}")
+    script = None
     
-    robot_initial_state_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_initial_state.json")
-    with open(robot_initial_state_path, "r") as f:
-        robot_initial_state = json.load(f)
-    if robot_initial_state is None or "initial_position" not in robot_initial_state or "initial_lookat" not in robot_initial_state:
-        raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
+    # robot_initial_state_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_initial_state.json")
+    # with open(robot_initial_state_path, "r") as f:
+    #     robot_initial_state = json.load(f)
+    # if robot_initial_state is None or "initial_position" not in robot_initial_state or "initial_lookat" not in robot_initial_state:
+    #     raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
     
     for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
-        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}")
+        run_once(args, comm, script, None, prefix="test")
+        # run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}")
         time.sleep(5)  # Ensure there's a delay between runs
     
 if __name__ == "__main__":
@@ -255,21 +294,20 @@ if __name__ == "__main__":
     }
     args.prefab_classes = {k.replace("_", "").lower(): v for k, v in prefab_classes.items()}
     
+    with open("../resources/object_script_placing_customed.json", "r") as f:
+        class_placements = json.load(f)
+    # Normalize keys and destinations
+    normalized_class_placements = {}
+    for cls_name, placements in class_placements.items():
+        new_key = cls_name.replace("_", "").lower()
+        new_placements = []
+        for entry in placements:
+            new_entry = entry.copy()
+            if 'destination' in new_entry:
+                new_entry['destination'] = new_entry['destination'].replace("_", "").lower()
+            new_placements.append(new_entry)
+        normalized_class_placements[new_key] = new_placements
+    args.class_placements = normalized_class_placements
+    
     for scene_id in args.scene_ids:
-    
-        with open(f"../resources/object_script_placing_customed_scene{scene_id}.json", "r") as f:
-            class_placements = json.load(f)
-        # Normalize keys and destinations
-        normalized_class_placements = {}
-        for cls_name, placements in class_placements.items():
-            new_key = cls_name.replace("_", "").lower()
-            new_placements = []
-            for entry in placements:
-                new_entry = entry.copy()
-                if 'destination' in new_entry:
-                    new_entry['destination'] = new_entry['destination'].replace("_", "").lower()
-                new_placements.append(new_entry)
-            normalized_class_placements[new_key] = new_placements
-        args.class_placements = normalized_class_placements
-    
         collect_data_in_one_scene(args, comm, scene_id)

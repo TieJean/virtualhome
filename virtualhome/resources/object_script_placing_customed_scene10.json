@@ -1170,6 +1170,11 @@
             "room": "null"
         }, 
         {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "kitchen_table", 
             "relation": "ON", 
             "room": "null"
@@ -1207,11 +1212,6 @@
         {
             "destination": "cabinet", 
             "relation": "IN", 
-            "room": "null"
-        }, 
-        {
-            "destination": "sofa", 
-            "relation": "ON", 
             "room": "null"
         }, 
         {
@@ -4960,6 +4960,11 @@
             "room": "null"
         }, 
         {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "couch", 
             "relation": "ON", 
             "room": "null"
@@ -4992,11 +4997,6 @@
         {
             "destination": "dresser", 
             "relation": "IN", 
-            "room": "null"
-        }, 
-        {
-            "destination": "sofa", 
-            "relation": "ON", 
             "room": "null"
         }, 
         {
@@ -5806,6 +5806,16 @@
             "room": "null"
         },
         {
+            "destination": "coffee_table", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "couch", 
             "relation": "ON", 
             "room": "null"
@@ -5822,11 +5832,6 @@
         },
         {
             "destination": "bed", 
-            "relation": "ON", 
-            "room": "null"
-        },
-        {
-            "destination": "sofa", 
             "relation": "ON", 
             "room": "null"
         }
@@ -8658,7 +8663,7 @@
             "room": "null"
         },
         {
-            "destination": "sofa", 
+            "destination": "washing_machine", 
             "relation": "ON", 
             "room": "null"
         }
