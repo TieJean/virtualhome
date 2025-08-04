@@ -123,21 +123,25 @@ def _replace_objects(args,
     _prepare_scene(args, comm, scene_id)
     time.sleep(1)  # Ensure the scene is ready
     
+    _, orginal_graph = comm.environment_graph()
+    
     _, graph = comm.environment_graph()
     success, graph, placement_log = place_all_objects(graph, 
                                              args.prefab_classes, 
                                              args.class_placements, 
                                              verbose=verbose)
     
+    success, expand_message = comm.expand_scene(graph)
     if not success:
-        print("Failed to place objects:", message)
-        return False, None
-    success, message = comm.expand_scene(graph)
-    if not success:
-        print("Failed to expand scene after placing objects:", message)
+        print("Failed to expand scene after placing objects:", expand_message)
+        
+        comm.reset(scene_id)
+        success, message = comm.expand_scene(orginal_graph)
+        
         remove_ids = []
-        if isinstance(message, dict) and "unplaced" in message:
-            for item in message["unplaced"]:
+        
+        if isinstance(expand_message, dict) and "unplaced" in expand_message:
+            for item in expand_message["unplaced"]:
                 # Extract the node id after the dot, e.g., 'folder.730' -> 730
                 try:
                     node_id = int(item.split(".")[-1])
@@ -148,6 +152,7 @@ def _replace_objects(args,
             success, message = comm.expand_scene(graph)
             # Remove entries from placement_log whose node id is in remove_ids
             placement_log = [entry for entry in placement_log if entry[2] not in remove_ids]
+            
             if not success:
                 print("Failed to expand scene after removing unplaced objects:", message)
                 return False, None

@@ -20,7 +20,6 @@
 <char0> [Walk] <kitchentable> (37)
 <char0> [LookAt] <kitchentable> (37)
 <char0> [LookAt] <kitchencabinet> (40)
-<char0> [LookAt] <wallshelf> (38)
 <char0> [Walk] <kitchencounter> (48)
 <char0> [LookAt] <kitchencounter> (48)
 <char0> [LookAt] <faucet> (50)
