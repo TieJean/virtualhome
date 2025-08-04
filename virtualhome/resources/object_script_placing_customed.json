@@ -1165,6 +1165,21 @@
     ], 
     "folder": [
         {
+            "destination": "cabinet", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "tv_stand", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
             "destination": "wallshelf", 
             "relation": "ON", 
             "room": "null"
@@ -4955,6 +4970,21 @@
     ], 
     "magazine": [
         {
+            "destination": "cabinet", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "tv_stand", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "bed", 
             "relation": "ON", 
             "room": "null"
@@ -5800,6 +5830,26 @@
         }
     ], 
     "toy": [
+        {
+            "destination": "cabinet", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "tv_stand", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        },
         {
             "destination": "kitchen_table", 
             "relation": "ON", 
@@ -8577,6 +8627,21 @@
         }
     ], 
     "book": [
+        {
+            "destination": "cabinet", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "tv_stand", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        },
         {
             "destination": "kitchen_counter", 
             "relation": "ON", 
