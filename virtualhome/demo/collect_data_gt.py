@@ -5,7 +5,6 @@ import cv2
 import imageio.v3 as iio
 
 sys.path.append('../simulation')
-from unity_simulator.comm_unity import UnityCommunication
 from utils_demo import *
 from graph_utils import *
 

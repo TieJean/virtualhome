@@ -1225,6 +1225,11 @@
             "room": "null"
         }, 
         {
+            "destination": "sofa", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
             "destination": "box", 
             "relation": "IN", 
             "room": "null"
@@ -5020,6 +5025,11 @@
             "room": "null"
         }, 
         {
+            "destination": "sofa", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
             "destination": "trashcan", 
             "relation": "IN", 
             "room": "null"
@@ -5826,6 +5836,11 @@
             "room": "null"
         },
         {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "tv_stand", 
             "relation": "ON", 
             "room": "null"
@@ -5860,6 +5875,11 @@
             "relation": "ON", 
             "room": "null"
         },
+        {
+            "destination": "sofa", 
+            "relation": "ON", 
+            "room": "null"
+        }
     ], 
     "after_shave": [
         {
@@ -8700,6 +8720,11 @@
         {
             "destination": "bag", 
             "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "sofa", 
+            "relation": "ON", 
             "room": "null"
         }
     ], 

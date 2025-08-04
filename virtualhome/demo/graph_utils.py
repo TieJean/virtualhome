@@ -739,6 +739,10 @@ def place_all_objects(
 
     next_id = 1 + max((n["id"] for n in graph["nodes"]), default=1000)
 
+    excluded_surface_prefabs = [
+        "Sofa_1"
+    ]
+
     # 2. Placement loop ------------------------------------------------------
     for target_class, prefab_name in tasks:
         rules = rule_cache[target_class]
@@ -757,7 +761,7 @@ def place_all_objects(
 
             surface_pool = [
                 n for n in graph["nodes"]
-                if n["class_name"] == surf_class and n["id"] not in used_surface_ids
+                if n["class_name"] == surf_class and n["id"] not in used_surface_ids and n["prefab_name"] not in excluded_surface_prefabs
             ]
             if not surface_pool:
                 continue
