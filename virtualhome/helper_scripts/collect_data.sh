@@ -1,4 +1,4 @@
-python collect_data_v2.py --scene_ids 14 --clean_surfaces wallshelf kitchentable desk --clean_ids 31 34 132 108 --n_runs_per_scene 16
+python collect_data_v2.py --scene_ids 4 --clean_surfaces wallshelf kitchentable desk --clean_ids 31 34 132 108 --n_runs_per_scene 16
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_00/0
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_01/0
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_02/0
@@ -15,7 +15,8 @@ python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virt
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_13/0
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_14/0
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene4_15/0
-python collect_data_v2.py --scene_ids 10 --clean_surfaces wallshelf kitchentable desk --clean_ids 480 136 --n_runs_per_scene 16
+python collect_data_gt.py --datanames scene4_00 scene4_01 scene4_02 scene4_03 scene4_04 scene4_05 scene4_06 scene4_07 scene4_08 scene4_09 scene4_10 scene4_11 scene4_12 scene4_13 scene4_14 scene4_15
+python collect_data_v2.py --scene_ids 10 --clean_surfaces wallshelf kitchentable desk --clean_ids 480 136 287 290 289 285 300  301 299 --n_runs_per_scene 16
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_00/0
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_01/0
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_02/0
@@ -32,3 +33,4 @@ python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virt
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_13/0
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_14/0
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_15/0
+python collect_data_gt.py --datanames scene10_00 scene10_01 scene10_02 scene10_03 scene10_04 scene10_05 scene10_06 scene10_07 scene10_08 scene10_09 scene10_10 scene10_11 scene10_12 scene10_13 scene10_14 scene10_15

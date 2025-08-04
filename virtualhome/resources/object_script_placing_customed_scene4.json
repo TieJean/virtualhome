@@ -1170,12 +1170,12 @@
             "room": "null"
         }, 
         {
-            "destination": "kitchen_table", 
+            "destination": "washing_machine", 
             "relation": "ON", 
             "room": "null"
-        }, 
+        },
         {
-            "destination": "nightstand", 
+            "destination": "kitchen_table", 
             "relation": "ON", 
             "room": "null"
         }, 
@@ -4965,6 +4965,11 @@
             "room": "null"
         }, 
         {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "couch", 
             "relation": "ON", 
             "room": "null"
@@ -5807,6 +5812,16 @@
     "toy": [
         {
             "destination": "kitchen_table", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "coffee_table", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
             "relation": "ON", 
             "room": "null"
         },
@@ -8660,6 +8675,11 @@
         {
             "destination": "bag", 
             "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
+            "relation": "ON", 
             "room": "null"
         },
         {
