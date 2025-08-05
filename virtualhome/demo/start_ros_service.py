@@ -312,6 +312,59 @@ def _find_instance(query_text: str, query_cls: str, ref_image):
         instance_id = None
     
     return instance_id
+
+def _get_visible_instances():
+    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
+    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
+    (ok_img, inst_imgs) = comm.camera_image(pano_camera_select, mode="seg_inst")
+    
+    # Step 3: Save for debug
+    view_pil = display_grid_img(imgs + cls_imgs + inst_imgs, nrows=3)
+    view_pil.save("../../outputs/debug_get_visible_instances.png")
+    
+    success, graph = comm.environment_graph()
+    success, instance_colors = comm.instance_colors()
+    
+    assert len(imgs) == len(cls_imgs) == len(inst_imgs), "Number of images mismatch"
+    
+    frame_nodes = set()
+    for img, cls_img, inst_img in zip(imgs, cls_imgs, inst_imgs):
+        unique_inst_colors = np.unique(inst_img.reshape(-1, 3), axis=0)
+        for inst_color in unique_inst_colors:
+            if np.all(inst_color == 0):
+                continue  # skip background
+            mask_inst = np.all(inst_img == inst_color, axis=-1)
+            if np.sum(mask_inst) < 10:
+                continue
+            class_colors, counts = np.unique(cls_img[mask_inst].reshape(-1, 3), axis=0, return_counts=True)
+            class_color = class_colors[np.argmax(counts)]
+            
+            matched_node = None
+            for node in graph["nodes"]:
+                node_id = str(node["id"])
+                prefab_name = node.get("prefab_name", "")
+                rgb_f = instance_colors.get(node_id)
+                if rgb_f is None:
+                    continue
+                
+                node_inst_color = np.array([rgb_f[2], rgb_f[1], rgb_f[0]]) * 255
+                node_inst_color = node_inst_color.astype(np.uint8)
+                
+                if not np.allclose(inst_color, node_inst_color, atol=2):
+                    continue
+                
+                try:
+                    node_class_color = semantic_cls_to_bgr(node["class_name"], class_list)
+                except ValueError:
+                    continue
+                if not np.allclose(class_color, node_class_color, atol=2):
+                    continue
+                matched_node = node
+                break
+            
+            if matched_node is not None:
+                frame_nodes.add(matched_node["prefab_name"])
+    return frame_nodes
     
 def handle_find_request(req):
     global comm
@@ -326,6 +379,9 @@ def handle_find_request(req):
         target_node_id = _find_instance(req.query_text, query_cls, req.ref_image)
     else:
         target_node_id = find_target_node_id(query_cls)
+        
+    visible_instances = _get_visible_instances()
+    # import pdb; pdb.set_trace()
     
     success, graph = comm.environment_graph()
     
@@ -346,7 +402,8 @@ def handle_find_request(req):
     return FindObjectSrvResponse(
         success=find_success,
         id=target_node_id,
-        position=target_position
+        position=target_position,
+        visible_instances=list(visible_instances),
     )
     
 def handle_pick_request(req):
