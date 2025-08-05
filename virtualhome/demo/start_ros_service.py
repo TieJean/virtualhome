@@ -84,6 +84,8 @@ def handle_navigate_request(req):
     rospy.loginfo(f"Received navigate request: ({req.x}, {req.y}, {req.z})")
     
     success = comm.move_character(0, [req.x, req.y, req.z])
+    if not success:
+        import pdb; pdb.set_trace()
     return GetImageAtPoseSrvResponse(success=success)
 
 def handle_observe_request(req):
@@ -167,7 +169,7 @@ def find_target_node_id(query_text):
     return target_node_id
 
 def _get_query_text(txt: str) -> str:
-    if "toy" in txt or "action figure" in txt or "transformer" in txt or "robot" in txt or "plush" in txt or "animal" in txt or "teddy" in txt:
+    if "toy" in txt or "action figure" in txt or "transformer" in txt or "robot" in txt or "plush" in txt or "animal" in txt or "teddy" in txt or "train" in txt:
         return "toy"
     elif "book" in txt or "biography" in txt or "novel" in txt:
         return "book"
