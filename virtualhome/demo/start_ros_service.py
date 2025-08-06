@@ -42,6 +42,7 @@ comm = None
 class_list = None
 cameras_select = None
 pano_camera_select = None
+gt_pano_camera_select = None
 vlm = None
 
 def parse_args():

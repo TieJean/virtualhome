@@ -5859,7 +5859,7 @@
             "destination": "bed", 
             "relation": "ON", 
             "room": "null"
-        },
+        }
     ], 
     "after_shave": [
         {
