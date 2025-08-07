@@ -671,6 +671,133 @@ def get_connected_to_nodes(graph, from_id, relations=["ON", "INSIDE"]):
 
 import random
 
+# class_placement: list of dicts like:  {'destination': 'table', 'relation': 'ON', 'room': 'null'}, {'destination': 'pantry', 'relation': 'ON', 'room': 'null'}]
+# placement: dict like {'destination': 'table', 'relation': 'ON',}
+# if both destination and relation match, return True
+
+def _is_valid_placement(class_placements, placement):
+    
+    """
+    Check if the given placement matches any of the class_placements rules.
+
+    Args:
+        class_placements (list[dict]): List of placement rules.
+        placement (dict): A single placement rule to check.
+
+    Returns:
+        bool: True if placement matches any rule, False otherwise.
+    """
+    #import pdb; pdb.set_trace()
+    for rule in class_placements:
+        if rule['destination'] == placement['destination'] and rule['relation'] == placement['relation']:
+            return True
+    return False
+
+
+def clean_scene_for_objects(
+    graph: dict,
+    prefab_dict: Dict[str, List[str]],  # {target_class: [prefab …]}
+    class_placements: dict,
+    relations: Tuple[str, ...] = ("ON", "INSIDE"),
+    verbose: bool = False,
+):
+    inserted_ids: List[int] = []
+    skipped: Dict[str, List[str]] = defaultdict(list)
+   
+    used_surface_ids: Dict[str, set[int]] = defaultdict(set)  # {target_class: set of used surface ids}
+    placement_log: List[List[str | int]] = []
+    # 0. Flatten → [(target_class, prefab_name), …] then shuffle -------------
+    tasks: List[Tuple[str, str]] = []
+    for t_cls, prefabs in prefab_dict.items():
+        if not prefabs:
+            continue
+        random.shuffle(prefabs)  # shuffle within each class
+        tasks.extend((t_cls, p) for p in prefabs)
+    if not tasks:
+        if verbose:
+            print("❌ Nothing to place (empty prefab_dict).")
+        return False, graph, inserted_ids, dict(skipped)
+
+    
+    random.shuffle(tasks)  # shuffle across classes
+   
+    
+    # placement loop ------------------------------------------------------
+    for target_class, prefab_name in tasks:
+       
+        #find all surfaces on which the prefab is already placed in the graph
+        found = False
+        existing_prefab = [n for n in graph["nodes"] if n["class_name"] == target_class and n["prefab_name"] == prefab_name]
+        if existing_prefab:
+            edges = [e for e in graph["edges"] if e["from_id"] in {n["id"] for n in existing_prefab} and e["relation_type"] in relations]
+            for edge in edges:
+                surface_id = edge["to_id"]
+                target_id = edge["from_id"]
+
+
+                surface_node = [node for node in graph["nodes"] if node['id'] == surface_id]
+                room_node = find_room_of_node(graph, surface_id)
+               
+                if surface_node:
+                    surface_node = surface_node[0]
+                else:
+                    continue
+
+                this_placement = {'destination': surface_node['class_name'], 'relation': edge['relation_type']}
+
+                if _is_valid_placement(class_placements[target_class], this_placement):
+
+                    if surface_node["id"] not in used_surface_ids[target_class]:
+                        used_surface_ids[target_class].add(surface_node["id"])
+                        inserted_ids.append(target_id)
+                        placement_log.append([
+                            target_class,                     # obj_cls
+                            prefab_name,                      # obj_prefab_name
+                            target_id,               # obj_node_id
+                            surface_node["class_name"],       # surface_cls (actual surface node class)
+                            surface_node["prefab_name"],      # surface_prefab_name
+                            surface_node["id"],               # surface_id
+                            room_node['class_name'] if room_node else "N/A",                           # room_cls (placeholder)
+                            room_node['prefab_name'] if room_node else "N/A",                    # room_prefab_name (placeholder)
+                            room_node['id'] if room_node else -1                         # room_id (placeholder)
+                        ])
+                        found = True
+                        #remove all objects with "relations" to the surface that have the same target_class but different id i.e. edge['from_id'] != surface_node['id']
+
+                        # get all objects that are ON or INSIDE the surface
+                        edges = [e for e in graph["edges"] if e["to_id"] == surface_node["id"] and e["relation_type"] in relations]
+                        for edge in edges:
+                            obj_id = edge["from_id"]
+                            obj_node = [n for n in graph["nodes"] if n['id'] == obj_id]
+                            if obj_node:
+                                obj_node = obj_node[0]
+                                if obj_node["class_name"] == target_class and obj_node["id"] != target_id:
+                                    # remove this object node
+                                    graph = remove_nodes_by_ids(graph, [obj_node["id"]], verbose=verbose)
+                                    #graph["nodes"].remove(obj_node)
+                                    
+                                    if verbose:
+                                        print(f"🧹 Removed {target_class} {obj_node['prefab_name']} from surface {surface_node['prefab_name']} ({surface_node['id']})")
+                            else:
+                                
+                                continue
+        else:
+            if verbose:
+                print(f"⚠️ No existing prefab '{prefab_name}' of class '{target_class}' found in the graph.")
+                skipped[target_class].append(prefab_name)
+
+        if not found:
+            skipped[target_class].append(prefab_name)
+            print(f"⚠️ No valid placement found for '{prefab_name}' of class '{target_class}'.")
+
+    if verbose:
+        total_skipped = sum(len(v) for v in skipped.values())
+        print(f"── Global placement summary: placed {len(inserted_ids)}, skipped {total_skipped}.")
+        if total_skipped:
+            for cls, lst in skipped.items():
+                print(f"   {cls}: {', '.join(lst)}")
+
+    return bool(inserted_ids), graph, placement_log
 
 def place_all_objects(
     graph: dict,
@@ -725,6 +852,8 @@ def place_all_objects(
         if verbose:
             print("❌ Nothing to place (empty prefab_dict).")
         return False, graph, inserted_ids, dict(skipped)
+
+    #import pdb; pdb.set_trace()
 
     random.shuffle(tasks)             # shuffle across classes
 

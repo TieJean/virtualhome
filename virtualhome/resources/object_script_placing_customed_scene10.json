@@ -1,4 +1,78 @@
 {
+
+    "cupcake": [
+        {
+            "destination": "table",
+            "relation": "ON",
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_counter",
+            "relation": "ON",
+            "room": "null"
+        },
+        {
+            "destination": "dishwasher",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_cabinet",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "cupboard",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "cabinet",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "fridge",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "dishwasher",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_cabinet",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "cupboard",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "cabinet",
+            "relation": "IN",
+            "room": "null"
+        },
+        {
+            "destination": "fridge",
+            "relation": "IN",
+            "room": "null"
+        }, {
+
+        
+            "destination": "plate", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "coffee_table",
+            "relation": "ON",
+            "room": "null"
+        }
+    ],
     "wine_glass": [
         {
             "destination": "table_cloth", 
@@ -8122,6 +8196,11 @@
         }
     ], 
     "apple": [
+         {
+            "destination": "coffee_table", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
         {
             "destination": "table_cloth", 
             "relation": "ON", 

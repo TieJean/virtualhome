@@ -17,6 +17,9 @@ from graph_utils import *
 from viz_utils import *
 import hashlib
 
+CLASSES_TO_PLACE = ["pillow", "book", "toy", "magazine", "folder"]
+CLASSES_TO_KEEP = ["fruits", "drinks", "apple", "cupcake"]
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Collect data for virtual home')
     parser.add_argument('--script_dir', type=str, default="example_scripts", help='Directory containing scripts')
@@ -25,9 +28,10 @@ def parse_args():
     parser.add_argument('--clean_surfaces', nargs='+', type=str, default=[], help='List of surfaces to clean')
     parser.add_argument('--clean_classes', nargs='+', type=str, default=["pillow", "book", "toy", "magazine", "folder"], help='List of target classes to replace')
     parser.add_argument('--clean_ids', nargs='+', type=int, default=[], help='List of target IDs to replace')
-    parser.add_argument('--n_runs_per_scene', type=int, default=6, help="Number of runs per scene")
+    parser.add_argument('--n_runs_per_scene', type=int, default=1, help="Number of runs per scene")
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
+    parser.add_argument("--keep_objects", action='store_true', help="Keep existing objects in the scene, set true for placing food/fruits")
     return parser.parse_args()
 
 def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_initial_state = None) -> bool:
@@ -51,7 +55,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
     if not success:
         print("Failed to get environment graph:", graph)
         return False
-    
+   # import pdb; pdb.set_trace()
     batch_size = 10
     for start in range(0, len(script), batch_size):
         sub_script = script[start:start + batch_size]
@@ -71,7 +75,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
             raise RuntimeError(f"Failed to render script: {message}")
     
     output_dir = os.path.join(save_dir, prefix, "0")
-    
+    os.makedirs(output_dir, exist_ok=True)
     # Save the agent graph and environment graph
     agent_graph_path = os.path.join(output_dir, "agent_graph.json") # This is necessary to obtain ground truth
     graph_path = os.path.join(output_dir, "graph.json")
@@ -119,21 +123,40 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
 def _replace_objects(args, 
                      comm, 
                      scene_id, 
-                     verbose: bool = False):
-    _prepare_scene(args, comm, scene_id)
+                     verbose: bool = False, keep_objects: bool = True):
+
+  #  import pdb; pdb.set_trace()
+   
+   # if not keep_objects:
+    _prepare_scene(args, comm, scene_id, keep_objects=keep_objects)
+    #else:
+     #   comm.reset(scene_id)  
     time.sleep(1)  # Ensure the scene is ready
-    
+
+    # we keep original graph for "keep_objects" case   
     _, orginal_graph = comm.environment_graph()
     
     _, graph = comm.environment_graph()
-    success, graph, placement_log = place_all_objects(graph, 
+    if not keep_objects:
+        success, graph, placement_log = place_all_objects(graph, 
                                              args.prefab_classes, 
                                              args.class_placements, 
                                              verbose=verbose)
-    
-    success, expand_message = comm.expand_scene(graph)
+    else:
+        success, graph, placement_log = clean_scene_for_objects(graph,
+                                             args.prefab_classes, 
+                                             args.class_placements, 
+                                             verbose=verbose)
+        _, message = comm.expand_scene(graph)
+        print("Expanded scene after cleaning:", message)
+        print("Success: ", success)
+        #import pdb; pdb.set_trace()
+        
     if not success:
-        print("Failed to expand scene after placing objects:", expand_message)
+       # import pdb; pdb.set_trace()
+        if keep_objects:
+            print("Failed due to no target object in the scene")
+            return False, None
         
         comm.reset(scene_id)
         success, message = comm.expand_scene(orginal_graph)
@@ -157,47 +180,54 @@ def _replace_objects(args,
                 print("Failed to expand scene after removing unplaced objects:", message)
                 return False, None
         else:
+            
             print("Failed to expand scene after placing objects:", message)
             return False, None
     
     return True, placement_log
-    
-def _prepare_scene(args, comm, scene_id: int):
+
+
+
+def _prepare_scene(args, comm, scene_id: int, keep_objects: bool = False):
     comm.reset(scene_id)
-    
-    _, graph = comm.environment_graph()
-    graph = remove_nodes_by_classes(graph, args.clean_classes)
-    success, message = comm.expand_scene(graph)
-    if not success:
-        raise RuntimeError(f"Failed to expand scene: {message}")
-    
-    _, graph = comm.environment_graph()
-    graph = remove_nodes_by_classes(graph, [args.prefab_classes.keys()])
-    success, message = comm.expand_scene(graph)
-    if not success:
-        raise RuntimeError(f"Failed to expand scene: {message}")
-    
+
+    if not keep_objects:
+        _, graph = comm.environment_graph()
+        graph = remove_nodes_by_classes(graph, args.clean_classes)
+        success, message = comm.expand_scene(graph)
+        if not success:
+            raise RuntimeError(f"Failed to expand scene: {message}")
+        
+        _, graph = comm.environment_graph()
+        graph = remove_nodes_by_classes(graph, [args.prefab_classes.keys()])
+        success, message = comm.expand_scene(graph)
+        if not success:
+            raise RuntimeError(f"Failed to expand scene: {message}")
+   
+    # For placing food/fruit, we need to remove objects from some irrelevant surfaces (e.g. wallshelf, desk)
     _, graph = comm.environment_graph()
     graph = remove_all_objects_on_surfaces(graph, args.clean_surfaces)
     success, message = comm.expand_scene(graph)
     if not success:
-        raise RuntimeError(f"Failed to expand scene: {message}")
+       raise RuntimeError(f"Failed to expand scene: {message}")
     
-    _, graph = comm.environment_graph()
-    graph = remove_all_objects_on_surfaces_by_ids(graph, args.clean_ids)
-    success, message = comm.expand_scene(graph)
-    if not success:
-        raise RuntimeError(f"Failed to expand scene: {message}")
-    
-    _, graph = comm.environment_graph()
-    graph = remove_nodes_by_ids(graph, args.clean_ids)
-    success, message = comm.expand_scene(graph)
-    if not success:
-        raise RuntimeError(f"Failed to expand scene: {message}")
+    if not keep_objects:
+        
+        _, graph = comm.environment_graph()
+        graph = remove_all_objects_on_surfaces_by_ids(graph, args.clean_ids)
+        success, message = comm.expand_scene(graph)
+        if not success:
+            raise RuntimeError(f"Failed to expand scene: {message}")
+        
+        _, graph = comm.environment_graph()
+        graph = remove_nodes_by_ids(graph, args.clean_ids)
+        success, message = comm.expand_scene(graph)
+        if not success:
+            raise RuntimeError(f"Failed to expand scene: {message}")
 
-def run_once(args, comm, script: List[str], robot_initial_state, prefix: str):
+def run_once(args, comm, script: List[str], robot_initial_state, prefix: str, keep_objects: bool = False):
     print(f"Running script with prefix: {prefix}")
-    success, placement_log = _replace_objects(args, comm, scene_id, verbose=True)
+    success, placement_log = _replace_objects(args, comm, scene_id, verbose=True, keep_objects=keep_objects)
     if not success:
         return False
     
@@ -218,12 +248,12 @@ def run_once(args, comm, script: List[str], robot_initial_state, prefix: str):
         writer = csv.writer(f)
         writer.writerow(header)
         writer.writerows(placement_log)
-    placement_log
+   # placement_log
     
     return True
     
 
-def collect_data_in_one_scene(args, comm, scene_id: int):
+def collect_data_in_one_scene(args, comm, scene_id: int, keep_objects: bool = False):
     
     robot_script_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_script.txt")
     with open(robot_script_path, "r") as f:
@@ -236,13 +266,19 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
         robot_initial_state = json.load(f)
     if robot_initial_state is None or "initial_position" not in robot_initial_state or "initial_lookat" not in robot_initial_state:
         raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
-    
+  
     for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
-        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}")
+        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}", keep_objects=keep_objects)
         time.sleep(5)  # Ensure there's a delay between runs
     
 if __name__ == "__main__":
     args = parse_args()
+
+    # assert that if args.clean_classes has any member of CLASSES_TO_CLEAN then no member of CLASSES_TO_PLACE is present
+    if any(cls in args.clean_classes for cls in CLASSES_TO_KEEP):
+        if any(cls in args.clean_classes for cls in CLASSES_TO_PLACE):
+            raise ValueError("You can either keep or place objects, not both.")
+
     args.data_dir = os.path.abspath('../../unity_output/')
     os.makedirs(args.data_dir, exist_ok=True)
     
@@ -253,10 +289,12 @@ if __name__ == "__main__":
     comm.timeout_wait = 60000
     
     prefab_classes = {
-        "book": ["Book_13", "Book_18", "Book_27"],
-        "toy": ["Toy_10", "Toy_5", "Toy_2"],
-        "folder": ["Folder_1", "Folder_2", "Folder_3"],
-        "magazine": ["Magazine_7l", "Magazine_7p", "Magazine_4"],
+   #     "book": ["Book_13", "Book_18", "Book_27"],
+  #      "toy": ["Toy_10", "Toy_5", "Toy_2"],
+    #    "folder": ["Folder_1", "Folder_2", "Folder_3"],
+  #      "magazine": ["Magazine_4"],
+        "apple": ["FMGP_PRE_Apple_1024"],
+        "cupcake": ["DHP_PRE_Rainbow_cupcake_1024"]
     }
     args.prefab_classes = {k.replace("_", "").lower(): v for k, v in prefab_classes.items()}
     
@@ -276,5 +314,5 @@ if __name__ == "__main__":
                 new_placements.append(new_entry)
             normalized_class_placements[new_key] = new_placements
         args.class_placements = normalized_class_placements
-    
-        collect_data_in_one_scene(args, comm, scene_id)
+
+        collect_data_in_one_scene(args, comm, scene_id, keep_objects=args.keep_objects)

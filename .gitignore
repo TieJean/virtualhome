@@ -178,3 +178,4 @@ fabric.properties
 test*/
 data/*
 .vscode/
+unity_output_*/
