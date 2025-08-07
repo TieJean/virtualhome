@@ -172,12 +172,12 @@ def find_target_node_id(query_text):
 def _get_query_text(txt: str) -> str:
     if "toy" in txt or "action figure" in txt or "transformer" in txt or "robot" in txt or "plush" in txt or "animal" in txt or "teddy" in txt or "train" in txt:
         return "toy"
-    elif "book" in txt or "biography" in txt or "novel" in txt:
-        return "book"
-    elif "folder" in txt or "binder" in txt or "doc" in txt:
-        return "folder"
     elif "magazine" in txt or "issue" in txt or "mag" in txt:
         return "magazine"
+    elif "folder" in txt or "binder" in txt or "doc" in txt:
+        return "folder"
+    elif "book" in txt or "biography" in txt or "novel" in txt:
+        return "book"
     else:
         raise ValueError(f"Unknown query text: {txt}")
     
@@ -258,6 +258,7 @@ def _find_instance(query_text: str, query_cls: str, ref_image):
     
     # Step 8: Iterate over inst_imgs and draw boxes
     any_box_drawn = False  # <-- Add this
+    valide_target_ids = []
     for i, (rgb_img, inst_img) in enumerate(zip(imgs, inst_imgs)):
         img_vis = rgb_img.copy()
 
@@ -272,21 +273,44 @@ def _find_instance(query_text: str, query_cls: str, ref_image):
                 x, y, w, h = cv2.boundingRect(cnt)
 
                 # Draw bounding box
-                cv2.rectangle(img_vis, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                cv2.rectangle(img_vis, (x, y), (x + w, y + h), (0, 0, 255), 1)
 
-                # Add label using node ID
                 label = f"Instance ID: {uid}"
+                valide_target_ids.append(uid)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.5
+                thickness = 1
+
+                (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+                img_h, img_w = img_vis.shape[:2]
+
+                # Try above the box
+                above_y = y - 10
+                if above_y - text_height >= 0:
+                    text_y = above_y
+                else:
+                    # Otherwise, try below
+                    below_y = y + h + text_height + 2
+                    if below_y < img_h:
+                        text_y = below_y
+                    else:
+                        # If both are out of bounds, clamp to bottom
+                        text_y = max(0, min(y + h, img_h - text_height - 1))
+
+                # Clamp x to stay fully within image width
+                text_x = max(0, min(x, img_w - text_width - 1))
+
                 cv2.putText(
                     img_vis,
                     label,
-                    (x, y - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5,
+                    (text_x, text_y),
+                    font,
+                    font_scale,
                     (0, 0, 255),
-                    1,
+                    thickness,
                     cv2.LINE_AA
                 )
-        
+
         encoded_img = opencv_image_to_base64(img_vis)
         encoded_img = [get_vlm_img_message(encoded_img)]
         messages += [HumanMessage(content=encoded_img)]
@@ -295,18 +319,29 @@ def _find_instance(query_text: str, query_cls: str, ref_image):
     # Early return if no bounding boxes were drawn
     if not any_box_drawn:
         return None
+    
+    if len(valide_target_ids) == 1:
+        return int(valide_target_ids[0])
         
+    valid_instance_ids_str = ", ".join(valide_target_ids)
+    messages += [
+        HumanMessage(content=(
+            f"Here are all valid instance IDs you may choose from: {valid_instance_ids_str}."
+            " Please answer ONLY with one of these instance IDs, or -1 if there is no match."
+        ))
+    ]
     chat_prompt = ChatPromptTemplate.from_messages(messages)
     chained_model = chat_prompt | vlm
     
     instance_id = None
-    for attempt in range(2):
+    for attempt in range(3):
         response = chained_model.invoke({})
         try:
             instance_id = int(response.content.strip())
-            break  # Success
+            if instance_id in target_ids or instance_id == -1:
+                break  # Success
         except Exception as e:
-            if attempt == 1:
+            if attempt == 3:
                 raise ValueError(f"Invalid response from model: {response.content}") from e
     
     if instance_id == -1:
@@ -418,11 +453,13 @@ def handle_pick_request(req):
         target_node_id = int(req.instance_id)
         target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
         if len(target_node) != 1:
+            rospy.logwarn(f"Object '{query_text}' not found in visible objects with instance ID {target_node_id}")
             return PickObjectSrvResponse(
                 success=False,
             )
         target_node = target_node[0]
         if target_node["class_name"].lower() != query_text.lower():
+            rospy.logwarn(f"Object '{query_text}' does not match instance ID {target_node_id} class '{target_node['class_name']}'")
             return PickObjectSrvResponse(
                 success=False,
             )
