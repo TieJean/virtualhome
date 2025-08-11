@@ -41,6 +41,7 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
             filepath = os.path.join(root, file)
             os.remove(filepath)
             
+    s, msg = comm.add_character_camera(position=[0, 2.0,  0.0], rotation=[0, 0, 0], field_view=60, name="tall_camera")
     if robot_initial_state is not None:
         comm.add_character('chars/Female2', position=robot_initial_state["initial_position"], initial_room="bathroom")
     else:
@@ -52,7 +53,7 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
         print("Failed to get environment graph:", graph)
         return False
     
-    batch_size = 10
+    batch_size = 30
     for start in range(0, len(script), batch_size):
         sub_script = script[start:start + batch_size]
         success, message = comm.render_script(script=sub_script,
@@ -63,7 +64,7 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
                                             skip_animation=False,
                                             recording=True,
                                             save_pose_data=True,
-                                            camera_mode=["FIRST_PERSON"],
+                                            camera_mode=["tall_camera"],
                                             image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
                                             file_name_prefix=prefix)
     
