@@ -359,8 +359,9 @@ def generate_walk_find_script(graph, target_classes):
     script_lines = []
 
     for edge in graph['edges']:
-        if edge['relation_type'] != 'ON':
+        if edge['relation_type'] not in ('ON', 'INSIDE'):
             continue
+        relation = edge['relation_type']
 
         obj_node = id_to_node.get(edge['from_id'])
         surf_node = id_to_node.get(edge['to_id'])
@@ -369,6 +370,10 @@ def generate_walk_find_script(graph, target_classes):
             continue
         if obj_node['class_name'] not in target_classes:
             continue
+        if surf_node['category'] == "Rooms":
+            continue
+        
+        # import pdb; pdb.set_trace()
         
         # Step 1: Walk to room (if any)
         room_node = find_room_of_node(graph, surf_node['id'])
@@ -378,9 +383,18 @@ def generate_walk_find_script(graph, target_classes):
         # Step 2: Walk to surface
         script_lines.append(f"<char0> [Walk] <{surf_node['class_name']}> ({surf_node['id']})")
 
+        # import pdb; pdb.set_trace()
+
+        # if relation == "INSIDE" and "CLOSED" in surf_node["states"]:
+        if "CLOSED" in surf_node["states"]:
+            script_lines.append(f"<char0> [Open] <{surf_node['class_name']}> ({surf_node['id']})")
+
         # Step 3: Repeated LookAt
         for _ in range(1):
             script_lines.append(f"<char0> [LookAt] <{obj_node['class_name']}> ({obj_node['id']})")
+        
+        if relation == "INSIDE":
+            script_lines.append(f"<char0> [Close] <{surf_node['class_name']}> ({surf_node['id']})")
 
     return script_lines
 
@@ -454,20 +468,34 @@ def print_edges_by_class(graph, target_class):
             other_node = id_to_node.get(other_id, {'class_name': 'UNKNOWN'})
             print(f"    {edge['relation_type']} {direction} {other_node['class_name']} (id: {other_id})")
 
-def remove_all_objects_on_surfaces(graph, surface_class_names, verbose=False):
+def remove_all_objects_on_surfaces(graph, 
+                                   class_names, 
+                                   relations=("ON", "INSIDE"),
+                                   verbose=False):
     """
     Removes all nodes that are ON any surface whose class_name is in surface_class_names.
     Cleans up all edges involving those nodes.
     """
     # Step 1: Identify surface node IDs
-    surface_ids = {node['id'] for node in graph['nodes'] if node['class_name'] in surface_class_names}
+    surface_ids = {node['id'] for node in graph['nodes'] if node['class_name'] in class_names}
 
     # Step 2: Find ON edges where to_id is a surface
-    on_edges = [e for e in graph['edges'] if e['relation_type'] == 'ON' and e['to_id'] in surface_ids]
+    on_edges = [e for e in graph['edges'] if e['relation_type'] in relations and e['to_id'] in surface_ids]
     object_ids = {e['from_id'] for e in on_edges}
 
     if verbose and object_ids:
         print(f"🧹 Preparing to remove {len(object_ids)} object nodes from surfaces...")
+        
+        # Print details of objects being removed
+        for obj_id in sorted(object_ids):
+            # Find the node with this ID
+            node = next((n for n in graph['nodes'] if n['id'] == obj_id), None)
+            if node:
+                class_name = node.get('class_name', 'Unknown')
+                prefab_name = node.get('prefab_name', 'Unknown')
+                print(f"   - ID {obj_id}: class='{class_name}', prefab='{prefab_name}'")
+            else:
+                print(f"   - ID {obj_id}: Node not found")
 
     # Step 3: Clean up all nodes with those IDs
     graph['nodes'] = [n for n in graph['nodes'] if n['id'] not in object_ids]
@@ -479,7 +507,7 @@ def remove_all_objects_on_surfaces(graph, surface_class_names, verbose=False):
     ]
 
     if verbose and object_ids:
-        print(f"✅ Removed objects: {sorted(object_ids)}")
+        print(f"✅ Removed {len(object_ids)} objects from surfaces")
         
     return graph
 
@@ -772,6 +800,8 @@ def place_all_objects(
 
         for rule in rules_try:
             surf_class, relation = rule["destination"], rule["relation"]
+            if "IN" in relation:
+                relation = "INSIDE"
 
             surface_pool = [
                 n for n in graph["nodes"]

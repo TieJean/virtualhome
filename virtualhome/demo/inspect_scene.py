@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('--scene_ids', nargs='+', type=int, default=[4], help='List of scene IDs to collect data from')
     parser.add_argument("--graph_dir", type=str, default="example_graphs", help="Directory containing scene graphs")
     parser.add_argument('--clean_surfaces', nargs='+', type=str, default=[], help='List of surfaces to clean')
+    parser.add_argument('--clean_containers', nargs='+', type=str, default=[], help='List of containers to clean')
     parser.add_argument('--clean_classes', nargs='+', type=str, default=["pillow", "book", "toy", "magazine", "folder"], help='List of target classes to replace')
     parser.add_argument('--clean_ids', nargs='+', type=int, default=[], help='List of target IDs to replace')
     parser.add_argument('--n_runs_per_scene', type=int, default=6, help="Number of runs per scene")
@@ -68,8 +69,8 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
                                             file_name_prefix=prefix)
     
         if not success:
+            import pdb; pdb.set_trace()
             raise RuntimeError(f"Failed to render script: {message}")
-    
     output_dir = os.path.join(save_dir, prefix, "0")
     
     # Save the agent graph and environment graph
@@ -119,7 +120,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
 def _replace_objects(args, 
                      comm, 
                      scene_id, 
-                     verbose: bool = False):
+                     verbose: bool = True):
     _prepare_scene(args, comm, scene_id)
     time.sleep(1)  # Ensure the scene is ready
     
@@ -129,9 +130,11 @@ def _replace_objects(args,
     success, graph, placement_log = place_all_objects(graph, 
                                              args.prefab_classes, 
                                              args.class_placements, 
+                                             relations=("INSIDE"),
                                              verbose=verbose)
     
     success, expand_message = comm.expand_scene(graph)
+    
     if not success:
         print("Failed to expand scene after placing objects:", expand_message)
         
@@ -178,7 +181,13 @@ def _prepare_scene(args, comm, scene_id: int):
         raise RuntimeError(f"Failed to expand scene: {message}")
     
     _, graph = comm.environment_graph()
-    graph = remove_all_objects_on_surfaces(graph, args.clean_surfaces)
+    graph = remove_all_objects_on_surfaces(graph, args.clean_surfaces, relations=("ON"))
+    success, message = comm.expand_scene(graph)
+    if not success:
+        raise RuntimeError(f"Failed to expand scene: {message}")
+    
+    _, graph = comm.environment_graph()
+    graph = remove_all_objects_on_surfaces(graph, args.clean_containers, relations=("INSIDE"), verbose=True)
     success, message = comm.expand_scene(graph)
     if not success:
         raise RuntimeError(f"Failed to expand scene: {message}")
@@ -198,6 +207,7 @@ def _prepare_scene(args, comm, scene_id: int):
 def run_once(args, comm, script: List[str], robot_initial_state, prefix: str):
     print(f"Running script with prefix: {prefix}")
     success, placement_log = _replace_objects(args, comm, scene_id, verbose=True)
+    # import pdb; pdb.set_trace()
     if not success:
         return False
     
@@ -241,7 +251,7 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
     #     raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
     
     for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
-        run_once(args, comm, script, None, prefix=f"scene{scene_id}_{i_run:02d}")
+        run_once(args, comm, script, None, prefix=f"test")
         time.sleep(5)  # Ensure there's a delay between runs
     
 if __name__ == "__main__":

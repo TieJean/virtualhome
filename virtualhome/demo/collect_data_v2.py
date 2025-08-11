@@ -178,7 +178,7 @@ def _prepare_scene(args, comm, scene_id: int):
         raise RuntimeError(f"Failed to expand scene: {message}")
     
     _, graph = comm.environment_graph()
-    graph = remove_all_objects_on_surfaces(graph, args.clean_surfaces)
+    graph = remove_all_objects_on_surfaces(graph, args.clean_surfaces, relations=("ON"))
     success, message = comm.expand_scene(graph)
     if not success:
         raise RuntimeError(f"Failed to expand scene: {message}")
