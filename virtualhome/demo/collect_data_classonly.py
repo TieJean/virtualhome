@@ -129,6 +129,7 @@ def _replace_objects(args,
     success, graph, placement_log = place_all_objects(graph, 
                                              args.prefab_classes, 
                                              args.class_placements, 
+                                             relations=("INSIDE",),
                                              verbose=verbose)
     
     success, expand_message = comm.expand_scene(graph)

@@ -42,6 +42,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
             filepath = os.path.join(root, file)
             os.remove(filepath)
             
+    s, msg = comm.add_character_camera(position=[0, 2.0,  0.0], rotation=[0, 0, 0], field_view=60, name="tall")
     if robot_initial_state is not None:
         comm.add_character('chars/Female2', position=robot_initial_state["initial_position"], initial_room="bathroom")
     else:
@@ -53,7 +54,78 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
         print("Failed to get environment graph:", graph)
         return False
     
-    batch_size = 10
+    # import pdb; pdb.set_trace()
+    script = [
+        "<char0> [Walk] <bathroomcabinet> (297)",
+        "<char0> [Open] <bathroomcabinet> (297)",
+        "<char0> [LookAt] <bathroomcabinet> (297)",
+        "<char0> [Close] <bathroomcabinet> (297)",
+        # "<char0> [Walk] <washingmachine> (367)",
+        # "<char0> [Open] <washingmachine> (367)",
+        # "<char0> [LookAt] <washingmachine> (367)",
+        # "<char0> [Close] <washingmachine> (367)",
+        # "<char0> [Walk] <fridge> (157)",
+        # "<char0> [Open] <fridge> (157)",
+        # "<char0> [LookAt] <fridge> (157)",
+        # "<char0> [Close] <fridge> (157)",
+        "<char0> [Walk] <kitchencabinet> (142)",
+        "<char0> [Open] <kitchencabinet> (142)",
+        "<char0> [LookAt] <kitchencabinet> (142)",
+        "<char0> [Close] <kitchencabinet> (142)",
+        "<char0> [Walk] <kitchencabinet> (143)",
+        "<char0> [Open] <kitchencabinet> (143)",
+        "<char0> [LookAt] <kitchencabinet> (143)",
+        "<char0> [Close] <kitchencabinet> (143)",
+        "<char0> [Walk] <kitchencabinet> (144)",
+        "<char0> [Open] <kitchencabinet> (144)",
+        "<char0> [LookAt] <kitchencabinet> (144)",
+        "<char0> [Close] <kitchencabinet> (144)",
+        "<char0> [Walk] <kitchencabinet> (145)",
+        "<char0> [Open] <kitchencabinet> (145)",
+        "<char0> [LookAt] <kitchencabinet> (145)",
+        "<char0> [Close] <kitchencabinet> (145)",
+        "<char0> [Walk] <kitchencabinet> (146)",
+        "<char0> [Open] <kitchencabinet> (146)",
+        "<char0> [LookAt] <kitchencabinet> (146)",
+        "<char0> [Close] <kitchencabinet> (146)",
+        "<char0> [Walk] <kitchencabinet> (147)",
+        "<char0> [Open] <kitchencabinet> (147)",
+        "<char0> [LookAt] <kitchencabinet> (147)",
+        "<char0> [Close] <kitchencabinet> (147)",
+        "<char0> [Walk] <kitchencabinet> (148)",
+        "<char0> [Open] <kitchencabinet> (148)",
+        "<char0> [LookAt] <kitchencabinet> (148)",
+        "<char0> [Close] <kitchencabinet> (148)",
+        "<char0> [Walk] <kitchencabinet> (149)",
+        "<char0> [Open] <kitchencabinet> (149)",
+        "<char0> [LookAt] <kitchencabinet> (149)",
+        "<char0> [Close] <kitchencabinet> (149)",
+        # "<char0> [Walk] <cabinet> (275)",
+        # "<char0> [Open] <cabinet> (275)",
+        # "<char0> [LookAt] <cabinet> (275)",
+        # "<char0> [Close] <cabinet> (275)",
+    ]
+    # script = [
+    #     "<char0> [Walk] <kitchencounter> (150)",
+    #     "<char0> [Grab] <bananas> (204)",
+    #     "<char0> [Walk] <fridge> (157)",
+    #     "<char0> [Open] <fridge> (157)",
+    #     "<char0> [PutIn] <bananas> (204) <fridge> (157)",
+    #     "<char0> [LookAt] <bananas> (204)",
+    #     "<char0> [Close] <fridge> (157)",
+    # ]
+    # script = [
+    #     "<char0> [Walk] <kitchencounter> (150)",
+    #     "<char0> [Grab] <bananas> (204)",
+    #     "<char0> [Walk] <microwave> (162)",
+    #     "<char0> [Open] <microwave> (162)",
+    #     "<char0> [PutIn] <bananas> (204) <microwave> (162)",
+    #     "<char0> [Grab] <bananas> (204)",
+    #     "<char0> [Close] <microwave> (162)",
+    #     # "<char0> [Walk] <dishwasher> (156)",
+    #     # "<char0> [Open] <dishwasher> (156)",
+    # ]
+    batch_size = 40
     for start in range(0, len(script), batch_size):
         sub_script = script[start:start + batch_size]
         success, message = comm.render_script(script=sub_script,
@@ -64,13 +136,14 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
                                             skip_animation=False,
                                             recording=True,
                                             save_pose_data=True,
-                                            camera_mode=["FIRST_PERSON"],
+                                            camera_mode=["tall"],
                                             image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
                                             file_name_prefix=prefix)
     
         if not success:
             import pdb; pdb.set_trace()
             raise RuntimeError(f"Failed to render script: {message}")
+    print(f"Script rendered successfully: {prefix}")
     output_dir = os.path.join(save_dir, prefix, "0")
     
     # Save the agent graph and environment graph
@@ -115,6 +188,7 @@ def _record_graph(comm, save_dir: str, prefix: str, script: List[str], robot_ini
         prefix=prefix, 
         output_path=os.path.join(args.data_dir, prefix)
     )
+    import pdb; pdb.set_trace()
     return True
 
 def _replace_objects(args, 

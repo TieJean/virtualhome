@@ -1170,6 +1170,16 @@
             "room": "null"
         },
         {
+            "destination": "bathroom_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
             "destination": "tv_stand", 
             "relation": "ON", 
             "room": "null"
@@ -1205,11 +1215,6 @@
             "room": "null"
         }, 
         {
-            "destination": "folder", 
-            "relation": "IN", 
-            "room": "null"
-        }, 
-        {
             "destination": "dresser", 
             "relation": "IN", 
             "room": "null"
@@ -1220,7 +1225,7 @@
             "room": "null"
         }, 
         {
-            "destination": "cabinet", 
+            "destination": "cabinetdrawer", 
             "relation": "IN", 
             "room": "null"
         }, 
@@ -2376,6 +2381,53 @@
         }, 
         {
             "destination": "trashcan", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "cutting_board", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "freezer", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "pantry", 
+            "relation": "ON", 
+            "room": "null"
+        }
+    ], 
+    "bananas": [
+        {
+            "destination": "table_cloth", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "kitchen_counter", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "plate", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "trashcan", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "fridge", 
             "relation": "IN", 
             "room": "null"
         }, 
@@ -5015,7 +5067,12 @@
             "room": "null"
         }, 
         {
-            "destination": "folder", 
+            "destination": "bathroom_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "kitchen_cabinet", 
             "relation": "IN", 
             "room": "null"
         }, 
@@ -5831,7 +5888,47 @@
     ], 
     "toy": [
         {
+            "destination": "bathroom_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
             "destination": "cabinet", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "dresser", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "washing_machine", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "bed", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "couch", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "bookshelf", 
             "relation": "ON", 
             "room": "null"
         },
@@ -8653,7 +8750,12 @@
             "room": "null"
         },
         {
-            "destination": "closet", 
+            "destination": "bathroom_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "kitchen_cabinet", 
             "relation": "IN", 
             "room": "null"
         }, 
@@ -8678,11 +8780,6 @@
             "room": "null"
         }, 
         {
-            "destination": "folder", 
-            "relation": "IN", 
-            "room": "null"
-        }, 
-        {
             "destination": "dresser", 
             "relation": "IN", 
             "room": "null"
@@ -8692,11 +8789,6 @@
             "relation": "ON", 
             "room": "null"
         }, 
-        {
-            "destination": "cabinet", 
-            "relation": "IN", 
-            "room": "null"
-        },
         {
             "destination": "desk", 
             "relation": "ON", 
