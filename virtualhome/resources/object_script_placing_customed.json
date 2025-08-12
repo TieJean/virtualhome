@@ -1170,11 +1170,6 @@
             "room": "null"
         },
         {
-            "destination": "bathroom_cabinet", 
-            "relation": "IN", 
-            "room": "null"
-        }, 
-        {
             "destination": "kitchen_cabinet", 
             "relation": "IN", 
             "room": "null"
@@ -2365,6 +2360,11 @@
     ], 
     "banana": [
         {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
             "destination": "table_cloth", 
             "relation": "ON", 
             "room": "null"
@@ -2406,6 +2406,11 @@
         }
     ], 
     "bananas": [
+        {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -5067,11 +5072,6 @@
             "room": "null"
         }, 
         {
-            "destination": "bathroom_cabinet", 
-            "relation": "IN", 
-            "room": "null"
-        }, 
-        {
             "destination": "kitchen_cabinet", 
             "relation": "IN", 
             "room": "null"
@@ -5170,6 +5170,11 @@
         }
     ], 
     "orange": [
+        {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        },
         {
             "destination": "table_cloth", 
             "relation": "ON", 
@@ -5888,11 +5893,6 @@
     ], 
     "toy": [
         {
-            "destination": "bathroom_cabinet", 
-            "relation": "IN", 
-            "room": "null"
-        }, 
-        {
             "destination": "kitchen_cabinet", 
             "relation": "IN", 
             "room": "null"
@@ -5900,11 +5900,6 @@
         {
             "destination": "cabinet", 
             "relation": "ON", 
-            "room": "null"
-        },
-        {
-            "destination": "washing_machine", 
-            "relation": "IN", 
             "room": "null"
         },
         {
@@ -8265,6 +8260,11 @@
     ], 
     "apple": [
         {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
             "destination": "table_cloth", 
             "relation": "ON", 
             "room": "null"
@@ -8749,11 +8749,6 @@
             "relation": "ON", 
             "room": "null"
         },
-        {
-            "destination": "bathroom_cabinet", 
-            "relation": "IN", 
-            "room": "null"
-        }, 
         {
             "destination": "kitchen_cabinet", 
             "relation": "IN", 

@@ -35,6 +35,12 @@ from amrl_msgs.srv import (
     SemanticObjectDetectionSrvResponse,
     ChangeVirtualHomeGraphSrv,
     ChangeVirtualHomeGraphSrvResponse,
+    DetectVirtualHomeObjectSrv,
+    DetectVirtualHomeObjectSrvRequest,
+    DetectVirtualHomeObjectSrvResponse,
+    OpenVirtualHomeObjectSrv,
+    OpenVirtualHomeObjectSrvRequest,
+    OpenVirtualHomeObjectSrvResponse,
 )
 from geometry_msgs.msg import Point
 
@@ -178,6 +184,8 @@ def _get_query_text(txt: str) -> str:
         return "folder"
     elif "book" in txt or "biography" in txt or "novel" in txt:
         return "book"
+    elif "cabinet" in txt:
+        return "cabinet"
     else:
         raise ValueError(f"Unknown query text: {txt}")
     
@@ -447,23 +455,24 @@ def handle_pick_request(req):
     rospy.loginfo("Received pick request")
     
     target_node_id = None
-    query_text = _get_query_text(req.query_text.lower())
     if req.instance_id is not None:
         _, graph = comm.environment_graph()
         target_node_id = int(req.instance_id)
         target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
         if len(target_node) != 1:
-            rospy.logwarn(f"Object '{query_text}' not found in visible objects with instance ID {target_node_id}")
+            rospy.logwarn(f"Object not found in visible objects with instance ID {target_node_id}")
             return PickObjectSrvResponse(
                 success=False,
             )
         target_node = target_node[0]
+        query_text = target_node["class_name"]
         if target_node["class_name"].lower() != query_text.lower():
             rospy.logwarn(f"Object '{query_text}' does not match instance ID {target_node_id} class '{target_node['class_name']}'")
             return PickObjectSrvResponse(
                 success=False,
             )
     else:
+        query_text = _get_query_text(req.query_text.lower())
         target_node_id = find_target_node_id(query_text)
     
     if target_node_id is None:
@@ -480,16 +489,159 @@ def handle_pick_request(req):
                                         recording=False,
                                         save_pose_data=False)
     
-    success, graph = comm.environment_graph()
+    _, graph = comm.environment_graph()
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])[0]
     instance_uid = target_node["prefab_name"]
-    
-    if not success:
-        import pdb; pdb.set_trace()
     
     return PickObjectSrvResponse(
         success=success,
         instance_uid=instance_uid
+    )
+    
+def handle_open_request(req):
+    global comm
+    rospy.loginfo("Received open request")
+    
+    query_text = _get_query_text(req.query_text.lower())
+    
+    _, graph = comm.environment_graph()
+    target_node_id = int(req.instance_id)
+    target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
+    if len(target_node) < 1:
+        rospy.logwarn(f"Object '{query_text}' not found in visible objects with instance ID {target_node_id}")
+        return PickObjectSrvResponse(
+            success=False,
+        )
+    target_node = target_node[0]
+    query_text = target_node["class_name"]
+    
+    script = [f"<char0> [Open] <{query_text}> ({target_node_id})"]
+    success, message = comm.render_script(script=script,
+                                        processing_time_limit=60,
+                                        find_solution=False,
+                                        image_width=640,
+                                        image_height=480,  
+                                        skip_animation=True,
+                                        recording=False,
+                                        save_pose_data=False)
+    
+    _, graph = comm.environment_graph()
+    target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])[0]
+    instance_uid = target_node["prefab_name"]
+    
+    return OpenVirtualHomeObjectSrvResponse(
+        success=success,
+        instance_uid=instance_uid,
+        message=str(message)
+    )
+
+def _detect_objects(query_cls: str):
+    """
+    Find the instance UID of the object based on the query text.
+    """
+    global comm
+    
+    # Step 2: Get images from simulator
+    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
+    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
+    (ok_img, inst_imgs) = comm.camera_image(pano_camera_select, mode="seg_inst")
+
+    # Step 3: Save for debug
+    view_pil = display_grid_img(imgs + cls_imgs + inst_imgs, nrows=3)
+    view_pil.save("../../outputs/debug_detect_objects.png")
+
+    # Step 4: Get scene graph
+    success, graph = comm.environment_graph()
+    
+    # Step 5: Parse object color map 
+    success, instance_colors = comm.instance_colors()
+    
+    # Step 6: Find IDs of all matching the target class objects
+    target_ids = []
+    for node in graph["nodes"]:
+        if query_cls.lower() == node.get("class_name", "").lower():
+            target_ids.append(str(node["id"]))
+            
+    # Step 7: Convert instance colors to uint8
+    target_bgr_colors = []
+    for uid in target_ids:
+        rgb = instance_colors.get(uid)
+        if rgb:
+            bgr_uint8 = bgr_uint8 = (
+                int(round(rgb[2] * 255)),  # B
+                int(round(rgb[1] * 255)),  # G
+                int(round(rgb[0] * 255))   # R
+            ) 
+            target_bgr_colors.append(bgr_uint8)
+
+    # Step 8: Iterate over inst_imgs and draw boxes
+    valid_target_ids = []
+    ros_images = []
+    for i, (rgb_img, inst_img) in enumerate(zip(imgs, inst_imgs)):
+        img_vis = rgb_img.copy()
+
+        for uid, color in zip(target_ids, target_bgr_colors):
+            mask = cv2.inRange(inst_img, np.array(color), np.array(color))  # exact match
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            for cnt in contours:
+                x, y, w, h = cv2.boundingRect(cnt)
+
+                # Draw bounding box
+                cv2.rectangle(img_vis, (x, y), (x + w, y + h), (0, 0, 255), 1)
+
+                label = f"Instance ID: {uid}"
+                valid_target_ids.append(uid)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.5
+                thickness = 1
+
+                (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+                img_h, img_w = img_vis.shape[:2]
+
+                # Try above the box
+                above_y = y - 10
+                if above_y - text_height >= 0:
+                    text_y = above_y
+                else:
+                    # Otherwise, try below
+                    below_y = y + h + text_height + 2
+                    if below_y < img_h:
+                        text_y = below_y
+                    else:
+                        # If both are out of bounds, clamp to bottom
+                        text_y = max(0, min(y + h, img_h - text_height - 1))
+
+                # Clamp x to stay fully within image width
+                text_x = max(0, min(x, img_w - text_width - 1))
+
+                cv2.putText(
+                    img_vis,
+                    label,
+                    (text_x, text_y),
+                    font,
+                    font_scale,
+                    (0, 0, 255),
+                    thickness,
+                    cv2.LINE_AA
+                )
+
+        cv2.imwrite(f"../../outputs/seg_debug_view_{i}.png", img_vis)
+        img_ros = opencv_to_ros_image(img_vis)
+        ros_images.append(img_ros)
+        
+    return (valid_target_ids, ros_images)
+
+def handle_detect_virtualhome_request(req):
+    global comm
+    rospy.loginfo("Received detect virtual home object request")
+    
+    query_cls = _get_query_text(req.query_text.lower())
+    instance_ids, ros_images = _detect_objects(query_cls)
+    return DetectVirtualHomeObjectSrvResponse(
+        success=len(instance_ids) > 0,
+        instance_ids=instance_ids,
+        images=ros_images
     )
     
 def handle_virtualhome_scene_request(req):
@@ -542,6 +694,10 @@ if __name__ == "__main__":
     rospy.loginfo("Ready to find objects")
     rospy.Service('/moma/pick_object', PickObjectSrv, handle_pick_request)
     rospy.loginfo("Ready to pick objects")
+    rospy.Service('/moma/open_object', OpenVirtualHomeObjectSrv, handle_open_request)
+    rospy.loginfo("Ready to open virtual home objects")
+    rospy.Service('/moma/detect_virtual_home_object', DetectVirtualHomeObjectSrv, handle_detect_virtualhome_request)
+    rospy.loginfo("Ready to detect virtual home objects")
     rospy.Service('/moma/change_virtualhome_graph', ChangeVirtualHomeGraphSrv, handle_virtualhome_scene_request)
     rospy.loginfo("Ready to change virtual home graph")
     

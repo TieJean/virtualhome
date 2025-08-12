@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--clean_containers', nargs='+', type=str, default=[], help='List of containers to clean')
     parser.add_argument('--clean_classes', nargs='+', type=str, default=["pillow", "book", "toy", "magazine", "folder"], help='List of target classes to replace')
     parser.add_argument('--clean_ids', nargs='+', type=int, default=[], help='List of target IDs to replace')
-    parser.add_argument('--n_runs_per_scene', type=int, default=4, help="Number of runs per scene")
+    parser.add_argument('--n_runs_per_scene', type=int, default=6, help="Number of runs per scene")
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
     return parser.parse_args()
@@ -41,7 +41,7 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
             filepath = os.path.join(root, file)
             os.remove(filepath)
             
-    s, msg = comm.add_character_camera(position=[0, 2.0,  0.0], rotation=[0, 0, 0], field_view=60, name="tall_camera")
+    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[20, 0, 0], field_view=60, name="tall_camera")
     if robot_initial_state is not None:
         comm.add_character('chars/Female2', position=robot_initial_state["initial_position"], initial_room="bathroom")
     else:
@@ -53,7 +53,7 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
         print("Failed to get environment graph:", graph)
         return False
     
-    batch_size = 30
+    batch_size = 28
     for start in range(0, len(script), batch_size):
         sub_script = script[start:start + batch_size]
         success, message = comm.render_script(script=sub_script,
@@ -127,8 +127,11 @@ def _replace_objects(args,
     _, orginal_graph = comm.environment_graph()
     
     _, graph = comm.environment_graph()
+    prefab_classes = {
+        k: [random.choice(v)] for k, v in args.prefab_classes.items()
+    }
     success, graph, placement_log = place_all_objects(graph, 
-                                             args.prefab_classes, 
+                                             prefab_classes, 
                                              args.class_placements, 
                                              relations=("INSIDE"),
                                              verbose=verbose)
@@ -246,7 +249,7 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
         raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
     
     for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
-        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}_interactive")
+        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}_interactive2")
         time.sleep(5)  # Ensure there's a delay between runs
     
 if __name__ == "__main__":
@@ -261,7 +264,7 @@ if __name__ == "__main__":
     comm.timeout_wait = 60000
     
     prefab_classes = {
-        "book": ["Book_13", "Book_18", "Book_27"],
+        # "book": ["Book_13", "Book_18", "Book_27"],
         "toy": ["Toy_10", "Toy_5", "Toy_2"],
         "folder": ["Folder_1", "Folder_2", "Folder_3"],
         "magazine": ["Magazine_7l", "Magazine_7p", "Magazine_4"],
