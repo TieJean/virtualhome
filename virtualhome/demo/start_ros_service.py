@@ -73,6 +73,8 @@ def detect_objects_owlv2(query_image: Image, query_cls: str) -> SemanticObjectDe
         print("Service call failed:", e)
 
 def observe():
+    global comm, pano_camera_select
+    
     (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
     if ok_img:
         view_pil = display_grid_img(imgs, nrows=2)
@@ -88,12 +90,20 @@ def observe():
 ### Handle Service Requests ###
 def handle_navigate_request(req):
     global comm
-    rospy.loginfo(f"Received navigate request: ({req.x}, {req.y}, {req.z})")
-    
-    success = comm.move_character(0, [req.x, req.y, req.z])
-    if not success:
+    try:
+        x = req.x if req.x is not None and req.x > 0 else 0.0
+        y = req.y if req.y is not None and req.y > 0 else 0.0
+        z = req.z if req.z is not None and req.z > 0 else 0.0
+        rospy.loginfo(f"Received navigate request: ({x}, {z}, {y})")
+        
+        success = comm.move_character(0, [x, z, y])
+        if not success:
+            # import pdb; pdb.set_trace()
+            return GetImageAtPoseSrvResponse(success=False)
+        pano_images = observe()
+        return GetImageAtPoseSrvResponse(success=success, pano_images=pano_images)
+    except:
         import pdb; pdb.set_trace()
-    return GetImageAtPoseSrvResponse(success=success)
 
 def handle_observe_request(req):
     global comm
@@ -539,7 +549,7 @@ def _detect_objects(query_cls: str):
     """
     Find the instance UID of the object based on the query text.
     """
-    global comm
+    global comm, pano_camera_select
     
     # Step 2: Get images from simulator
     (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
@@ -636,13 +646,21 @@ def handle_detect_virtualhome_request(req):
     global comm
     rospy.loginfo("Received detect virtual home object request")
     
-    query_cls = _get_query_text(req.query_text.lower())
-    instance_ids, ros_images = _detect_objects(query_cls)
-    return DetectVirtualHomeObjectSrvResponse(
-        success=len(instance_ids) > 0,
-        instance_ids=instance_ids,
-        images=ros_images
-    )
+    try:
+        query_cls = _get_query_text(req.query_text.lower())
+        instance_ids, ros_images = _detect_objects(query_cls)
+        instance_ids = [int(id) for id in instance_ids]
+        
+        visible_instances = _get_visible_instances()
+        
+        return DetectVirtualHomeObjectSrvResponse(
+            success=len(instance_ids) > 0,
+            ids=instance_ids,
+            visible_instances=list(visible_instances),
+            images=ros_images
+        )
+    except Exception as e:
+        import pdb; pdb.set_trace()
     
 def handle_virtualhome_scene_request(req):
     global comm, cameras_select, pano_camera_select
