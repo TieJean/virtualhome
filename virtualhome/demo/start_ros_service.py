@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 from PIL import ImageDraw
+import copy
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -48,7 +49,8 @@ comm = None
 class_list = None
 cameras_select = None
 pano_camera_select = None
-gt_pano_camera_select = None
+first_person_pano_camera_select = None
+tall_pano_camera_select = None
 vlm = None
 
 def parse_args():
@@ -89,17 +91,20 @@ def observe():
 
 ### Handle Service Requests ###
 def handle_navigate_request(req):
-    global comm
+    global comm, pano_camera_select, first_person_pano_camera_select, tall_pano_camera_select
     try:
         x = req.x if req.x is not None and req.x > 0 else 0.0
         y = req.y if req.y is not None and req.y > 0 else 0.0
         z = req.z if req.z is not None and req.z > 0 else 0.0
-        rospy.loginfo(f"Received navigate request: ({x}, {z}, {y})")
+        rospy.loginfo(f"Received navigate request: ({x}, {0}, {y})")
         
-        success = comm.move_character(0, [x, z, y])
+        success = comm.move_character(0, [x, 0, y])
         if not success:
-            # import pdb; pdb.set_trace()
             return GetImageAtPoseSrvResponse(success=False)
+        if z > 0.3:
+            pano_camera_select = copy.deepcopy(tall_pano_camera_select)
+        else:
+            pano_camera_select = copy.deepcopy(first_person_pano_camera_select)
         pano_images = observe()
         return GetImageAtPoseSrvResponse(success=success, pano_images=pano_images)
     except:
@@ -435,7 +440,6 @@ def handle_find_request(req):
         target_node_id = find_target_node_id(query_cls)
         
     visible_instances = _get_visible_instances()
-    # import pdb; pdb.set_trace()
     
     success, graph = comm.environment_graph()
     
@@ -461,7 +465,7 @@ def handle_find_request(req):
     )
     
 def handle_pick_request(req):
-    global comm
+    global comm, pano_camera_select, first_person_pano_camera_select, tall_pano_camera_select
     rospy.loginfo("Received pick request")
     
     target_node_id = None
@@ -489,15 +493,18 @@ def handle_pick_request(req):
         rospy.logwarn(f"Object '{query_text}' not found in visible objects.")
         return PickObjectSrvResponse(success=False)
     
-    script = [f"<char0> [Grab] <{query_text}> ({target_node_id})"]
-    success, message = comm.render_script(script=script,
-                                        processing_time_limit=60,
-                                        find_solution=False,
-                                        image_width=640,
-                                        image_height=480,  
-                                        skip_animation=True,
-                                        recording=False,
-                                        save_pose_data=False)
+    if pano_camera_select == first_person_pano_camera_select:
+        script = [f"<char0> [Grab] <{query_text}> ({target_node_id})"]
+        success, message = comm.render_script(script=script,
+                                            processing_time_limit=60,
+                                            find_solution=False,
+                                            image_width=640,
+                                            image_height=480,  
+                                            skip_animation=True,
+                                            recording=False,
+                                            save_pose_data=False)
+    else:
+        success = _detect_instance(target_node_id)
     
     _, graph = comm.environment_graph()
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])[0]
@@ -512,13 +519,11 @@ def handle_open_request(req):
     global comm
     rospy.loginfo("Received open request")
     
-    query_text = _get_query_text(req.query_text.lower())
-    
     _, graph = comm.environment_graph()
     target_node_id = int(req.instance_id)
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
     if len(target_node) < 1:
-        rospy.logwarn(f"Object '{query_text}' not found in visible objects with instance ID {target_node_id}")
+        rospy.logwarn(f"Object not found in visible objects with instance ID {target_node_id}")
         return PickObjectSrvResponse(
             success=False,
         )
@@ -544,6 +549,54 @@ def handle_open_request(req):
         instance_uid=instance_uid,
         message=str(message)
     )
+
+def _detect_instance(query_id: int):
+    global comm, pano_camera_select
+    
+    # Step 2: Get images from simulator
+    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
+    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
+    (ok_img, inst_imgs) = comm.camera_image(pano_camera_select, mode="seg_inst")
+
+    # Step 3: Save for debug
+    view_pil = display_grid_img(imgs + cls_imgs + inst_imgs, nrows=3)
+    view_pil.save("../../outputs/debug_detect_instance.png")
+    
+    # Step 4: Get scene graph
+    success, graph = comm.environment_graph()
+    
+    # Step 5: Parse object color map 
+    success, instance_colors = comm.instance_colors()
+    
+    # Step 6: Find IDs of all matching the target class objects
+    target_ids = [str(query_id)]
+    
+    # Step 7: Convert instance colors to uint8
+    target_bgr_colors = []
+    for uid in target_ids:
+        rgb = instance_colors.get(uid)
+        if rgb:
+            bgr_uint8 = bgr_uint8 = (
+                int(round(rgb[2] * 255)),  # B
+                int(round(rgb[1] * 255)),  # G
+                int(round(rgb[0] * 255))   # R
+            ) 
+            target_bgr_colors.append(bgr_uint8)
+            
+    # Step 8: Iterate over inst_imgs and draw boxes
+    found = False
+    for i, (rgb_img, inst_img) in enumerate(zip(imgs, inst_imgs)):
+        img_vis = rgb_img.copy()
+
+        for uid, color in zip(target_ids, target_bgr_colors):
+            mask = cv2.inRange(inst_img, np.array(color), np.array(color))  # exact match
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            for cnt in contours:
+                x, y, w, h = cv2.boundingRect(cnt)
+                if w > 10 and h > 10:
+                    return True
+    return False
 
 def _detect_objects(query_cls: str):
     """
@@ -663,7 +716,7 @@ def handle_detect_virtualhome_request(req):
         import pdb; pdb.set_trace()
     
 def handle_virtualhome_scene_request(req):
-    global comm, cameras_select, pano_camera_select
+    global comm, cameras_select, pano_camera_select, tall_pano_camera_select, first_person_pano_camera_select
     rospy.loginfo(f"Received change virtual home graph request: {req.graph_path}")
     
     with open(req.graph_path, "r") as f:
@@ -684,10 +737,13 @@ def handle_virtualhome_scene_request(req):
     
     s, nc_before = comm.camera_count()
     prepare_pano_character_camera(comm)
+    prepare_tall_pano_character_camera(comm)
     comm.add_character('chars/Female2', initial_room='bathroom')
     s, nc_after = comm.camera_count()
     cameras_select = list(range(nc_before, nc_after))
     pano_camera_select = cameras_select[8:14]
+    first_person_pano_camera_select = cameras_select[8:14]
+    tall_pano_camera_select = cameras_select[14:20]
     
     return ChangeVirtualHomeGraphSrvResponse(success=success)
 

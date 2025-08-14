@@ -249,7 +249,7 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
         raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
     
     for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
-        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}_interactive2")
+        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}_interactive")
         time.sleep(5)  # Ensure there's a delay between runs
     
 if __name__ == "__main__":

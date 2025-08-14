@@ -326,6 +326,7 @@ class GrabExecutor(ActionExecutor):
         current_line = script[0]
         info.set_current_line(current_line)
         node = state.get_state_node(current_line.object())
+        import pdb; pdb.set_trace()
         if node is None:
             info.object_found_error()
         else:

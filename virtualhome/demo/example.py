@@ -14,6 +14,23 @@ def print_node_names(n_list):
     if len(n_list) > 0:
         print([n.class_name for n in n_list])
 
+def test():
+    graph = utils.load_graph("../../unity_output/scene4_00_interactive/0/agent_graph.json")
+    name_equivalence = utils.load_name_equivalence()
+    script = read_script('example_scripts/test_script.txt')
+    executor = ScriptExecutor(graph, name_equivalence)
+    state_enum = executor.find_solutions(script)
+    state = next(state_enum, None)
+    if state is None:
+        print('Script is not executable.')
+    else:
+        chars = state.get_nodes_by_attr('class_name', 'character')
+        if len(chars) > 0:
+            char = chars[0]
+            print("Character holds:")
+            print_node_names(state.get_nodes_from(char, Relation.HOLDS_RH))
+            print_node_names(state.get_nodes_from(char, Relation.HOLDS_LH))
+    import pdb; pdb.set_trace()
 
 def example_1():
     print('Example 1')
@@ -166,8 +183,9 @@ def example_5():
     
 
 if __name__ == '__main__':
-    example_1()
-    example_2()
-    example_3()
-    example_4()
-    example_5()
+    test()
+    # example_1()
+    # example_2()
+    # example_3()
+    # example_4()
+    # example_5()

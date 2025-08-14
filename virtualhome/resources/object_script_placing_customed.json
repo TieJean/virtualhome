@@ -1230,11 +1230,6 @@
             "room": "null"
         }, 
         {
-            "destination": "box", 
-            "relation": "IN", 
-            "room": "null"
-        }, 
-        {
             "destination": "desk", 
             "relation": "ON", 
             "room": "null"

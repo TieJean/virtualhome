@@ -10,27 +10,21 @@ import json
 import csv
 
 def prepare_pano_character_camera(comm):
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20,  0, 0], field_view=60, name="pano_0")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 60, 0], field_view=60, name="pano_1")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 120, 0], field_view=60, name="pano_2")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 180, 0], field_view=60, name="pano_3")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 240, 0], field_view=60, name="pano_4")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[20, 300, 0], field_view=60, name="pano_5")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[30,  0, 0], field_view=60, name="pano_0")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[30, 60, 0], field_view=60, name="pano_1")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[30, 120, 0], field_view=60, name="pano_2")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[30, 180, 0], field_view=60, name="pano_3")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[30, 240, 0], field_view=60, name="pano_4")
+    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[30, 300, 0], field_view=60, name="pano_5")
     
-def prepare_gt_pano_character_camera(comm):
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[-45,  0, 0], field_view=60,  name="pano_gt_0")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[-45, 60, 0], field_view=60,  name="pano_gt_1")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[-45, 120, 0], field_view=60, name="pano_gt_2")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[-45, 180, 0], field_view=60, name="pano_gt_3")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[-45, 240, 0], field_view=60, name="pano_gt_4")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[-45, 300, 0], field_view=60, name="pano_gt_5")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[45,  0, 0], field_view=60,  name="pano_gt_6")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[45, 60, 0], field_view=60,  name="pano_gt_7")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[45, 120, 0], field_view=60, name="pano_gt_8")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[45, 180, 0], field_view=60, name="pano_gt_9")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[45, 240, 0], field_view=60, name="pano_gt_10")
-    s, msg = comm.add_character_camera(position=[0, 1.8,  0.0], rotation=[45, 300, 0], field_view=60, name="pano_gt_11")
-
+def prepare_tall_pano_character_camera(comm):
+    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[30,  0, 0], field_view=60,  name="tall_pano_0")
+    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[30, 60, 0], field_view=60,  name="tall_pano_1")
+    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[30, 120, 0], field_view=60, name="tall_pano_2")
+    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[30, 180, 0], field_view=60, name="tall_pano_3")
+    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[30, 240, 0], field_view=60, name="tall_pano_4")
+    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[30, 300, 0], field_view=60, name="tall_pano_5")
+    
 def viz_scene(comm, scene_id:int, savepath:str):
     view = get_scene_cameras(comm, [scene_id])
     view_pil = display_grid_img(view, nrows=1)
