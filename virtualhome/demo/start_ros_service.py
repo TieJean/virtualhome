@@ -598,7 +598,7 @@ def _detect_instance(query_id: int):
                     return True
     return False
 
-def _detect_objects(query_cls: str):
+def _detect_objects(query_cls: List[str]):
     """
     Find the instance UID of the object based on the query text.
     """
@@ -622,7 +622,7 @@ def _detect_objects(query_cls: str):
     # Step 6: Find IDs of all matching the target class objects
     target_ids = []
     for node in graph["nodes"]:
-        if query_cls.lower() == node.get("class_name", "").lower():
+        if node.get("class_name", "") in query_cls:
             target_ids.append(str(node["id"]))
             
     # Step 7: Convert instance colors to uint8
@@ -701,6 +701,10 @@ def handle_detect_virtualhome_request(req):
     
     try:
         query_cls = _get_query_text(req.query_text.lower())
+        if query_cls == "cabinet":
+            query_cls = ["kitchencabinet", "bathroomcabinet"]
+        else:
+            query_cls = [query_cls]
         instance_ids, ros_images = _detect_objects(query_cls)
         instance_ids = [int(id) for id in instance_ids]
         

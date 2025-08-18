@@ -713,6 +713,7 @@ def place_all_objects(
     prefab_dict: Dict[str, List[str]],        # {target_class: [prefab …]}
     class_placements: dict,
     relations: Tuple[str, ...] = ("ON", "INSIDE"),
+    excluded_surface_ids: List[int] = [],
     verbose: bool = False,
 ):
     """
@@ -799,7 +800,10 @@ def place_all_objects(
 
             surface_pool = [
                 n for n in graph["nodes"]
-                if n["class_name"] == surf_class and n["id"] not in used_surface_ids and n["prefab_name"] not in excluded_surface_prefabs
+                if n["class_name"] == surf_class 
+                and n["id"] not in used_surface_ids 
+                and n["id"] not in excluded_surface_ids
+                and n["prefab_name"] not in excluded_surface_prefabs
             ]
             if not surface_pool:
                 continue

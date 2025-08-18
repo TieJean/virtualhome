@@ -25,6 +25,8 @@ def parse_args():
     parser.add_argument('--clean_containers', nargs='+', type=str, default=[], help='List of containers to clean')
     parser.add_argument('--clean_classes', nargs='+', type=str, default=["pillow", "book", "toy", "magazine", "folder"], help='List of target classes to replace')
     parser.add_argument('--clean_ids', nargs='+', type=int, default=[], help='List of target IDs to replace')
+    parser.add_argument('--excluded_surface_ids', nargs='+', type=int, default=[], help='List of surface IDs to exclude')
+    parser.add_argument('--start_run_id', type=int, default=0, help='Starting run ID for the scene')
     parser.add_argument('--n_runs_per_scene', type=int, default=6, help="Number of runs per scene")
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
@@ -41,7 +43,7 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
             filepath = os.path.join(root, file)
             os.remove(filepath)
             
-    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[20, 0, 0], field_view=60, name="tall_camera")
+    s, msg = comm.add_character_camera(position=[0, 2.3,  0.0], rotation=[30, 0, 0], field_view=60, name="tall_camera")
     if robot_initial_state is not None:
         comm.add_character('chars/Female2', position=robot_initial_state["initial_position"], initial_room="bathroom")
     else:
@@ -134,6 +136,7 @@ def _replace_objects(args,
                                              prefab_classes, 
                                              args.class_placements, 
                                              relations=("INSIDE"),
+                                             excluded_surface_ids=args.excluded_surface_ids,
                                              verbose=verbose)
     
     success, expand_message = comm.expand_scene(graph)
@@ -248,7 +251,7 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
     if robot_initial_state is None or "initial_position" not in robot_initial_state or "initial_lookat" not in robot_initial_state:
         raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
     
-    for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
+    for i_run in tqdm(range(args.start_run_id, args.start_run_id+args.n_runs_per_scene), desc=f"Scene {scene_id}"):
         run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}_interactive")
         time.sleep(5)  # Ensure there's a delay between runs
     
