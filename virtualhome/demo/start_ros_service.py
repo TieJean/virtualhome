@@ -602,7 +602,7 @@ def _detect_objects(query_cls: List[str]):
     """
     Find the instance UID of the object based on the query text.
     """
-    global comm, pano_camera_select
+    global comm, pano_camera_select, class_list
     
     # Step 2: Get images from simulator
     (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
@@ -620,6 +620,8 @@ def _detect_objects(query_cls: List[str]):
     success, instance_colors = comm.instance_colors()
     
     # Step 6: Find IDs of all matching the target class objects
+    node_by_id = {str(n["id"]): n for n in graph["nodes"]}
+    
     target_ids = []
     for node in graph["nodes"]:
         if node.get("class_name", "") in query_cls:
@@ -636,15 +638,28 @@ def _detect_objects(query_cls: List[str]):
                 int(round(rgb[0] * 255))   # R
             ) 
             target_bgr_colors.append(bgr_uint8)
+            
+    expected_cls_bgr = {
+        uid: tuple(int(v) for v in semantic_cls_to_bgr(node_by_id[uid]["class_name"], class_list))
+        for uid in target_ids
+    }
 
     # Step 8: Iterate over inst_imgs and draw boxes
-    valid_target_ids = []
+    valid_target_ids = set()
     ros_images = []
-    for i, (rgb_img, inst_img) in enumerate(zip(imgs, inst_imgs)):
+    for i, (rgb_img, inst_img, cls_img) in enumerate(zip(imgs, inst_imgs, cls_imgs)):
         img_vis = rgb_img.copy()
 
-        for uid, color in zip(target_ids, target_bgr_colors):
-            mask = cv2.inRange(inst_img, np.array(color), np.array(color))  # exact match
+        for uid, inst_bgr in zip(target_ids, target_bgr_colors):
+            mask_inst = cv2.inRange(inst_img, np.array(inst_bgr, dtype=np.uint8), np.array(inst_bgr, dtype=np.uint8))
+            cls_bgr = expected_cls_bgr[uid]
+            mask_cls  = cv2.inRange(cls_img,  np.array(cls_bgr,  dtype=np.uint8), np.array(cls_bgr,  dtype=np.uint8))
+
+            mask = cv2.bitwise_and(mask_inst, mask_cls)
+            
+            if cv2.countNonZero(mask) < 10:
+                continue
+            
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             for cnt in contours:
@@ -654,7 +669,7 @@ def _detect_objects(query_cls: List[str]):
                 cv2.rectangle(img_vis, (x, y), (x + w, y + h), (0, 0, 255), 1)
 
                 label = f"Instance ID: {uid}"
-                valid_target_ids.append(uid)
+                valid_target_ids.add(uid)
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 0.5
                 thickness = 1
