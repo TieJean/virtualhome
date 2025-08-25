@@ -89,7 +89,7 @@ def find_nodes_and_edges_by_class(graph, target_classes: list, verbose: bool = F
 
     return node_ids, selected_nodes, selected_edges
 
-def get_classes_by_category(graph: Dict, target_category: str, return_counts: bool = False) -> List[str] | Tuple[List[str], Dict[str, int]]:
+def get_classes_by_category(graph: Dict, target_categories: List[str], return_counts: bool = False) -> List[str] | Tuple[List[str], Dict[str, int]]:
     """
     Return all class_names of nodes whose 'Category' matches `target_category`.
 
@@ -97,8 +97,8 @@ def get_classes_by_category(graph: Dict, target_category: str, return_counts: bo
     ----------
     graph : dict
         Scene graph with 'nodes'.
-    target_category : str
-        Category value to match (exact match).
+    target_categories : list[str]
+        Category values to match (exact match).
     return_counts : bool
         If True, also return a dict {class_name: count}.
 
@@ -113,7 +113,7 @@ def get_classes_by_category(graph: Dict, target_category: str, return_counts: bo
     counts: Dict[str, int] = {}
 
     for node in graph.get("nodes", []):
-        if node.get("category") == target_category:
+        if node.get("category") in target_categories:
             cls = node.get("class_name")
             if not cls:
                 continue
@@ -1080,6 +1080,7 @@ def generate_random_placement_scripts(
     class_placements: dict,                     # e.g. {"bananas":[{"relation":"ON","destination":"kitchencounter"}, ...], ...}
     relations: Tuple[str, ...] = ("ON", "INSIDE"),
     character: str = "<char0>",
+    excluded_surface_prefabs: List[str] = ["Sofa_1", "PRE_FUR_Bookshelf_01_04"],
     verbose: bool = False
 ) -> Tuple[List[List[str]], List[List[Union[str, int]]], Dict[str, List[int]]]:
     """
@@ -1166,6 +1167,7 @@ def generate_random_placement_scripts(
                 if _slug(n.get("class_name", "")) == dst_surf_slug
                 and n["id"] not in used_surface_ids
                 and (not src_surface or n["id"] != src_surface["id"])
+                and n.get("prefab_name") not in excluded_surface_prefabs
             ]
             if not surface_pool:
                 continue

@@ -105,14 +105,14 @@ def _record_graph(args, comm, save_dir: str, prefix: str, record_script: List[st
 
     comm.add_character('chars/Female2', initial_room="bathroom")
     time.sleep(5)
-    s = ['<char0> [Walk] <kitchen> (111)']
-    success, message = comm.render_script(script=s, find_solution=False, skip_animation=True, recording=False, save_pose_data=False)
+    script = ['<char0> [Walk] <kitchen> (11)']
+    success, message = comm.render_script(script=script, find_solution=False, skip_animation=True, recording=False, save_pose_data=False)
     if not success:
         import pdb; pdb.set_trace()
         raise RuntimeError(f"Failed to render script: {message}")
     
-    for s in scripts:
-        success, message = comm.render_script(script=s, find_solution=False, skip_animation=True, recording=False)
+    for script in scripts:
+        success, message = comm.render_script(script=script, find_solution=False, skip_animation=True, recording=False)
         if not success:
             import pdb; pdb.set_trace()
             print("Failed to render script:", message)
@@ -151,7 +151,6 @@ def _record_graph(args, comm, save_dir: str, prefix: str, record_script: List[st
                                             camera_mode=["FIRST_PERSON"],
                                             image_synthesis=["normal", "seg_inst", "seg_class", "depth"],
                                             file_name_prefix=prefix)
-    
         if not success:
             import pdb; pdb.set_trace()
             raise RuntimeError(f"Failed to render script: {message}")
@@ -310,23 +309,6 @@ def prepare_scene_and_save_graph(
     if not ok:
         raise ValueError("Failed to get final prepared environment graph.")
     
-    # if tmp_path is None:
-    #     # put the temp file in args.data_dir if available; else system temp dir
-    #     base_dir = getattr(args, "data_dir", None)
-    #     if base_dir:
-    #         os.makedirs(base_dir, exist_ok=True)
-    #         fd, tmp_path = tempfile.mkstemp(prefix="prepared_scene_", suffix=".json", dir=base_dir)
-    #         os.close(fd)
-    #     else:
-    #         fd, tmp_path = tempfile.mkstemp(prefix="prepared_scene_", suffix=".json")
-    #         os.close(fd)
-
-    # with open(tmp_path, "w") as f:
-    #     json.dump(graph, f, indent=2)
-    # if verbose:
-    #     print(f"✅ Prepared scene saved to: {tmp_path}")
-    # return tmp_path
-
 def reset_scene_from_saved_graph(comm, saved_graph_path: str) -> bool:
     """
     Load a previously saved environment graph JSON and expand the scene to this state.
@@ -344,20 +326,10 @@ def reset_scene_from_saved_graph(comm, saved_graph_path: str) -> bool:
         raise RuntimeError(f"Failed to expand scene from saved graph: {msg}")
 
 def run_once(args, comm, record_script: List[str], robot_initial_state, prefix: str, scene_id: int):
-    # print(f"Running script with prefix: {prefix}")
-    # success, placement_log = _replace_objects(args, comm, scene_id, verbose=True)
-    # print(placement_log)
-    # if not success:
-    #     return False
-    
-    # time.sleep(1)  # Ensure the scene is ready after placing objects
 
     success, placement_log = _record_graph(args, comm, args.data_dir, prefix, record_script, robot_initial_state)
     if not success:
         return False
-    
-    # out_dir = _roll_episode_dirs(args.data_dir, prefix, verbose=True)
-    # obj_placement_savepath = os.path.join(out_dir, "object_placement.csv")
     
     obj_placement_savepath = os.path.join(args.data_dir, prefix, "0", "object_placement.csv")
 
@@ -405,21 +377,15 @@ if __name__ == "__main__":
     comm = UnityCommunication(port=args.port)
     comm.timeout_wait = 60000
     
-    # comm.add_character('chars/Female2', initial_room="bathroom")
-    # script = ['<char0> [Walk] <kitchen> (111)']
-    # success, message = comm.render_script(script=script, find_solution=False, skip_animation=True, recording=False, save_pose_data=False)
-    # import pdb; pdb.set_trace()
-    
     for scene_id in args.scene_ids:
         
         prepare_scene_and_save_graph(args, comm, scene_id, verbose=True)
+        time.sleep(5)
         
-        success, graph = comm.environment_graph()
-        (class_list, counts) = get_classes_by_category(graph, "Foods", True)
-        for cls, cnt in counts.items():
-            if cnt != 1:
-                raise ValueError(f"Class {cls} has {cnt} instances; expected exactly 1.")
-        args.target_classes = class_list
+        if scene_id == 4:
+            args.target_classes = ["bananas", "cupcake", "cereal"]
+        elif scene_id == 10:
+            args.target_classes = ["bananas", "mincedmeat", "cereal"]
     
         with open(f"../resources/object_script_placing_customed.json", "r") as f:
             class_placements = json.load(f)

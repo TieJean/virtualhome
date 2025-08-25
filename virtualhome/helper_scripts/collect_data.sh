@@ -35,3 +35,6 @@ python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virt
 python scripts/amend_missing_files.py --folder /robodata/taijing/benchmarks/virtualhome/unity_output/scene10_15/0
 python collect_data_gt.py --datanames scene10_00 scene10_01 scene10_02 scene10_03 scene10_04 scene10_05 scene10_06 scene10_07 scene10_08 scene10_09 scene10_10 scene10_11 scene10_12 scene10_13 scene10_14 scene10_15
 python collect_data_v2.py --scene_ids 15 --clean_surfaces wallshelf desk --n_runs_per_scene 16 --port 18080
+
+python collect_data_foods.py --port 18080 --clean_ids 203 208 207 206 210 31 34 132 105 108 109 212 213  --clean_surfaces desk --start_run_id 2 --n_runs_per_scene 14 --seed 43
+python collect_data_foods.py --port 8080 --scene_ids 10 --clean_ids 480 136 287 290 289 285 300  301 299 97 101 102 438 439 440 441 442 443 444 445 --clean_surfaces desk

@@ -2477,6 +2477,78 @@
             "room": "null"
         }
     ], 
+    "mincedmeat": [
+        {
+            "destination": "coffeetable", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "desk", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_table", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "bookshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table_cloth", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "trashcan", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "fridge", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "cutting_board", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "freezer", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "pantry", 
+            "relation": "ON", 
+            "room": "null"
+        }
+    ], 
     "cupcake": [
         {
             "destination": "coffeetable", 
@@ -6046,11 +6118,6 @@
         }, 
         {
             "destination": "microwave", 
-            "relation": "ON", 
-            "room": "null"
-        },
-        {
-            "destination": "wallshelf", 
             "relation": "ON", 
             "room": "null"
         },
