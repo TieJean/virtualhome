@@ -382,10 +382,17 @@ if __name__ == "__main__":
         prepare_scene_and_save_graph(args, comm, scene_id, verbose=True)
         time.sleep(5)
         
+        # success, graph = comm.environment_graph()
+        # (class_list, counts) = get_classes_by_category(graph, ["Foods", "Food"], True)
+        # import pdb; pdb.set_trace()
         if scene_id == 4:
             args.target_classes = ["bananas", "cupcake", "cereal"]
         elif scene_id == 10:
             args.target_classes = ["bananas", "mincedmeat", "cereal"]
+        elif scene_id == 15:
+            args.target_classes = ["bananas", "apple", "creamybuns"]
+        else:
+            raise ValueError(f"Unexpected scene_id: {scene_id}")
     
         with open(f"../resources/object_script_placing_customed.json", "r") as f:
             class_placements = json.load(f)

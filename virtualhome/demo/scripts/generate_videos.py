@@ -49,6 +49,8 @@ def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, cls_paths,
             "bananas":  (255, 255,   0),   # purple
             "cupcake":  (255, 192, 203),   # pink
             "mincedmeat": (128, 0, 128),   # violet
+            "apple": (0, 165, 255),        # orange (using OpenCV BGR for orange)
+            "creamybuns": (0, 255, 255),   # cyan
         }
         TARGET_CLASSES = set(CLASS_PALETTE.keys())
         
@@ -121,7 +123,7 @@ def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, cls_paths,
         return
 
     class_colors = {}
-    for cls_name in ["book", "folder", "toy", "magazine", "bananas", "cupcake", "cereal", "mincedmeat"]:
+    for cls_name in ["book", "folder", "toy", "magazine", "bananas", "cupcake", "cereal", "mincedmeat", "apple", "creamybuns"]:
         class_colors[cls_name] = semantic_cls_to_bgr(cls_name, class_list)
 
     tmp_dir = tempfile.mkdtemp()              # store annotated PNGs here
