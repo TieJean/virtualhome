@@ -55,7 +55,7 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
         print("Failed to get environment graph:", graph)
         return False
     
-    batch_size = 28
+    batch_size = 10
     for start in range(0, len(script), batch_size):
         sub_script = script[start:start + batch_size]
         success, message = comm.render_script(script=sub_script,

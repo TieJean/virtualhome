@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Union
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -88,6 +88,40 @@ def find_nodes_and_edges_by_class(graph, target_classes: list, verbose: bool = F
                 print(f"    {edge['relation_type']} {arrow} {other_id} <{other_class}>")
 
     return node_ids, selected_nodes, selected_edges
+
+def get_classes_by_category(graph: Dict, target_category: str, return_counts: bool = False) -> List[str] | Tuple[List[str], Dict[str, int]]:
+    """
+    Return all class_names of nodes whose 'Category' matches `target_category`.
+
+    Parameters
+    ----------
+    graph : dict
+        Scene graph with 'nodes'.
+    target_category : str
+        Category value to match (exact match).
+    return_counts : bool
+        If True, also return a dict {class_name: count}.
+
+    Returns
+    -------
+    class_list : list[str]
+        Sorted unique class names with the requested category.
+    counts (optional) : dict[str, int]
+        Frequency of class_name among matching nodes.
+    """
+    classes = set()
+    counts: Dict[str, int] = {}
+
+    for node in graph.get("nodes", []):
+        if node.get("category") == target_category:
+            cls = node.get("class_name")
+            if not cls:
+                continue
+            classes.add(cls)
+            counts[cls] = counts.get(cls, 0) + 1
+
+    class_list = sorted(classes)
+    return (class_list, counts) if return_counts else class_list
 
 def remove_nodes_by_ids(graph, target_ids: list, verbose: bool = False):
     """
@@ -707,6 +741,160 @@ def get_connected_to_nodes(graph, from_id, relations=["ON", "INSIDE"]):
 
 import random
 
+def get_random_relocation_plan(
+    graph: dict,
+    target_classes: List[str],                 # e.g., ["Mug", "Book"]
+    class_placements: dict,                    # same schema as before
+    relations: Tuple[str, ...] = ("ON", "INSIDE"),
+    excluded_surface_ids: List[int] = [],
+    excluded_surface_prefabs: Tuple[str, ...] = ("Sofa_1",),
+    character: str = "<char0>",
+    verbose: bool = False,
+) -> List[List[str | int]]:
+    """
+    Plan relocations for existing objects (one node per class). For each target class:
+      - Choose a valid destination surface by placement rules (not the current one)
+      - Produce a 4-line execution script (walk->grab->walk->put) WITHOUT walking to rooms
+      - Produce a placement_log row for the destination
+
+    Returns
+    -------
+    scripts_per_object : list[list[str]]
+        One list of script lines per placed object.
+    placement_log : list[list[str|int]]
+        Rows: [obj_cls, obj_prefab_name, obj_node_id,
+               surface_cls, surface_prefab_name, surface_id,
+               room_cls, room_prefab_name, room_id]
+    """
+
+    # ── helpers ──────────────────────────────────────────────────────────────
+    def _slug(s: str) -> str:
+        # unify "Dining_Table", "diningtable", "DiningTable" → "diningtable"
+        return "".join(ch for ch in s if ch.isalnum()).lower()
+
+    id_to_node = {n["id"]: n for n in graph.get("nodes", [])}
+
+    def _current_support_surface_id(obj_id: int) -> int | None:
+        for e in graph.get("edges", []):
+            if e.get("from_id") == obj_id and e.get("relation_type") in relations:
+                return e.get("to_id")
+        return None
+
+    def _room_of(node_id: int):
+        # uses your existing utility (preferred), else None
+        try:
+            return find_room_of_node(graph, node_id)
+        except Exception:
+            return None
+
+    # ── normalize placements to slug lookup ─────────────────────────────────
+    # Accept both normalized (slug) or raw keys/destinations.
+    placements_by_slug = {}
+    for k, rules in class_placements.items():
+        placements_by_slug[_slug(k)] = [
+            {
+                **r,
+                "relation": r.get("relation"),
+                "destination": _slug(r.get("destination", "")),
+            }
+            for r in rules
+            if r.get("relation") in relations
+        ]
+
+    # ── iterate objects ─────────────────────────────────────────────────────
+    scripts_per_object: List[List[str]] = []
+    placement_log: List[List[Union[str, int]]] = []
+    used_surface_ids: set[int] = set()
+
+    tasks = target_classes[:]
+    random.shuffle(tasks)
+
+    for target_class in tasks:
+        target_slug = _slug(target_class)
+
+        # find exactly one node of this class (match by slug)
+        nodes = [n for n in graph.get("nodes", []) if _slug(n.get("class_name", "")) == target_slug]
+        if len(nodes) != 1:
+            raise ValueError(f"Expected exactly one node for class '{target_class}', found {len(nodes)}.")
+        obj_node = nodes[0]
+        obj_id = obj_node["id"]
+        obj_prefab = obj_node.get("prefab_name", "N/A")
+
+        current_surface_id = _current_support_surface_id(obj_id)
+        current_surface_node = id_to_node.get(current_surface_id) if current_surface_id is not None else None
+
+        rules = placements_by_slug.get(target_slug, [])
+        if not rules:
+            if verbose:
+                print(f"⚠️ No placement rules for '{target_class}' with relations {relations} — skipping.")
+            continue
+
+        # pick a valid destination surface
+        placed = False
+        for rule in random.sample(rules, len(rules)):
+            dest_surf_slug = rule["destination"]
+
+            surface_pool = [
+                n for n in graph["nodes"]
+                if _slug(n.get("class_name", "")) == dest_surf_slug
+                and n["id"] not in used_surface_ids
+                and n["id"] not in excluded_surface_ids
+                and n.get("prefab_name") not in excluded_surface_prefabs
+                and n["id"] != current_surface_id                      # must differ from current surface
+            ]
+            if not surface_pool:
+                continue
+            
+            dst_surface = random.choice(surface_pool)
+            dst_room = _room_of(dst_surface["id"])  # for logging only
+            
+            # ── build script (NO room walk) ────────────────────────────────
+            # If we know the current supporting surface, walk there first.
+            one_script: List[str] = []
+            if current_surface_node is not None:
+                one_script.append(
+                    f"{character} [Walk] <{current_surface_node['class_name']}> ({current_surface_node['id']})"
+                )
+                # Grab object
+                one_script.append(
+                    f"{character} [Grab] <{obj_node['class_name']}> ({obj_id})"
+                )
+                # Walk to destination surface
+                one_script.append(
+                    f"{character} [Walk] <{dst_surface['class_name']}> ({dst_surface['id']})"
+                )
+                # Put on destination surface
+                one_script.append(
+                    f"{character} [Put] <{obj_node['class_name']}> ({obj_id}) <{dst_surface['class_name']}> ({dst_surface['id']})"
+                )
+
+            scripts_per_object.append(one_script)
+
+            # ── log row ───────────────────────────────────────────────────
+            placement_log.append([
+                obj_node["class_name"],                        # obj_cls
+                obj_prefab,                                    # obj_prefab_name
+                obj_id,                                        # obj_node_id
+                dst_surface["class_name"],                     # surface_cls
+                dst_surface.get("prefab_name", "N/A"),         # surface_prefab_name
+                dst_surface["id"],                             # surface_id
+                dst_room["class_name"] if dst_room else "N/A", # room_cls (for record)
+                dst_room.get("prefab_name", "N/A") if dst_room else "N/A",  # room_prefab_name
+                dst_room["id"] if dst_room else -1,            # room_id
+            ])
+
+            used_surface_ids.add(dst_surface["id"])
+            placed = True
+
+            if verbose:
+                print(f"📝 Plan script for '{obj_node['class_name']}' (id={obj_id}) → "
+                      f"{dst_surface['class_name']} (id={dst_surface['id']}).")
+            break
+
+        if not placed and verbose:
+            print(f"⚠️ Skipped '{target_class}': no valid destination surface matched any rule.")
+
+    return scripts_per_object, placement_log
 
 def place_all_objects(
     graph: dict,
@@ -888,78 +1076,117 @@ def find_surface_supporting_object(graph, object_node_id, relations=("ON", "INSI
 
 def generate_random_placement_scripts(
     graph: dict,
-    target_classes: dict,
-    class_placements: dict,
-    relations: tuple = ("ON", "INSIDE"),
+    target_classes: Dict | List[str] | set,     # dict -> keys used
+    class_placements: dict,                     # e.g. {"bananas":[{"relation":"ON","destination":"kitchencounter"}, ...], ...}
+    relations: Tuple[str, ...] = ("ON", "INSIDE"),
     character: str = "<char0>",
     verbose: bool = False
-):
+) -> Tuple[List[List[str]], List[List[Union[str, int]]], Dict[str, List[int]]]:
     """
-    For each object node of target_classes in the graph, greedily and randomly assign it to a valid, unused surface.
-    Returns: (scripts, placement_log, skipped)
+    Room-based relocation scripts.
+
+    For each object node whose class is in target_classes:
+      - find its current supporting surface and source room,
+      - choose a valid destination surface by placement rules (not the current one),
+      - emit a 4-line script that walks to SOURCE ROOM, grabs, walks to DEST ROOM, then PUT onto the chosen surface.
+        (No walking to surfaces.)
+
+    Returns:
+        scripts        : List[List[str]]  # 4 lines per object
+        placement_log  : List[[obj_cls, obj_prefab_name, obj_node_id,
+                               surface_cls, surface_prefab_name, surface_id,
+                               room_cls,  room_prefab_name, room_id]]
+        skipped        : Dict[str, List[int]]  # class -> [object_ids]
     """
-    used_surface_ids = set()
-    scripts = []
-    placement_log = []
-    skipped = defaultdict(list)
 
-    obj_nodes = [
-        n for n in graph["nodes"]
-        if n["class_name"] in target_classes
-    ]
-    random.shuffle(obj_nodes)
+    # ---------- helpers ----------
+    def _slug(s: str) -> str:
+        return "".join(ch for ch in s if ch.isalnum()).lower()
 
-    rule_cache = {
-        c: [
-            r for r in class_placements.get(c, [])
-            if r["relation"] in relations
+    def find_surface_supporting_object(g: dict, obj_id: int, rels: Tuple[str, ...]):
+        id_to_node = {n["id"]: n for n in g.get("nodes", [])}
+        for e in g.get("edges", []):
+            if e.get("from_id") == obj_id and e.get("relation_type") in rels:
+                return id_to_node.get(e.get("to_id"))
+        return None
+
+    # normalize placement rules to slug for robust matching
+    placements_by_slug = {}
+    for k, rules in class_placements.items():
+        kslug = _slug(k)
+        placements_by_slug[kslug] = [
+            {
+                **r,
+                "relation": r.get("relation"),
+                "destination": _slug(r.get("destination", "")),
+            }
+            for r in rules
+            if r.get("relation") in relations
         ]
-        for c in target_classes
-    }
+
+    used_surface_ids = set()
+    scripts: List[List[str]] = []
+    placement_log: List[List[Union[str, int]]] = []
+    skipped: Dict[str, List[int]] = defaultdict(list)
+
+    # collect candidate objects (slug-aware)
+    tc_keys = set(target_classes.keys()) if isinstance(target_classes, dict) else set(target_classes)
+    tc_slugs = {_slug(c) for c in tc_keys}
+    obj_nodes = [n for n in graph["nodes"] if _slug(n.get("class_name", "")) in tc_slugs]
+    random.shuffle(obj_nodes)
 
     for node in obj_nodes:
         t_cls = node["class_name"]
-        rules = rule_cache.get(t_cls, [])
+        t_slug = _slug(t_cls)
+
+        rules = placements_by_slug.get(t_slug, [])
         if not rules:
             skipped[t_cls].append(node["id"])
             if verbose:
                 print(f"⚠️ No placement rules for {t_cls}")
             continue
 
-        # Find the *current* supporting surface
+        # current support + source room (needed for room-based navigation)
         src_surface = find_surface_supporting_object(graph, node["id"], relations)
-        if not src_surface:
+        # room from surface if possible; else fall back to object's room
+        src_room = find_room_of_node(graph, src_surface["id"]) if src_surface else find_room_of_node(graph, node["id"])
+        if not src_room:
             skipped[t_cls].append(node["id"])
             if verbose:
-                print(f"⚠️ Could not find current surface for object {t_cls}:{node['id']}")
+                print(f"⚠️ No source room found for {t_cls}:{node['id']}")
             continue
 
         placed = False
         for rule in random.sample(rules, len(rules)):
-            dst_surf_class = rule["destination"]
+            dst_surf_slug = rule["destination"]
 
-            # Find candidate destination surfaces (not used yet, not same as src_surface)
+            # candidate destination surfaces (unused and different from current)
             surface_pool = [
                 n for n in graph["nodes"]
-                if n["class_name"] == dst_surf_class
+                if _slug(n.get("class_name", "")) == dst_surf_slug
                 and n["id"] not in used_surface_ids
-                and n["id"] != src_surface["id"]
+                and (not src_surface or n["id"] != src_surface["id"])
             ]
             if not surface_pool:
                 continue
 
             dst_surface = random.choice(surface_pool)
-            used_surface_ids.add(dst_surface["id"])
+            dst_room = find_room_of_node(graph, dst_surface["id"])
+            if not dst_room:
+                # if no room for the destination surface, try another
+                continue
 
+            # -------- build room-based script (no surface walks) --------
             script = [
-                f'{character} [Walk] <{src_surface["class_name"]}> ({src_surface["id"]})',
+                f'{character} [Walk] <{src_room["class_name"]}> ({src_room["id"]})',
                 f'{character} [Grab] <{node["class_name"]}> ({node["id"]})',
-                f'{character} [Walk] <{dst_surface["class_name"]}> ({dst_surface["id"]})',
-                f'{character} [Put] <{node["class_name"]}> ({node["id"]}) <{dst_surface["class_name"]}> ({dst_surface["id"]})'
+                f'{character} [Walk] <{dst_room["class_name"]}> ({dst_room["id"]})',
+                f'{character} [Put] <{node["class_name"]}> ({node["id"]}) '
+                f'<{dst_surface["class_name"]}> ({dst_surface["id"]})'
             ]
-            # scripts.append(script)
-            scripts.extend(script)
+            scripts.append(script)
 
+            # -------- placement log (destination info) --------
             placement_log.append([
                 t_cls,
                 node.get("prefab_name", "N/A"),
@@ -967,12 +1194,20 @@ def generate_random_placement_scripts(
                 dst_surface["class_name"],
                 dst_surface.get("prefab_name", "N/A"),
                 dst_surface["id"],
-                "N/A", "N/A", -1,
+                dst_room["class_name"],
+                dst_room.get("prefab_name", "N/A"),
+                dst_room["id"],
             ])
+
+            used_surface_ids.add(dst_surface["id"])
             placed = True
+
             if verbose:
-                print(f"✅ Moved {t_cls}:{node['id']} from {src_surface['id']} to {dst_surface['id']}")
+                src_sid = src_surface["id"] if src_surface else "?"
+                print(f"✅ Planned move {t_cls}:{node['id']}  room {src_room['id']} (src_surf={src_sid}) "
+                      f"→ room {dst_room['id']} (dst_surf={dst_surface['id']})")
             break
+
         if not placed:
             skipped[t_cls].append(node["id"])
 

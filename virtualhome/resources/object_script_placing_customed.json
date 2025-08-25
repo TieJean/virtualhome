@@ -2402,6 +2402,36 @@
     ], 
     "bananas": [
         {
+            "destination": "coffeetable", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "bathroom_counter", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "desk", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "bookshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "kitchen_cabinet", 
             "relation": "IN", 
             "room": "null"
@@ -2412,12 +2442,223 @@
             "room": "null"
         }, 
         {
-            "destination": "kitchen_counter", 
+            "destination": "plate", 
             "relation": "ON", 
             "room": "null"
         }, 
         {
-            "destination": "plate", 
+            "destination": "trashcan", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "fridge", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "cutting_board", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "freezer", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "pantry", 
+            "relation": "ON", 
+            "room": "null"
+        }
+    ], 
+    "cupcake": [
+        {
+            "destination": "coffeetable", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "bathroom_counter", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "desk", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "bookshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table_cloth", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "trashcan", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "fridge", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "cutting_board", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "freezer", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "pantry", 
+            "relation": "ON", 
+            "room": "null"
+        }
+    ], 
+    "pie": [
+        {
+            "destination": "coffeetable", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "bathroom_counter", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "desk", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "bookshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table_cloth", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "trashcan", 
+            "relation": "IN", 
+            "room": "null"
+        },
+        {
+            "destination": "fridge", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "cutting_board", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "freezer", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "pantry", 
+            "relation": "ON", 
+            "room": "null"
+        }
+    ], 
+    "pudding": [
+        {
+            "destination": "coffeetable", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "bathroom_counter", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "desk", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "bookshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_cabinet", 
+            "relation": "IN", 
+            "room": "null"
+        }, 
+        {
+            "destination": "table_cloth", 
             "relation": "ON", 
             "room": "null"
         }, 
@@ -5784,12 +6025,37 @@
     ], 
     "cereal": [
         {
-            "destination": "table_cloth", 
+            "destination": "coffeetable", 
             "relation": "ON", 
             "room": "null"
         }, 
         {
-            "destination": "kitchen_counter", 
+            "destination": "bathroom_counter", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "desk", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "bookshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "table_cloth", 
             "relation": "ON", 
             "room": "null"
         }, 
@@ -8254,6 +8520,36 @@
         }
     ], 
     "apple": [
+        {
+            "destination": "coffeetable", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "bathroom_counter", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "desk", 
+            "relation": "ON", 
+            "room": "null"
+        }, 
+        {
+            "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "bookshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
         {
             "destination": "kitchen_cabinet", 
             "relation": "IN", 
