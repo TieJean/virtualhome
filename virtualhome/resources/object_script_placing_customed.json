@@ -2422,6 +2422,11 @@
             "room": "null"
         },
         {
+            "destination": "kitchen_table", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
             "destination": "wallshelf", 
             "relation": "ON", 
             "room": "null"
@@ -2438,11 +2443,6 @@
         }, 
         {
             "destination": "table_cloth", 
-            "relation": "ON", 
-            "room": "null"
-        }, 
-        {
-            "destination": "plate", 
             "relation": "ON", 
             "room": "null"
         }, 
@@ -2495,6 +2495,11 @@
         }, 
         {
             "destination": "microwave", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_table", 
             "relation": "ON", 
             "room": "null"
         },
@@ -6046,6 +6051,11 @@
         },
         {
             "destination": "wallshelf", 
+            "relation": "ON", 
+            "room": "null"
+        },
+        {
+            "destination": "kitchen_table", 
             "relation": "ON", 
             "room": "null"
         },

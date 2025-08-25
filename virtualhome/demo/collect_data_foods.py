@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument('--clean_surfaces', nargs='+', type=str, default=[], help='List of surfaces to clean')
     parser.add_argument('--clean_classes', nargs='+', type=str, default=["dishbowl"], help='List of target classes to replace')
     parser.add_argument('--clean_ids', nargs='+', type=int, default=[], help='List of target IDs to replace')
+    parser.add_argument('--start_run_id', type=int, default=0, help='Starting run ID for the scene')
     parser.add_argument('--n_runs_per_scene', type=int, default=16, help="Number of runs per scene")
     parser.add_argument('--seed', type=int, default=40, help='Random seed')
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
@@ -91,7 +92,36 @@ def _swap_character_token(
         else:
             return [_replace(line) for line in scripts]
 
-def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], robot_initial_state = None) -> bool:
+def _record_graph(args, comm, save_dir: str, prefix: str, record_script: List[str], robot_initial_state = None) -> bool:
+    prepare_scene_and_save_graph(args, comm, scene_id, verbose=True)
+    # reset_scene_from_saved_graph(comm, args.saved_graph_path)
+    time.sleep(1)  # Ensure the scene is ready
+    
+    success, graph = comm.environment_graph()
+    scripts, placement_log, _ = generate_random_placement_scripts(graph, 
+                                                                  args.target_classes, 
+                                                                  args.class_placements, 
+                                                                  relations = ["ON"])
+
+    comm.add_character('chars/Female2', initial_room="bathroom")
+    time.sleep(5)
+    s = ['<char0> [Walk] <kitchen> (111)']
+    success, message = comm.render_script(script=s, find_solution=False, skip_animation=True, recording=False, save_pose_data=False)
+    if not success:
+        import pdb; pdb.set_trace()
+        raise RuntimeError(f"Failed to render script: {message}")
+    
+    for s in scripts:
+        success, message = comm.render_script(script=s, find_solution=False, skip_animation=True, recording=False)
+        if not success:
+            import pdb; pdb.set_trace()
+            print("Failed to render script:", message)
+            return False, None
+        time.sleep(1)  # Ensure the scene is ready after placing objects
+    
+    for placement in placement_log:
+        print(placement)
+
     image_dir = os.path.join(save_dir, prefix)
     if not os.path.exists(image_dir):
         os.makedirs(image_dir)
@@ -102,21 +132,14 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
             filepath = os.path.join(root, file)
             os.remove(filepath)
             
-    if robot_initial_state is not None:
-        comm.add_character('chars/Female2', position=robot_initial_state["initial_position"], initial_room="bathroom")
-    else:
-        comm.add_character('chars/Female2', initial_room="bathroom")
-    time.sleep(5) # NOTE this is necessary to ensure a fixed starting pose
-    
-    success, graph = comm.environment_graph()
+    success = comm.move_character(0, robot_initial_state["initial_position"])
     if not success:
-        print("Failed to get environment graph:", graph)
-        return False
-
-    script = _swap_character_token(script, "char0", "char1")
-    batch_size = 8
-    for start in range(0, len(script), batch_size):
-        sub_script = script[start:start + batch_size]
+        raise RuntimeError("Failed to move character to initial position.")
+    time.sleep(5)
+    
+    batch_size = 10
+    for start in range(0, len(record_script), batch_size):
+        sub_script = record_script[start:start + batch_size]
         success, message = comm.render_script(script=sub_script,
                                             processing_time_limit=6000,
                                             find_solution=False,
@@ -133,7 +156,7 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
             import pdb; pdb.set_trace()
             raise RuntimeError(f"Failed to render script: {message}")
     
-    output_dir = os.path.join(save_dir, prefix, "1")
+    output_dir = os.path.join(save_dir, prefix, "0")
     
     # Save the agent graph and environment graph
     agent_graph_path = os.path.join(output_dir, "agent_graph.json") # This is necessary to obtain ground truth
@@ -143,13 +166,13 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
     success, instance_colors = comm.instance_colors()
     if not success:
         print("Failed to get instance colors:", instance_colors)
-        return False
+        return False, None
     try:
         with open(isinstance_colors_path, 'w') as f:
             json.dump(instance_colors, f, indent=2)
     except Exception as e:
         print(f"Failed to save instance colors: {e}")
-        return False
+        return False, None
     
     success, agent_graph = comm.environment_graph()
     try:
@@ -157,27 +180,27 @@ def _record_graph(args, comm, save_dir: str, prefix: str, script: List[str], rob
             json.dump(agent_graph, f, indent=2)
     except Exception as e:
         print(f"Failed to save agent graph: {e}")
-        return False
+        return False, None
     
     graph = remove_nodes_by_classes(agent_graph, ["character"])
     success, message = comm.expand_scene(graph)
     if not success:
         print("Failed to expand scene:", message)
-        return False
+        return False, None
     success, graph = comm.environment_graph()
     try:
         with open(graph_path, 'w') as f:
             json.dump(graph, f, indent=2)
     except Exception as e:
         print(f"Failed to save environment graph: {e}")
-        return False
-    
+        return False, None
+
     utils_viz.generate_video(
         input_path=args.data_dir, 
         prefix=prefix, 
         output_path=os.path.join(args.data_dir, prefix)
     )
-    return True
+    return True, placement_log
 
 def _replace_objects(args, 
                      comm, 
@@ -287,22 +310,22 @@ def prepare_scene_and_save_graph(
     if not ok:
         raise ValueError("Failed to get final prepared environment graph.")
     
-    if tmp_path is None:
-        # put the temp file in args.data_dir if available; else system temp dir
-        base_dir = getattr(args, "data_dir", None)
-        if base_dir:
-            os.makedirs(base_dir, exist_ok=True)
-            fd, tmp_path = tempfile.mkstemp(prefix="prepared_scene_", suffix=".json", dir=base_dir)
-            os.close(fd)
-        else:
-            fd, tmp_path = tempfile.mkstemp(prefix="prepared_scene_", suffix=".json")
-            os.close(fd)
+    # if tmp_path is None:
+    #     # put the temp file in args.data_dir if available; else system temp dir
+    #     base_dir = getattr(args, "data_dir", None)
+    #     if base_dir:
+    #         os.makedirs(base_dir, exist_ok=True)
+    #         fd, tmp_path = tempfile.mkstemp(prefix="prepared_scene_", suffix=".json", dir=base_dir)
+    #         os.close(fd)
+    #     else:
+    #         fd, tmp_path = tempfile.mkstemp(prefix="prepared_scene_", suffix=".json")
+    #         os.close(fd)
 
-    with open(tmp_path, "w") as f:
-        json.dump(graph, f, indent=2)
-    if verbose:
-        print(f"✅ Prepared scene saved to: {tmp_path}")
-    return tmp_path
+    # with open(tmp_path, "w") as f:
+    #     json.dump(graph, f, indent=2)
+    # if verbose:
+    #     print(f"✅ Prepared scene saved to: {tmp_path}")
+    # return tmp_path
 
 def reset_scene_from_saved_graph(comm, saved_graph_path: str) -> bool:
     """
@@ -320,21 +343,23 @@ def reset_scene_from_saved_graph(comm, saved_graph_path: str) -> bool:
     if not ok:
         raise RuntimeError(f"Failed to expand scene from saved graph: {msg}")
 
-def run_once(args, comm, script: List[str], robot_initial_state, prefix: str, scene_id: int):
-    print(f"Running script with prefix: {prefix}")
-    success, placement_log = _replace_objects(args, comm, scene_id, verbose=True)
-    print(placement_log)
+def run_once(args, comm, record_script: List[str], robot_initial_state, prefix: str, scene_id: int):
+    # print(f"Running script with prefix: {prefix}")
+    # success, placement_log = _replace_objects(args, comm, scene_id, verbose=True)
+    # print(placement_log)
+    # if not success:
+    #     return False
+    
+    # time.sleep(1)  # Ensure the scene is ready after placing objects
+
+    success, placement_log = _record_graph(args, comm, args.data_dir, prefix, record_script, robot_initial_state)
     if not success:
         return False
     
-    time.sleep(1)  # Ensure the scene is ready after placing objects
+    # out_dir = _roll_episode_dirs(args.data_dir, prefix, verbose=True)
+    # obj_placement_savepath = os.path.join(out_dir, "object_placement.csv")
     
-    if not _record_graph(args, comm, args.data_dir, prefix, script, robot_initial_state):
-        return False
-    
-    out_dir = _roll_episode_dirs(args.data_dir, prefix, verbose=True)
-
-    obj_placement_savepath = os.path.join(out_dir, "object_placement.csv")
+    obj_placement_savepath = os.path.join(args.data_dir, prefix, "0", "object_placement.csv")
 
     header = [
         "obj_cls", "obj_prefab_name", "obj_node_id",
@@ -354,8 +379,8 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
     
     robot_script_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_script.txt")
     with open(robot_script_path, "r") as f:
-        script = [line.strip() for line in f if line.strip()]
-    if script is None or len(script) == 0:
+        record_script = [line.strip() for line in f if line.strip()]
+    if record_script is None or len(record_script) == 0:
         raise ValueError(f"No script found for scene {scene_id} in {robot_script_path}")
     
     robot_initial_state_path = os.path.join(args.script_dir, f"scene{scene_id}_robot_initial_state.json")
@@ -364,8 +389,8 @@ def collect_data_in_one_scene(args, comm, scene_id: int):
     if robot_initial_state is None or "initial_position" not in robot_initial_state or "initial_lookat" not in robot_initial_state:
         raise ValueError(f"No initial state found for scene {scene_id} in {robot_initial_state_path}")
     
-    for i_run in tqdm(range(args.n_runs_per_scene), desc=f"Scene {scene_id}"):
-        run_once(args, comm, script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}_foods", scene_id=scene_id)
+    for i_run in tqdm(range(args.start_run_id, args.start_run_id+args.n_runs_per_scene), desc=f"Scene {scene_id}"):
+        run_once(args, comm, record_script, robot_initial_state, prefix=f"scene{scene_id}_{i_run:02d}_foods", scene_id=scene_id)
         time.sleep(5)  # Ensure there's a delay between runs
         
 if __name__ == "__main__":
@@ -387,7 +412,7 @@ if __name__ == "__main__":
     
     for scene_id in args.scene_ids:
         
-        args.saved_graph_path = prepare_scene_and_save_graph(args, comm, scene_id, verbose=True)
+        prepare_scene_and_save_graph(args, comm, scene_id, verbose=True)
         
         success, graph = comm.environment_graph()
         (class_list, counts) = get_classes_by_category(graph, "Foods", True)

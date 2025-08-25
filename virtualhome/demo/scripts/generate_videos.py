@@ -41,10 +41,13 @@ def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, cls_paths,
     
     def _draw_bounding_box(image, instance_mask, class_mask, instance_colors, class_colors):
         CLASS_PALETTE = {
-            "book":     (  0,   0, 255),   # red
-            "folder":   (  0, 255,   0),   # green
-            "toy":      (255,   0,   0),   # blue
-            "magazine": (  0, 255, 255),   # yellow
+            # "book":     (  0,   0, 255),   # red
+            # "folder":   (  0, 255,   0),   # green
+            # "toy":      (255,   0,   0),   # blue
+            # "magazine": (  0, 255, 255),   # yellow
+            "cereal":   (255, 128, 0),     # orange
+            "bananas":  (255, 255,   0),   # purple
+            "cupcake":  (255, 192, 203),   # pink
         }
         TARGET_CLASSES = set(CLASS_PALETTE.keys())
         
@@ -117,7 +120,7 @@ def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, cls_paths,
         return
 
     class_colors = {}
-    for cls_name in ["book", "folder", "toy", "magazine"]:
+    for cls_name in ["book", "folder", "toy", "magazine", "bananas", "cupcake", "cereal"]:
         class_colors[cls_name] = semantic_cls_to_bgr(cls_name, class_list)
 
     tmp_dir = tempfile.mkdtemp()              # store annotated PNGs here
