@@ -3,6 +3,8 @@ import json
 import sys
 from PIL import ImageDraw
 import copy
+import numpy as np
+import cv2
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -18,7 +20,6 @@ from graph_utils import *
 
 ## ROS Service Calls
 import rospy
-import cv2
 import roslib; roslib.load_manifest('amrl_msgs')
 from amrl_msgs.srv import (
     GetImageSrv,
@@ -201,6 +202,18 @@ def _get_query_text(txt: str) -> str:
         return "book"
     elif "cabinet" in txt:
         return "cabinet"
+    elif "bananas" == txt:
+        return "bananas"
+    elif "cupcake" == txt:
+        return "cupcake"
+    elif "cereal" == txt:
+        return "cereal"
+    elif "mincedmeat" == txt:
+        return "mincedmeat"
+    elif "apple" == txt:
+        return "apple"
+    elif "creamybuns" == txt:
+        return "creamybuns"
     else:
         raise ValueError(f"Unknown query text: {txt}")
     
@@ -403,7 +416,7 @@ def _get_visible_instances(class_list: dict) -> set[str]:  # NEW: pass class_lis
         id2cls_bgr[uid]  = cls_bgr
 
     visible_instances: set[str] = set()
-    MIN_PIX = 10
+    MIN_PIX = 20
 
     # Frame loop --------------------------------------------------------------
     for img, cls_img, inst_img in zip(imgs, cls_imgs, inst_imgs):
@@ -481,7 +494,6 @@ def handle_find_request(req):
     
 def handle_pick_request(req):
     global comm, pano_camera_select, first_person_pano_camera_select, tall_pano_camera_select
-    rospy.loginfo("Received pick request")
     
     target_node_id = None
     if req.instance_id is not None:
@@ -565,170 +577,224 @@ def handle_open_request(req):
         message=str(message)
     )
 
-def _detect_instance(query_id: int):
+def _detect_instance(query_id: int) -> bool:
+    """
+    Return True iff the specific instance (by node/uid) is visible in any pano view,
+    AND its mean masked depth (ignoring zeros) is < DEPTH_MAX.
+    """
+    import numpy as np
+    import cv2
+
     global comm, pano_camera_select
-    
-    # Step 2: Get images from simulator
-    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
-    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
-    (ok_img, inst_imgs) = comm.camera_image(pano_camera_select, mode="seg_inst")
 
-    # Step 3: Save for debug
-    view_pil = display_grid_img(imgs + cls_imgs + inst_imgs, nrows=3)
-    view_pil.save("../../outputs/debug_detect_instance.png")
-    
-    # Step 4: Get scene graph
-    success, graph = comm.environment_graph()
-    
-    # Step 5: Parse object color map 
-    success, instance_colors = comm.instance_colors()
-    
-    # Step 6: Find IDs of all matching the target class objects
-    target_ids = [str(query_id)]
-    
-    # Step 7: Convert instance colors to uint8
-    target_bgr_colors = []
-    for uid in target_ids:
-        rgb = instance_colors.get(uid)
-        if rgb:
-            bgr_uint8 = bgr_uint8 = (
-                int(round(rgb[2] * 255)),  # B
-                int(round(rgb[1] * 255)),  # G
-                int(round(rgb[0] * 255))   # R
-            ) 
-            target_bgr_colors.append(bgr_uint8)
-            
-    # Step 8: Iterate over inst_imgs and draw boxes
-    found = False
-    for i, (rgb_img, inst_img) in enumerate(zip(imgs, inst_imgs)):
-        img_vis = rgb_img.copy()
+    # ── params
+    MIN_PIX = 32
+    MIN_W, MIN_H = 12, 12
+    ATOL = 0            # palette tolerance for inst seg
+    DEPTH_MAX = 3.5     # meters (cap)
+    MIN_DEPTH_PIX = 20  # require at least this many valid (>0) depth pixels
 
-        for uid, color in zip(target_ids, target_bgr_colors):
-            mask = cv2.inRange(inst_img, np.array(color), np.array(color))  # exact match
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # 1) Fetch views
+    ok_rgb,  rgb_imgs   = comm.camera_image(pano_camera_select, mode="normal")
+    ok_inst, inst_imgs  = comm.camera_image(pano_camera_select, mode="seg_inst")
+    ok_depth, depth_imgs= comm.camera_image(pano_camera_select, mode="depth")
+    if not (ok_rgb and ok_inst and ok_depth) or not rgb_imgs:
+        return False
 
-            for cnt in contours:
-                x, y, w, h = cv2.boundingRect(cnt)
-                if w > 10 and h > 10:
-                    return True
+    # 2) Debug montage (best-effort)
+    try:
+        ok_cls, cls_imgs = comm.camera_image(pano_camera_select, mode="seg_class")
+        view_pil = display_grid_img(rgb_imgs + (cls_imgs if ok_cls else []) + inst_imgs, nrows=3 if ok_cls else 2)
+        view_pil.save("../../outputs/debug_detect_instance.png")
+    except Exception:
+        pass
+
+    # 3) Lookup instance color
+    _, instance_colors = comm.instance_colors()
+    uid = str(query_id)
+    rgb_f = instance_colors.get(uid)  # float RGB [0,1]
+    if not rgb_f:
+        return False
+
+    inst_bgr = np.array([int(round(255*rgb_f[2])),
+                         int(round(255*rgb_f[1])),
+                         int(round(255*rgb_f[0]))], dtype=np.uint8)
+
+    for i, (rgb_img, inst_img, d) in enumerate(zip(rgb_imgs, inst_imgs, depth_imgs)):
+        if inst_img is None or d is None:
+            continue
+        depth_scalar = d[..., 0]  # HxW
+
+        # exact/tolerant instance mask
+        if ATOL == 0:
+            m_inst = cv2.inRange(inst_img, inst_bgr, inst_bgr)
+        else:
+            lo = np.clip(inst_bgr - ATOL, 0, 255).astype(np.uint8)
+            hi = np.clip(inst_bgr + ATOL, 0, 255).astype(np.uint8)
+            m_inst = cv2.inRange(inst_img, lo, hi)
+
+        if cv2.countNonZero(m_inst) < MIN_PIX:
+            continue
+
+        cnts, _ = cv2.findContours(m_inst, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for c in cnts:
+            x, y, w, h = cv2.boundingRect(c)
+            if w < MIN_W or h < MIN_H:
+                continue
+
+            # depth mask for this contour
+            obj_mask = np.zeros(m_inst.shape, dtype=np.uint8)
+            cv2.drawContours(obj_mask, [c], -1, 255, thickness=cv2.FILLED)
+            obj_depth = depth_scalar[obj_mask.astype(bool)]
+            obj_depth = obj_depth[obj_depth > 0]  # ignore zeros
+            if obj_depth.size < MIN_DEPTH_PIX:
+                continue
+
+            mean_depth = float(obj_depth.mean())
+            if mean_depth < DEPTH_MAX:
+                # Optional: annotate and save
+                vis = rgb_img.copy()
+                cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 0, 255), 1)
+                cv2.putText(vis, f"id:{uid} z~{mean_depth:.2f}m", (x, max(0, y - 8)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.imwrite(f"../../outputs/inst_depth_pass_view_{i}.png", vis)
+                return True
+
     return False
 
 def _detect_objects(query_cls: List[str]):
     """
-    Find the instance UID of the object based on the query text.
+    Detect all visible instances whose class_name ∈ query_cls.
+    For each detected contour, compute mean depth on its mask (ignore zeros)
+    and keep only those with mean depth < DEPTH_MAX.
+
+    Returns: (set[str] of instance IDs, List[ROS Image] of RGB with boxes+depth)
     """
+    import numpy as np
+    import cv2
+
     global comm, pano_camera_select, class_list
-    
-    # Step 2: Get images from simulator
-    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
-    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
-    (ok_img, inst_imgs) = comm.camera_image(pano_camera_select, mode="seg_inst")
 
-    # Step 3: Save for debug
-    view_pil = display_grid_img(imgs + cls_imgs + inst_imgs, nrows=3)
-    view_pil.save("../../outputs/debug_detect_objects.png")
+    # ── params
+    MIN_PIX = 32
+    MIN_W, MIN_H = 12, 12
+    ATOL = 0            # palette tolerance
+    DEPTH_MAX = 3.5     # meters
+    MIN_DEPTH_PIX = 20  # require some valid depth pixels
 
-    # Step 4: Get scene graph
-    success, graph = comm.environment_graph()
-    
-    # Step 5: Parse object color map 
-    success, instance_colors = comm.instance_colors()
-    
-    # Step 6: Find IDs of all matching the target class objects
-    node_by_id = {str(n["id"]): n for n in graph["nodes"]}
-    
-    target_ids = []
-    for node in graph["nodes"]:
-        if node.get("class_name", "") in query_cls:
-            target_ids.append(str(node["id"]))
-            
-    # Step 7: Convert instance colors to uint8
-    target_bgr_colors = []
+    # 1) Fetch views
+    ok_rgb,  rgb_imgs   = comm.camera_image(pano_camera_select, mode="normal")
+    ok_cls,  cls_imgs   = comm.camera_image(pano_camera_select, mode="seg_class")
+    ok_inst, inst_imgs  = comm.camera_image(pano_camera_select, mode="seg_inst")
+    ok_depth, depth_imgs= comm.camera_image(pano_camera_select, mode="depth")
+    if not (ok_rgb and ok_cls and ok_inst and ok_depth) or not rgb_imgs:
+        return (set(), [])
+
+    # 2) Debug montage
+    try:
+        view_pil = display_grid_img(rgb_imgs + cls_imgs + inst_imgs, nrows=3)
+        view_pil.save("../../outputs/debug_detect_objects.png")
+    except Exception:
+        pass
+
+    # 3) Scene graph & colors
+    _, graph = comm.environment_graph()
+    _, instance_colors = comm.instance_colors()
+
+    want = {c.lower() for c in query_cls}
+    id2node = {str(n["id"]): n for n in graph["nodes"]}
+
+    target_ids: list[str] = []
+    for n in graph["nodes"]:
+        cname = (n.get("class_name") or "").lower()
+        if cname in want:
+            target_ids.append(str(n["id"]))
+    if not target_ids:
+        return (set(), [])
+
+    def _cls_to_bgr(cname: str) -> np.ndarray:
+        return np.array(semantic_cls_to_bgr(cname, class_list), dtype=np.uint8)
+
+    id2_inst_bgr, id2_cls_bgr = {}, {}
     for uid in target_ids:
-        rgb = instance_colors.get(uid)
-        if rgb:
-            bgr_uint8 = bgr_uint8 = (
-                int(round(rgb[2] * 255)),  # B
-                int(round(rgb[1] * 255)),  # G
-                int(round(rgb[0] * 255))   # R
-            ) 
-            target_bgr_colors.append(bgr_uint8)
-            
-    expected_cls_bgr = {
-        uid: tuple(int(v) for v in semantic_cls_to_bgr(node_by_id[uid]["class_name"], class_list))
-        for uid in target_ids
-    }
+        rgb_f = instance_colors.get(uid)
+        if not rgb_f:
+            continue
+        id2_inst_bgr[uid] = np.array([int(round(255*rgb_f[2])),
+                                      int(round(255*rgb_f[1])),
+                                      int(round(255*rgb_f[0]))], dtype=np.uint8)
+        id2_cls_bgr[uid]  = _cls_to_bgr(id2node[uid]["class_name"])
 
-    # Step 8: Iterate over inst_imgs and draw boxes
-    valid_target_ids = set()
+    valid_target_ids: set[str] = set()
     ros_images = []
-    for i, (rgb_img, inst_img, cls_img) in enumerate(zip(imgs, inst_imgs, cls_imgs)):
-        img_vis = rgb_img.copy()
 
-        for uid, inst_bgr in zip(target_ids, target_bgr_colors):
-            mask_inst = cv2.inRange(inst_img, np.array(inst_bgr, dtype=np.uint8), np.array(inst_bgr, dtype=np.uint8))
-            cls_bgr = expected_cls_bgr[uid]
-            mask_cls  = cv2.inRange(cls_img,  np.array(cls_bgr,  dtype=np.uint8), np.array(cls_bgr,  dtype=np.uint8))
+    # 4) Per-view processing
+    for i, (rgb_img, inst_img, cls_img, d) in enumerate(zip(rgb_imgs, inst_imgs, cls_imgs, depth_imgs)):
+        vis = rgb_img.copy()
+        depth_scalar = d[..., 0]  # HxW
 
-            mask = cv2.bitwise_and(mask_inst, mask_cls)
-            
-            if cv2.countNonZero(mask) < 10:
+        for uid in list(id2_inst_bgr.keys()):
+            inst_bgr = id2_inst_bgr[uid]
+            cls_bgr  = id2_cls_bgr[uid]
+
+            # build masks (inst & class)
+            if ATOL == 0:
+                m_inst = cv2.inRange(inst_img, inst_bgr, inst_bgr)
+                m_cls  = cv2.inRange(cls_img,  cls_bgr,  cls_bgr)
+            else:
+                lo_i = np.clip(inst_bgr - ATOL, 0, 255).astype(np.uint8)
+                hi_i = np.clip(inst_bgr + ATOL, 0, 255).astype(np.uint8)
+                m_inst = cv2.inRange(inst_img, lo_i, hi_i)
+
+                lo_c = np.clip(cls_bgr - ATOL, 0, 255).astype(np.uint8)
+                hi_c = np.clip(cls_bgr + ATOL, 0, 255).astype(np.uint8)
+                m_cls  = cv2.inRange(cls_img,  lo_c, hi_c)
+
+            m = cv2.bitwise_and(m_inst, m_cls)
+            if cv2.countNonZero(m) < MIN_PIX:
                 continue
-            
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            for cnt in contours:
-                x, y, w, h = cv2.boundingRect(cnt)
+            # contours for this uid
+            cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            for c in cnts:
+                x, y, w, h = cv2.boundingRect(c)
+                if w < MIN_W or h < MIN_H:
+                    continue
 
-                # Draw bounding box
-                cv2.rectangle(img_vis, (x, y), (x + w, y + h), (0, 0, 255), 1)
+                # depth for this contour
+                obj_mask = np.zeros(m.shape, dtype=np.uint8)
+                cv2.drawContours(obj_mask, [c], -1, 255, thickness=cv2.FILLED)
+                obj_depth = depth_scalar[obj_mask.astype(bool)]
+                obj_depth = obj_depth[obj_depth > 0]  # ignore zeros
+                if obj_depth.size < MIN_DEPTH_PIX:
+                    continue
 
-                label = f"Instance ID: {uid}"
+                mean_depth = float(obj_depth.mean())
+                if mean_depth >= DEPTH_MAX:
+                    continue  # cap by depth
+
                 valid_target_ids.add(uid)
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                font_scale = 0.5
-                thickness = 1
 
-                (text_width, text_height), baseline = cv2.getTextSize(label, font, font_scale, thickness)
-                img_h, img_w = img_vis.shape[:2]
+                # annotate
+                cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 0, 255), 1)
+                label = f"ID:{uid} z~{mean_depth:.2f}m"
+                font, fs, th = cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1
+                (tw, th_text), _ = cv2.getTextSize(label, font, fs, th)
+                img_h, img_w = vis.shape[:2]
+                ty = y - 10 if (y - 10 - th_text) >= 0 else min(y + h + th_text + 2, img_h - th_text - 1)
+                tx = max(0, min(x, img_w - tw - 1))
+                cv2.putText(vis, label, (tx, ty), font, fs, (0, 0, 255), th, cv2.LINE_AA)
 
-                # Try above the box
-                above_y = y - 10
-                if above_y - text_height >= 0:
-                    text_y = above_y
-                else:
-                    # Otherwise, try below
-                    below_y = y + h + text_height + 2
-                    if below_y < img_h:
-                        text_y = below_y
-                    else:
-                        # If both are out of bounds, clamp to bottom
-                        text_y = max(0, min(y + h, img_h - text_height - 1))
-
-                # Clamp x to stay fully within image width
-                text_x = max(0, min(x, img_w - text_width - 1))
-
-                cv2.putText(
-                    img_vis,
-                    label,
-                    (text_x, text_y),
-                    font,
-                    font_scale,
-                    (0, 0, 255),
-                    thickness,
-                    cv2.LINE_AA
-                )
-
-        cv2.imwrite(f"../../outputs/seg_debug_view_{i}.png", img_vis)
-        img_ros = opencv_to_ros_image(img_vis)
-        ros_images.append(img_ros)
+        cv2.imwrite(f"../../outputs/seg_debug_view_{i}.png", vis)
+        ros_images.append(opencv_to_ros_image(vis))
         
     return (valid_target_ids, ros_images)
 
+
 def handle_detect_virtualhome_request(req):
     global comm, class_list
-    rospy.loginfo("Received detect virtual home object request")
-    
+    rospy.loginfo(f"Received detect virtual home object request: {req.query_text}")
+
     try:
         query_cls = _get_query_text(req.query_text.lower())
         if query_cls == "cabinet":
