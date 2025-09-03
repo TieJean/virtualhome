@@ -591,7 +591,7 @@ def _detect_instance(query_id: int) -> bool:
     MIN_PIX = 32
     MIN_W, MIN_H = 12, 12
     ATOL = 0            # palette tolerance for inst seg
-    DEPTH_MAX = 3.5     # meters (cap)
+    DEPTH_MAX = 2.5     # meters (cap)
     MIN_DEPTH_PIX = 20  # require at least this many valid (>0) depth pixels
 
     # 1) Fetch views
@@ -679,7 +679,7 @@ def _detect_objects(query_cls: List[str]):
     MIN_PIX = 32
     MIN_W, MIN_H = 12, 12
     ATOL = 0            # palette tolerance
-    DEPTH_MAX = 3.5     # meters
+    DEPTH_MAX = 2.5     # meters
     MIN_DEPTH_PIX = 20  # require some valid depth pixels
 
     # 1) Fetch views

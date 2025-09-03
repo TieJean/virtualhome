@@ -2,7 +2,6 @@ from tqdm import tqdm
 import os, json, argparse
 import sys
 import cv2
-import imageio.v3 as iio
 
 sys.path.append('../simulation')
 from utils_demo import *

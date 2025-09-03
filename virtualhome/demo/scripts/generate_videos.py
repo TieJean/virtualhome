@@ -41,10 +41,10 @@ def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, cls_paths,
     
     def _draw_bounding_box(image, instance_mask, class_mask, instance_colors, class_colors):
         CLASS_PALETTE = {
-            # "book":     (  0,   0, 255),   # red
-            # "folder":   (  0, 255,   0),   # green
-            # "toy":      (255,   0,   0),   # blue
-            # "magazine": (  0, 255, 255),   # yellow
+            "book":     (  0,   0, 255),   # red
+            "folder":   (  0, 255,   0),   # green
+            "toy":      (255,   0,   0),   # blue
+            "magazine": (  0, 255, 255),   # yellow
             "cereal":   (255, 128, 0),     # orange
             "bananas":  (255, 255,   0),   # purple
             "cupcake":  (255, 192, 203),   # pink

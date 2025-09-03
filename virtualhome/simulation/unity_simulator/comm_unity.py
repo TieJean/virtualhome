@@ -13,7 +13,10 @@ import atexit
 from sys import platform
 import sys
 import pdb
-import imageio.v3 as iio
+# import imageio.v3 as iio
+import io, base64, tempfile
+import numpy as np, OpenEXR, Imath
+
 from . import communication
 
 from requests.adapters import HTTPAdapter
@@ -529,15 +532,28 @@ def _decode_image_list(img_string_list):
         image_list.append(_decode_image(img_string))
     return image_list
 
-def _decode_depth_image(img_string):
-    img_bytes = base64.b64decode(img_string)
+def _decode_depth_image(img_string: str):
+    b = base64.b64decode(img_string)
+    with tempfile.NamedTemporaryFile(suffix=".exr") as f:
+        f.write(b); f.flush()
+        exr = OpenEXR.InputFile(f.name)
+        dw = exr.header()['dataWindow']
+        w, h = dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1
 
-    # Try decoding with imageio
-    try:
-        img_file = iio.imread(io.BytesIO(img_bytes), extension=".exr")
-        return img_file
-    except Exception as e:
-        raise RuntimeError(f"Failed to decode image using imageio: {e}")
+        # common depth channel
+        if 'Z' in exr.header()['channels']:
+            pt = Imath.PixelType(Imath.PixelType.FLOAT)
+            Z = exr.channel('Z', pt)
+            return np.frombuffer(Z, dtype=np.float32).reshape(h, w)
+
+        # RGB float fallback
+        pt = Imath.PixelType(Imath.PixelType.FLOAT)
+        chans = [c for c in ('R','G','B') if c in exr.header()['channels']]
+        if chans:
+            arrs = [np.frombuffer(exr.channel(c, pt), dtype=np.float32).reshape(h, w) for c in chans]
+            return np.stack(arrs, axis=-1) if len(arrs) > 1 else arrs[0]
+
+        raise RuntimeError(f"Unexpected EXR layout; channels: {list(exr.header()['channels'].keys())}")
     
 def _decode_depth_image_list(img_string_list):
     image_list = []

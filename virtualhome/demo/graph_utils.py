@@ -1,7 +1,6 @@
 from collections import defaultdict
 from typing import Dict, List, Tuple, Union
 import requests
-from bs4 import BeautifulSoup
 import pandas as pd
 import re
 import random
@@ -237,104 +236,6 @@ def categorize_from_nodes(from_nodes):
                 result["unambiguous_unmanipulable_object"].append(cls)
 
     return result
-
-def fetch_virtualhome_objects(url:str = "http://virtual-home.org/documentation/master/kb/objects.html"):
-    """
-    Fetch and parse the VirtualHome object list from the given URL.
-    Returns a cleaned pandas DataFrame.
-    """
-    # Fetch page
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    # Find table
-    table = soup.find('table')
-
-    # Parse headers
-    headers = [header.text.strip() for header in table.find_all('th')]
-
-    # Parse rows
-    rows = []
-    current_object_name = None
-
-    for row in table.find_all('tr')[1:]:  # skip header
-        cells = row.find_all('td')
-        cell_texts = [cell.text.strip() for cell in cells]
-
-        if len(cell_texts) == len(headers):
-            current_object_name = cell_texts[0]
-        else:
-            # fill in missing Object Name
-            cell_texts = [current_object_name] + cell_texts
-
-        # Clean encoding artifacts
-        cleaned_row = [text.replace('â', 'y') for text in cell_texts]
-        rows.append(cleaned_row)
-
-    # Create DataFrame
-    df = pd.DataFrame(rows, columns=headers)
-
-    # Fill down missing Object Names if any
-    df['Object Name'] = df['Object Name'].replace('', pd.NA).ffill()
-
-    return df
-
-def get_ambiguous_manipulable_metadata(
-    ambiguous_classes: list = ["book", "dishbowl", "pillow", "clothespile", "towel", "folder"],
-    sample: bool = False,
-    seed: int = 42
-):
-    """
-    Fetch prefab metadata for ambiguous manipulable objects.
-    - Normalize Object Name (lowercase, no underscore).
-    - For 'book', only keep Book_XX and PRE_PRO_Book_01/02.
-    - If sample=True, sample up to 2 prefabs per class.
-    """
-    df = fetch_virtualhome_objects()
-
-    normalize = lambda s: s.lower().replace("_", "")
-    target_set = set(normalize(cls) for cls in ambiguous_classes)
-
-    mask = df["Object Name"].apply(lambda name: normalize(name) in target_set)
-    filtered = df[mask].copy()
-
-    # Special-case filtering for 'book'
-    is_book = filtered["Object Name"].apply(lambda s: normalize(s) == "book")
-    keep_book = filtered["Prefab Name"].apply(
-        lambda name: bool(re.fullmatch(r"Book_\d+", name)) or name in {"PRE_PRO_Book_01", "PRE_PRO_Book_02"}
-    )
-    filtered = filtered[~is_book | keep_book]
-
-    # Normalize "Object Name" column in output
-    filtered["Object Name"] = filtered["Object Name"].apply(normalize)
-
-    # Optional sampling
-    if sample:
-        random.seed(seed)
-        sampled_rows = []
-        for cls in ambiguous_classes:
-            norm_cls = normalize(cls)
-            subset = filtered[filtered["Object Name"] == norm_cls]
-            sampled_rows.append(subset.sample(n=min(2, len(subset)), random_state=seed))
-        filtered = pd.concat(sampled_rows, ignore_index=True)
-        
-    # TODO
-    manual_prefabs = {
-        "dishbowl": ["PRE_PRO_Bowl_01", "FMGP_PRE_Wooden_bowl_1024"],
-        "pillow": ["PRE_DEC_Pillow_01_02", "HSHP_PRE_DEC_Pillow_01_01"],
-    }
-    for cls, new_prefabs in manual_prefabs.items():
-        mask = filtered["Object Name"] == cls
-        matching_indices = filtered[mask].index
-
-        if len(matching_indices) != len(new_prefabs):
-            # print(f"⚠️ Mismatch: {cls} has {len(matching_indices)} rows but {len(new_prefabs)} new prefabs")
-            continue
-
-        for idx, new_prefab in zip(matching_indices, new_prefabs):
-            filtered.at[idx, "Prefab Name"] = new_prefab
-
-    return filtered
 
 def generate_fixed_waypoint_script(graph, surface_ids):
     """
@@ -738,6 +639,91 @@ def get_connected_to_nodes(graph, from_id, relations=["ON", "INSIDE"]):
             if to_node:
                 to_nodes.append(to_node)
     return to_nodes
+
+def extract_placement_log_from_graph(
+    graph: dict,
+    target_classes: List[str],
+    relations: Tuple[str, ...] = ("INSIDE", "ON"),   # prefer INSIDE over ON
+    include_only_supported: bool = False
+) -> List[List[Union[str, int]]]:
+    """
+    Build a placement_log by *reading* the scene graph.
+
+    Parameters
+    ----------
+    graph : dict
+        VirtualHome scene graph with 'nodes' and 'edges'.
+    target_classes : list[str]
+        Object classes to include (exact match on node['class_name']).
+    relations : tuple[str]
+        Relation types considered a 'support' link (order = preference).
+    include_only_supported : bool
+        If True, only include objects that have a valid supporting surface.
+
+    Returns
+    -------
+    placement_log : list[list[str|int]]
+        Rows:
+          [obj_cls, obj_prefab_name, obj_node_id,
+           surface_cls, surface_prefab_name, surface_id,
+           room_cls, room_prefab_name, room_id]
+    """
+    id2node = {n["id"]: n for n in graph.get("nodes", [])}
+
+    # index edges by from_id for quick support lookup
+    from_edges = {}
+    for e in graph.get("edges", []):
+        from_edges.setdefault(e["from_id"], []).append(e)
+
+    # helper: best support edge (respect relation preference order)
+    def _best_support_edge(obj_id: int):
+        cand = from_edges.get(obj_id, [])
+        # choose first edge whose relation matches our preference order
+        for rel in relations:
+            for e in cand:
+                if e.get("relation_type") == rel:
+                    return e
+        return None
+
+    placement_log: List[List[Union[str, int]]] = []
+
+    want = set(target_classes)
+    # deterministic output: sort by (class, id)
+    objs = [n for n in graph.get("nodes", []) if n.get("class_name") in want]
+    objs.sort(key=lambda n: (n.get("class_name", ""), n.get("id", -1)))
+
+    for obj in objs:
+        obj_cls   = obj.get("class_name", "Unknown")
+        obj_pref  = obj.get("prefab_name", "N/A")
+        obj_id    = obj.get("id")
+
+        support_edge = _best_support_edge(obj_id)
+        surface_node = id2node.get(support_edge["to_id"]) if support_edge else None
+
+        if include_only_supported and surface_node is None:
+            continue
+
+        # Room: try from surface; else fall back to object’s room
+        room_node = None
+        if surface_node is not None:
+            room_node = find_room_of_node(graph, surface_node["id"])
+        if room_node is None:
+            room_node = find_room_of_node(graph, obj_id)
+
+        row = [
+            obj_cls,                               # obj_cls
+            obj_pref,                              # obj_prefab_name
+            obj_id,                                # obj_node_id
+            surface_node.get("class_name", "N/A") if surface_node else "N/A",           # surface_cls
+            surface_node.get("prefab_name", "N/A") if surface_node else "N/A",          # surface_prefab_name
+            surface_node.get("id", -1)            if surface_node else -1,              # surface_id
+            room_node.get("class_name", "N/A")    if room_node else "N/A",              # room_cls
+            room_node.get("prefab_name", "N/A")   if room_node else "N/A",              # room_prefab_name
+            room_node.get("id", -1)               if room_node else -1,                 # room_id
+        ]
+        placement_log.append(row)
+
+    return placement_log
 
 import random
 

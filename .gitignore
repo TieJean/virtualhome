@@ -178,3 +178,5 @@ fabric.properties
 test*/
 data/*
 .vscode/
+
+virtualhome/demo/collect_data_common_sense.py
