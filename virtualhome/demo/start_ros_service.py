@@ -56,6 +56,7 @@ vlm = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Virtual Home ROS Service')
+    parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
     # parser.add_argument("--graph_path", type=str, required=True, help="Path to the scene graph")
     return parser.parse_args()
 
@@ -853,7 +854,7 @@ if __name__ == "__main__":
     args = parse_args()
     prefab_classes, class_list = load_prefab_metadata("../resources/PrefabClass.json")
     
-    comm = UnityCommunication()
+    comm = UnityCommunication(port=args.port)
     comm.timeout_wait = 300
     
     vlm = ChatOpenAI(model="o3", temperature=1, api_key=os.environ.get("OPENAI_API_KEY"))
