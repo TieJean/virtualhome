@@ -40,6 +40,7 @@ def visualize_trajectory(args):
             x1, y1, z1 = map(float, values[1+5*3:4+5*3])
             x2, y2, z2 = map(float, values[1+6*3:4+6*3])
             positions.append([(x1+x2)/2, (y1+y2)/2, ((z1+z2)/2)])
+    positions = positions[:180]
     
     # Extract x,z coordinates and apply transformations
     x_coords = []

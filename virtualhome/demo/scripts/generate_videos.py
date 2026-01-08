@@ -18,14 +18,14 @@ def parse_args():
         "--unity_output_dir", 
         type=str, 
         default='../../unity_output/',
-        help="Path to unity_output directory (default: ../../unity_output/)"
+        help="Path to unity_output directory"
     )
     parser.add_argument(
         "--datanames", 
         type=str, 
         nargs='+', 
         required=True, 
-        help="List of dataname folders to process (e.g., scene4_754ab231d3_0)"
+        help="List of dataname folders to process"
     )
     parser.add_argument(
         "--make_stitched_video",
@@ -40,225 +40,205 @@ def collect_sorted_images(folder, suffix):
 def make_bbox_video(normal_paths, inst_paths, instance_colors, graph, cls_paths, class_list, out_path, fps=5):
     
     def _draw_bounding_box(image, instance_mask, class_mask, instance_colors, class_colors):
+        # Modern Palette (Pastels/Neon)
         CLASS_PALETTE = {
-            "book":     (  0,   0, 255),   # red
-            "folder":   (  0, 255,   0),   # green
-            "toy":      (255,   0,   0),   # blue
-            "magazine": (  0, 255, 255),   # yellow
-            "cereal":   (255, 128, 0),     # orange
-            "bananas":  (255, 255,   0),   # purple
-            "cupcake":  (255, 192, 203),   # pink
-            "mincedmeat": (128, 0, 128),   # violet
-            "apple": (0, 165, 255),        # orange (using OpenCV BGR for orange)
-            "creamybuns": (0, 255, 255),   # cyan
+            "book":     (  0,   0, 255), "folder":   (  0, 255,   0),
+            "toy":      (255,   0,   0), "magazine": (  0, 255, 255),
+            "cereal":   (255, 128, 0),   "bananas":  (255, 255,   0),
+            "cupcake":  (255, 192, 203), "mincedmeat": (128, 0, 128),
+            "apple":    (0, 165, 255),   "creamybuns": (0, 255, 255),
         }
         TARGET_CLASSES = set(CLASS_PALETTE.keys())
         
-        if instance_mask.ndim == 2:  # single channel
-            instance_mask = cv2.cvtColor(instance_mask, cv2.COLOR_GRAY2BGR)
-        elif instance_mask.shape[2] == 4:  # BGRA
-            instance_mask = instance_mask[:, :, :3]
-            
-        if class_mask.ndim == 2:  # single channel
-            class_mask = cv2.cvtColor(class_mask, cv2.COLOR_GRAY2BGR)
-        elif class_mask.shape[2] == 4:  # BGRA
-            class_mask = class_mask[:, :, :3]
+        # Ensure 3-channel
+        if instance_mask.ndim == 2: instance_mask = cv2.cvtColor(instance_mask, cv2.COLOR_GRAY2BGR)
+        elif instance_mask.shape[2] == 4: instance_mask = instance_mask[:, :, :3]
+        if class_mask.ndim == 2: class_mask = cv2.cvtColor(class_mask, cv2.COLOR_GRAY2BGR)
+        elif class_mask.shape[2] == 4: class_mask = class_mask[:, :, :3]
 
         out = image.copy()
 
         for node in graph["nodes"]:
             cls_name = node.get("class_name", "").lower()
-            if cls_name not in TARGET_CLASSES:
-                continue
+            if cls_name not in TARGET_CLASSES: continue
 
             uid = str(node["id"])
             rgb_f = instance_colors.get(uid)
-            if rgb_f is None:
-                continue
+            if rgb_f is None: continue
 
-            # Convert Unity RGB float [0‑1] -> uint8 BGR
-            bgr_uint8 = (
-                int(round(rgb_f[2] * 255)),  # B
-                int(round(rgb_f[1] * 255)),  # G
-                int(round(rgb_f[0] * 255)),  # R
-            )
-
-            # Binary mask for instance color
+            bgr_uint8 = (int(round(rgb_f[2]*255)), int(round(rgb_f[1]*255)), int(round(rgb_f[0]*255)))
+            
+            # Masking
             mask_instance = cv2.inRange(instance_mask, np.array(bgr_uint8), np.array(bgr_uint8))
-            # Binary mask for class color
-            bgr_class = class_colors[cls_name]
+            bgr_class = class_colors.get(cls_name, (0,0,0))
             mask_class = cv2.inRange(class_mask, np.array(bgr_class), np.array(bgr_class))
-            # Final mask: only pixels where both match
             mask = cv2.bitwise_and(mask_instance, mask_class)
+            
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if not contours: continue
 
-            if not contours:
-                continue
-
-            color = CLASS_PALETTE.get(cls_name, (255, 255, 255))  # fallback white
+            color = CLASS_PALETTE.get(cls_name, (255, 255, 255))
+            
+            # Draw contours
             for cnt in contours:
                 x, y, w, h = cv2.boundingRect(cnt)
-                if w < 4 or h < 4:        # ignore tiny specks
-                    continue
+                if w < 4 or h < 4: continue
+                
+                # Thinner, cleaner line
                 cv2.rectangle(out, (x, y), (x + w, y + h), color, 2)
-                cv2.putText(
-                    out,
-                    cls_name,
-                    (x, y - 6),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5,
-                    color,
-                    1,
-                    cv2.LINE_AA,
-                )
+                
+                # Label with background for readability
+                label = cls_name
+                (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                
+                # Text Background
+                cv2.rectangle(out, (x, y - 20), (x + tw + 4, y), color, -1)
+                # Text (White or Black depending on contrast? Using White/Black fixed for now)
+                cv2.putText(out, label, (x + 2, y - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1, cv2.LINE_AA)
 
         return out
-    
-    """
-    Draw bounding‑boxes (via your `_draw_bounding_box`) on each normal/instance
-    pair and encode them into a video.  Uses `make_video_ffmpeg` unchanged.
-    """
-    if not normal_paths or not inst_paths or not cls_paths or len(normal_paths) != len(inst_paths) or len(normal_paths) != len(cls_paths):
-        print(f"[Warning] Bounding‑box video skipped for {out_path} (frame mismatch).")
-        return
+
+    if not normal_paths or not inst_paths or not cls_paths: return
 
     class_colors = {}
-    for cls_name in ["book", "folder", "toy", "magazine", "bananas", "cupcake", "cereal", "mincedmeat", "apple", "creamybuns"]:
+    target_list = ["book", "folder", "toy", "magazine", "bananas", "cupcake", "cereal", "mincedmeat", "apple", "creamybuns"]
+    for cls_name in target_list:
         class_colors[cls_name] = semantic_cls_to_bgr(cls_name, class_list)
 
-    tmp_dir = tempfile.mkdtemp()              # store annotated PNGs here
+    tmp_dir = tempfile.mkdtemp()
     try:
+        # Use tqdm here for individual video generation progress
         for idx, (n_path, i_path, c_path) in enumerate(zip(normal_paths, inst_paths, cls_paths)):
-            img_normal = cv2.imread(n_path)                           # BGR
-            img_inst   = cv2.imread(i_path, cv2.IMREAD_UNCHANGED)     # seg‑inst
-            img_cls    = cv2.imread(c_path, cv2.IMREAD_UNCHANGED)     # seg‑class
+            img_normal = cv2.imread(n_path)
+            img_inst   = cv2.imread(i_path, cv2.IMREAD_UNCHANGED)
+            img_cls    = cv2.imread(c_path, cv2.IMREAD_UNCHANGED)
             drawn      = _draw_bounding_box(img_normal, img_inst, img_cls, instance_colors, class_colors)
             cv2.imwrite(os.path.join(tmp_dir, f"frame_{idx:04d}_bbox.png"), drawn)
 
         annotated_frames = sorted(glob(os.path.join(tmp_dir, "frame_*.png")))
-        make_video_ffmpeg(annotated_frames, out_path, fps=fps)        # ← untouched
+        make_video_ffmpeg(annotated_frames, out_path, fps=fps)
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 def make_video_ffmpeg(image_paths, out_path, fps=5):
-    if not image_paths:
-        print(f"[Warning] No images found for {out_path}")
-        return
-
+    if not image_paths: return
+    
+    # Filename parsing logic
     folder = os.path.dirname(image_paths[0])
     sample_name = os.path.basename(image_paths[0])
-    parts = sample_name.split('_')
-
-    if len(parts) < 3:
-        print(f"[Error] Unexpected filename format: {sample_name}")
-        return
-
-    # prefix = parts[0]  # e.g., frame
-    # suffix = parts[-1].replace('.png', '')  # e.g., normal
-    # pattern = os.path.join(folder, f"{prefix}_%04d_{suffix}.png")
-    
-    # ── derive pattern:  frame_%04d_seg_inst.png  (works with seg_class etc.) ──
     try:
-        prefix, _, remainder = sample_name.split('_', 2)  # "frame", "0000", "seg_inst.png"
+        prefix, _, remainder = sample_name.split('_', 2) 
     except ValueError:
-        print(f"[Error] Unexpected filename format: {sample_name}")
         return
-
-    suffix = remainder.rsplit('.', 1)[0]                  # "seg_inst"  (or "normal")
+    suffix = remainder.rsplit('.', 1)[0]
     pattern = os.path.join(folder, f"{prefix}_%04d_{suffix}.png")
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-
     command = [
-        'ffmpeg',
-        '-y',
-        '-framerate', str(fps),
-        '-i', pattern,
-        '-c:v', 'libx264',
-        '-pix_fmt', 'yuv420p',
-        '-r', str(fps),
-        out_path
+        'ffmpeg', '-y', '-framerate', str(fps), '-i', pattern,
+        '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', str(fps), out_path
     ]
-
     try:
         subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"Saved video to {out_path}")
     except subprocess.CalledProcessError:
         print(f"[Error] ffmpeg failed for {out_path}")
-        
-def stitch_bbox_videos(video_paths, output_path, grid_cols=4):
-    import math
 
-    # Open all video captures
+def stitch_bbox_videos(video_paths, output_path, max_cols=4, target_width=480):
+    """
+    Creates a 'Gallery View' stitched video.
+    - Resizes all videos to 'target_width'.
+    - Adds padding and a modern dark background.
+    """
+    
+    # 1. Initialize Captures
     caps = [cv2.VideoCapture(p) for p in video_paths]
-    n_videos = len(caps)
-    if n_videos == 0:
-        print(f"No videos to stitch for {output_path}")
-        return
+    if not caps: return
 
-    # Video properties (use the first video for shape/fps)
-    width = int(caps[0].get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # 2. Get Input Specs (assume first video represents aspect ratio)
+    orig_w = caps[0].get(cv2.CAP_PROP_FRAME_WIDTH)
+    orig_h = caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT)
     fps = caps[0].get(cv2.CAP_PROP_FPS)
-
-    # Determine max frame count among all videos
-    frame_counts = [int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) for cap in caps]
-    max_frames = max(frame_counts)
-
-    # Calculate grid size
-    grid_rows = math.ceil(n_videos / grid_cols)
-    grid_w = width * grid_cols
-    grid_h = height * grid_rows
-
-    # Output writer
+    
+    # 3. Calculate Gallery Dimensions
+    scale = target_width / orig_w
+    cell_w = int(target_width)
+    cell_h = int(orig_h * scale)
+    
+    # Style constants
+    PADDING = 20
+    LABEL_H = 0  # No text labels
+    BG_COLOR = (30, 30, 30) # Soft Dark Grey (Modern VS Code style)
+    
+    n_videos = len(caps)
+    cols = min(n_videos, max_cols)
+    import math
+    rows = math.ceil(n_videos / cols)
+    
+    # Final Canvas Size
+    grid_w = (cols * cell_w) + ((cols + 1) * PADDING)
+    grid_h = (rows * (cell_h + LABEL_H)) + ((rows + 1) * PADDING)
+    
+    # 4. Prepare Writer
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out_writer = cv2.VideoWriter(output_path, fourcc, fps, (grid_w, grid_h))
 
-    # For each frame index up to max_frames:
-    for frame_idx in range(max_frames):
-        frames = []
-        for vid_i, cap in enumerate(caps):
-            # If frame_idx < this video's length, read frame
-            if frame_idx < frame_counts[vid_i]:
+    # Determine max frames
+    frame_counts = [int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) for cap in caps]
+    max_frames = max(frame_counts)
+
+    print(f"Stitching {n_videos} videos into {grid_w}x{grid_h} layout...")
+
+    for frame_idx in tqdm(range(max_frames), desc="Stitching Frames"):
+        # Create blank canvas
+        canvas = np.full((grid_h, grid_w, 3), BG_COLOR, dtype=np.uint8)
+        
+        for i, cap in enumerate(caps):
+            # Grid position
+            c = i % cols
+            r = i // cols
+            
+            x_offset = PADDING + (c * (cell_w + PADDING))
+            y_offset = PADDING + (r * (cell_h + LABEL_H + PADDING))
+            
+            # Read Frame
+            if frame_idx < frame_counts[i]:
                 ret, frame = cap.read()
-                if not ret or frame is None:
-                    frame = np.zeros((height, width, 3), dtype=np.uint8)
-                elif frame.shape[2] == 4:
-                    frame = frame[..., :3]  # Remove alpha
+                if ret and frame is not None:
+                    # Resize
+                    frame = cv2.resize(frame, (cell_w, cell_h), interpolation=cv2.INTER_AREA)
+                else:
+                    frame = np.zeros((cell_h, cell_w, 3), dtype=np.uint8)
             else:
-                # This video finished: black frame
-                frame = np.zeros((height, width, 3), dtype=np.uint8)
-            frames.append(frame)
-        # Pad if needed
-        while len(frames) < grid_rows * grid_cols:
-            frames.append(np.zeros((height, width, 3), dtype=np.uint8))
-        # Build the grid
-        grid_img = []
-        for i in range(grid_rows):
-            row = np.concatenate(frames[i*grid_cols:(i+1)*grid_cols], axis=1)
-            grid_img.append(row)
-        grid_img = np.concatenate(grid_img, axis=0)
-        out_writer.write(grid_img)
+                # Video ended, show last frame or black? Let's show black.
+                frame = np.zeros((cell_h, cell_w, 3), dtype=np.uint8)
+
+            # Place Frame
+            canvas[y_offset:y_offset+cell_h, x_offset:x_offset+cell_w] = frame
+            
+        out_writer.write(canvas)
+
     out_writer.release()
-    for cap in caps:
-        cap.release()
+    for cap in caps: cap.release()
     print(f"Saved stitched video to {output_path}")
 
 def visualize_all_bbox_videos(datanames, unity_output_dir, output_dir='../../outputs/'):
-    # Collect bbox video paths from all datanames
     video_paths = []
+    
     for dataname in datanames:
         bbox_path = os.path.join(unity_output_dir, dataname, 'videos', f"{dataname}_normal_bbox.mp4")
         if os.path.isfile(bbox_path):
             video_paths.append(bbox_path)
         else:
-            print(f"[Warning] No bbox video found for {dataname} at {bbox_path}")
+            print(f"[Warning] No bbox video found for {dataname}")
+            
     if not video_paths:
-        print("No bbox videos found to stitch.")
+        print("No videos found.")
         return
-    output_path = os.path.join(output_dir, "stitched_bbox_grid.mp4")
-    stitch_bbox_videos(video_paths, output_path)
+        
+    output_path = os.path.join(output_dir, "stitched_gallery.mp4")
+    # Reduced max columns to 3 for a cleaner look, target width 480p
+    stitch_bbox_videos(video_paths, output_path, max_cols=4, target_width=480)
 
 def process_dataname(unity_output_dir, dataname):
     scene_folder = os.path.join(unity_output_dir, dataname)
@@ -270,41 +250,34 @@ def process_dataname(unity_output_dir, dataname):
     output_dir = os.path.join(scene_folder, 'videos')
     os.makedirs(output_dir, exist_ok=True)
 
+    # Generate source videos first
     for suffix in ['_normal', '_seg_class', '_seg_inst']:
         img_paths = collect_sorted_images(frame_dir, suffix)
         out_path = os.path.join(output_dir, f"{dataname}{suffix}.mp4")
-        make_video_ffmpeg(img_paths, out_path)
+        # Only create if doesn't exist to save time (optional optimization)
+        if not os.path.exists(out_path):
+            make_video_ffmpeg(img_paths, out_path)
 
-    _, class_list = load_prefab_metadata("../resources/PrefabClass.json")
+    # Load metadata
+    try:
+        _, class_list = load_prefab_metadata("../resources/PrefabClass.json")
+        instance_colors_path = os.path.join(frame_dir, 'instance_colors.json')
+        with open(instance_colors_path, 'r') as f: instance_colors = json.load(f)
+        agent_graph_path = os.path.join(frame_dir, 'agent_graph.json')
+        with open(agent_graph_path, 'r') as f: agent_graph = json.load(f)
+    except Exception as e:
+        print(f"Skipping BBox generation for {dataname} due to missing metadata: {e}")
+        return
 
     normal_paths = collect_sorted_images(frame_dir, '_normal')
     cls_paths    = collect_sorted_images(frame_dir, '_seg_class')
     inst_paths   = collect_sorted_images(frame_dir, '_seg_inst')
-    
-    instance_colors_path = os.path.join(frame_dir, 'instance_colors.json')
-    with open(instance_colors_path, 'r') as f:
-        instance_colors = json.load(f)
-    if not instance_colors:
-        raise ValueError(f"No instance colors found in {instance_colors_path}")
-    agent_graph_path = os.path.join(frame_dir, 'agent_graph.json')
-    with open(agent_graph_path, 'r') as f:
-        agent_graph = json.load(f)
-    if not agent_graph:
-        raise ValueError(f"No agent graph found in {agent_graph_path}")
         
     bbox_out = os.path.join(output_dir, f"{dataname}_normal_bbox.mp4")
-    make_bbox_video(normal_paths, 
-                    inst_paths, 
-                    instance_colors, 
-                    agent_graph, 
-                    cls_paths, 
-                    class_list,
-                    bbox_out, 
-                    fps=5)
+    make_bbox_video(normal_paths, inst_paths, instance_colors, agent_graph, cls_paths, class_list, bbox_out, fps=5)
 
 def main():
     args = parse_args()
-
     if not os.path.isdir(args.unity_output_dir):
         raise FileNotFoundError(f"{args.unity_output_dir} not found.")
 
