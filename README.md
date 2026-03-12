@@ -1,3 +1,5 @@
+podman stop virtualhome_container && podman rm virtualhome_container &&  podman run --name virtualhome_container   --hooks-dir=/usr/share/containers/oci/hooks.d   --env NVIDIA_VISIBLE_DEVICES=all   --env NVIDIA_DRIVER_CAPABILITIES=all,graphics,display,compute,utility   --device /dev/nvidia0   --device /dev/nvidiactl   --device /dev/nvidia-uvm   --mount type=bind,source="$(pwd)"/unity_vol,target=/unity_vol/   --mount type=bind,source="$(pwd)"/unity_output,target=/Output/   -p 28080:8080 --entrypoint /bin/bash  -it virtualhome
+
 # Docker Setup
 
 ```bash

@@ -6,10 +6,6 @@ import copy
 import numpy as np
 import cv2
 
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate
-
 # Simulation
 sys.path.append('../simulation')
 from unity_simulator.comm_unity import UnityCommunication
@@ -19,32 +15,111 @@ from utils_demo import *
 from graph_utils import *
 
 ## ROS Service Calls
-import rospy
-import roslib; roslib.load_manifest('amrl_msgs')
+import rclpy
+from rclpy.node import Node
 from amrl_msgs.srv import (
     GetImageSrv,
-    GetImageSrvResponse,
     GetImageAtPoseSrv, 
-    GetImageAtPoseSrvResponse, 
     PickObjectSrv, 
-    PickObjectSrvResponse,
     GetVisibleObjectsSrv,
-    GetVisibleObjectsSrvResponse,
     FindObjectSrv,
-    FindObjectSrvResponse,
     SemanticObjectDetectionSrv,
-    SemanticObjectDetectionSrvRequest,
-    SemanticObjectDetectionSrvResponse,
     ChangeVirtualHomeGraphSrv,
-    ChangeVirtualHomeGraphSrvResponse,
     DetectVirtualHomeObjectSrv,
-    DetectVirtualHomeObjectSrvRequest,
-    DetectVirtualHomeObjectSrvResponse,
     OpenVirtualHomeObjectSrv,
-    OpenVirtualHomeObjectSrvRequest,
-    OpenVirtualHomeObjectSrvResponse,
 )
 from geometry_msgs.msg import Point
+
+GetImageSrvResponse = GetImageSrv.Response
+GetImageAtPoseSrvResponse = GetImageAtPoseSrv.Response
+PickObjectSrvResponse = PickObjectSrv.Response
+GetVisibleObjectsSrvResponse = GetVisibleObjectsSrv.Response
+FindObjectSrvResponse = FindObjectSrv.Response
+SemanticObjectDetectionSrvRequest = SemanticObjectDetectionSrv.Request
+SemanticObjectDetectionSrvResponse = SemanticObjectDetectionSrv.Response
+ChangeVirtualHomeGraphSrvResponse = ChangeVirtualHomeGraphSrv.Response
+DetectVirtualHomeObjectSrvRequest = DetectVirtualHomeObjectSrv.Request
+DetectVirtualHomeObjectSrvResponse = DetectVirtualHomeObjectSrv.Response
+OpenVirtualHomeObjectSrvRequest = OpenVirtualHomeObjectSrv.Request
+OpenVirtualHomeObjectSrvResponse = OpenVirtualHomeObjectSrv.Response
+
+
+class _RospyShim:
+    ServiceException = Exception
+
+    def __init__(self):
+        self._node = None
+        self._services = []
+
+    def init_node(self, name: str, anonymous: bool = True):
+        if not rclpy.ok():
+            rclpy.init()
+        self._node = Node(name)
+
+    def wait_for_service(self, name: str):
+        return
+
+    def ServiceProxy(self, name: str, srv_type):
+        node = self._node
+        if node is None:
+            raise RuntimeError("ROS2 node is not initialized")
+        client = node.create_client(srv_type, name)
+        while not client.wait_for_service(timeout_sec=1.0):
+            self.logwarn(f"Waiting for service: {name}")
+
+        class _Proxy:
+            def __call__(self_inner, request):
+                future = client.call_async(request)
+                rclpy.spin_until_future_complete(node, future)
+                result = future.result()
+                if result is None:
+                    raise _RospyShim.ServiceException(f"Service call failed: {name}")
+                return result
+
+        return _Proxy()
+
+    def Service(self, name: str, srv_type, handler):
+        node = self._node
+        if node is None:
+            raise RuntimeError("ROS2 node is not initialized")
+
+        def _callback(request, response):
+            return handler(request)
+
+        service = node.create_service(srv_type, name, _callback)
+        self._services.append(service)
+        return service
+
+    def loginfo(self, msg: str):
+        if self._node is None:
+            print(msg)
+            return
+        self._node.get_logger().info(msg)
+
+    def logwarn(self, msg: str):
+        if self._node is None:
+            print(msg)
+            return
+        self._node.get_logger().warning(msg)
+
+    def logerr(self, msg: str):
+        if self._node is None:
+            print(msg)
+            return
+        self._node.get_logger().error(msg)
+
+    def spin(self):
+        if self._node is None:
+            raise RuntimeError("ROS2 node is not initialized")
+        try:
+            rclpy.spin(self._node)
+        finally:
+            self._node.destroy_node()
+            if rclpy.ok():
+                rclpy.shutdown()
+
+
+rospy = _RospyShim()
 
 comm = None
 class_list = None
@@ -52,13 +127,19 @@ cameras_select = None
 pano_camera_select = None
 first_person_pano_camera_select = None
 tall_pano_camera_select = None
-vlm = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Virtual Home ROS Service')
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
+    parser.add_argument('--parallel', action='store_true', help='Namespace services as /moma_{port}/... for parallel runs')
     # parser.add_argument("--graph_path", type=str, required=True, help="Path to the scene graph")
     return parser.parse_args()
+
+
+def get_moma_service_name(port: str, service: str, parallel: bool) -> str:
+    if parallel:
+        return f'/moma_{port}/{service}'
+    return f'/moma/{service}'
 
 ### Helper Functions ###
 def detect_objects_owlv2(query_image: Image, query_cls: str) -> SemanticObjectDetectionSrvResponse:
@@ -101,6 +182,7 @@ def handle_navigate_request(req):
         rospy.loginfo(f"Received navigate request: ({x}, {0}, {y})")
         
         success = comm.move_character(0, [x, 0, y])
+        rospy.loginfo(f"Move character success: {success}")
         if not success:
             return GetImageAtPoseSrvResponse(success=False)
         if z > 0.3:
@@ -109,8 +191,11 @@ def handle_navigate_request(req):
             pano_camera_select = copy.deepcopy(first_person_pano_camera_select)
         pano_images = observe()
         return GetImageAtPoseSrvResponse(success=success, pano_images=pano_images)
-    except:
+    except Exception as e:
+        rospy.logerr(f"Error in navigate request: {e}")
+        import traceback; traceback.print_exc()
         import pdb; pdb.set_trace()
+        
 
 def handle_observe_request(req):
     global comm
@@ -673,6 +758,8 @@ def _detect_objects(query_cls: List[str]):
     """
     import numpy as np
     import cv2
+    import traceback
+    import time
 
     global comm, pano_camera_select, class_list
 
@@ -684,19 +771,25 @@ def _detect_objects(query_cls: List[str]):
     MIN_DEPTH_PIX = 20  # require some valid depth pixels
 
     # 1) Fetch views
+    start_time = time.perf_counter()
+
     ok_rgb,  rgb_imgs   = comm.camera_image(pano_camera_select, mode="normal")
     ok_cls,  cls_imgs   = comm.camera_image(pano_camera_select, mode="seg_class")
     ok_inst, inst_imgs  = comm.camera_image(pano_camera_select, mode="seg_inst")
     ok_depth, depth_imgs= comm.camera_image(pano_camera_select, mode="depth")
+
+    end_time = time.perf_counter()
+    rospy.loginfo(f"Camera image fetch time: {(end_time - start_time) * 1000:.2f} ms")
     if not (ok_rgb and ok_cls and ok_inst and ok_depth) or not rgb_imgs:
         return (set(), [])
 
     # 2) Debug montage
-    try:
-        view_pil = display_grid_img(rgb_imgs + cls_imgs + inst_imgs, nrows=3)
-        view_pil.save("../../outputs/debug_detect_objects.png")
-    except Exception:
-        pass
+    # try:
+    #     view_pil = display_grid_img(rgb_imgs + cls_imgs + inst_imgs, nrows=3)
+    #     view_pil.save("../../outputs/debug_detect_objects.png")
+    # except Exception as e:
+    #     rospy.logerr(f"Error in debug montage: {e}")
+    #     traceback.print_exc()
 
     # 3) Scene graph & colors
     _, graph = comm.environment_graph()
@@ -805,12 +898,12 @@ def handle_detect_virtualhome_request(req):
         instance_ids, ros_images = _detect_objects(query_cls)
         instance_ids = [int(id) for id in instance_ids]
         
-        visible_instances = _get_visible_instances(class_list)
+        # visible_instances = _get_visible_instances(class_list)
         
         return DetectVirtualHomeObjectSrvResponse(
             success=len(instance_ids) > 0,
             ids=instance_ids,
-            visible_instances=list(visible_instances),
+            # visible_instances=list(visible_instances),
             images=ros_images
         )
     except Exception as e:
@@ -857,24 +950,31 @@ if __name__ == "__main__":
     
     comm = UnityCommunication(port=args.port)
     comm.timeout_wait = 300
+
+    navigate_service = get_moma_service_name(args.port, 'navigate', args.parallel)
+    observe_service = get_moma_service_name(args.port, 'observe', args.parallel)
+    visible_objects_service = get_moma_service_name(args.port, 'visible_objects', args.parallel)
+    find_object_service = get_moma_service_name(args.port, 'find_object', args.parallel)
+    pick_object_service = get_moma_service_name(args.port, 'pick_object', args.parallel)
+    open_object_service = get_moma_service_name(args.port, 'open_object', args.parallel)
+    detect_virtual_home_object_service = get_moma_service_name(args.port, 'detect_virtual_home_object', args.parallel)
+    change_virtualhome_graph_service = get_moma_service_name(args.port, 'change_virtualhome_graph', args.parallel)
     
-    vlm = ChatOpenAI(model="o3", temperature=1, api_key=os.environ.get("OPENAI_API_KEY"))
-        
-    rospy.Service('/moma/navigate', GetImageAtPoseSrv, handle_navigate_request)
+    rospy.Service(navigate_service, GetImageAtPoseSrv, handle_navigate_request)
     rospy.loginfo("Ready to navigate")
-    rospy.Service('/moma/observe', GetImageSrv, handle_observe_request)
+    rospy.Service(observe_service, GetImageSrv, handle_observe_request)
     rospy.loginfo("Ready to observe")
-    rospy.Service('/moma/visible_objects', GetVisibleObjectsSrv, handle_visible_objects_request)
+    rospy.Service(visible_objects_service, GetVisibleObjectsSrv, handle_visible_objects_request)
     rospy.loginfo("Ready to return visible objects")
-    rospy.Service('/moma/find_object', FindObjectSrv, handle_find_request)
+    rospy.Service(find_object_service, FindObjectSrv, handle_find_request)
     rospy.loginfo("Ready to find objects")
-    rospy.Service('/moma/pick_object', PickObjectSrv, handle_pick_request)
+    rospy.Service(pick_object_service, PickObjectSrv, handle_pick_request)
     rospy.loginfo("Ready to pick objects")
-    rospy.Service('/moma/open_object', OpenVirtualHomeObjectSrv, handle_open_request)
+    rospy.Service(open_object_service, OpenVirtualHomeObjectSrv, handle_open_request)
     rospy.loginfo("Ready to open virtual home objects")
-    rospy.Service('/moma/detect_virtual_home_object', DetectVirtualHomeObjectSrv, handle_detect_virtualhome_request)
+    rospy.Service(detect_virtual_home_object_service, DetectVirtualHomeObjectSrv, handle_detect_virtualhome_request)
     rospy.loginfo("Ready to detect virtual home objects")
-    rospy.Service('/moma/change_virtualhome_graph', ChangeVirtualHomeGraphSrv, handle_virtualhome_scene_request)
+    rospy.Service(change_virtualhome_graph_service, ChangeVirtualHomeGraphSrv, handle_virtualhome_scene_request)
     rospy.loginfo("Ready to change virtual home graph")
     
     rospy.spin()

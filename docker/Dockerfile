@@ -129,7 +129,7 @@ RUN apt-get update && apt-get install -y wget && wget https://sourceforge.net/pr
 
 
 # Copy and set up run script
-COPY ./run_sim.sh /
+COPY ./run_sim_gpu.sh /run_sim.sh
 RUN chmod +x /run_sim.sh
 
 RUN apt-get update && apt-get -y upgrade
