@@ -760,6 +760,7 @@ def _detect_objects(query_cls: List[str]):
     import cv2
     import traceback
     import time
+    from concurrent.futures import ThreadPoolExecutor
 
     global comm, pano_camera_select, class_list
 
@@ -779,7 +780,7 @@ def _detect_objects(query_cls: List[str]):
     ok_depth, depth_imgs= comm.camera_image(pano_camera_select, mode="depth")
 
     end_time = time.perf_counter()
-    rospy.loginfo(f"Camera image fetch time: {(end_time - start_time) * 1000:.2f} ms")
+    rospy.loginfo(f"Camera image fetch time: {(end_time - start_time):.2f} s")
     if not (ok_rgb and ok_cls and ok_inst and ok_depth) or not rgb_imgs:
         return (set(), [])
 
@@ -819,22 +820,23 @@ def _detect_objects(query_cls: List[str]):
                                       int(round(255*rgb_f[0]))], dtype=np.uint8)
         id2_cls_bgr[uid]  = _cls_to_bgr(id2node[uid]["class_name"])
 
-    valid_target_ids: set[str] = set()
-    ros_images = []
-
-    # 4) Per-view processing
-    for i, (rgb_img, inst_img, cls_img, d) in enumerate(zip(rgb_imgs, inst_imgs, cls_imgs, depth_imgs)):
+    def _process_view(view_data):
+        i, rgb_img, inst_img, cls_img, d = view_data
         vis = rgb_img.copy()
-        depth_scalar = d[..., 0]  # HxW
+
+        if d is None or inst_img is None or cls_img is None:
+            return set(), opencv_to_ros_image(vis)
+
+        depth_scalar = d[..., 0] if (d.ndim == 3 and d.shape[2] >= 1) else d
+        local_valid_target_ids: set[str] = set()
 
         for uid in list(id2_inst_bgr.keys()):
             inst_bgr = id2_inst_bgr[uid]
-            cls_bgr  = id2_cls_bgr[uid]
+            cls_bgr = id2_cls_bgr[uid]
 
-            # build masks (inst & class)
             if ATOL == 0:
                 m_inst = cv2.inRange(inst_img, inst_bgr, inst_bgr)
-                m_cls  = cv2.inRange(cls_img,  cls_bgr,  cls_bgr)
+                m_cls = cv2.inRange(cls_img, cls_bgr, cls_bgr)
             else:
                 lo_i = np.clip(inst_bgr - ATOL, 0, 255).astype(np.uint8)
                 hi_i = np.clip(inst_bgr + ATOL, 0, 255).astype(np.uint8)
@@ -842,34 +844,31 @@ def _detect_objects(query_cls: List[str]):
 
                 lo_c = np.clip(cls_bgr - ATOL, 0, 255).astype(np.uint8)
                 hi_c = np.clip(cls_bgr + ATOL, 0, 255).astype(np.uint8)
-                m_cls  = cv2.inRange(cls_img,  lo_c, hi_c)
+                m_cls = cv2.inRange(cls_img, lo_c, hi_c)
 
             m = cv2.bitwise_and(m_inst, m_cls)
             if cv2.countNonZero(m) < MIN_PIX:
                 continue
 
-            # contours for this uid
             cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for c in cnts:
                 x, y, w, h = cv2.boundingRect(c)
                 if w < MIN_W or h < MIN_H:
                     continue
 
-                # depth for this contour
                 obj_mask = np.zeros(m.shape, dtype=np.uint8)
                 cv2.drawContours(obj_mask, [c], -1, 255, thickness=cv2.FILLED)
                 obj_depth = depth_scalar[obj_mask.astype(bool)]
-                obj_depth = obj_depth[obj_depth > 0]  # ignore zeros
+                obj_depth = obj_depth[obj_depth > 0]
                 if obj_depth.size < MIN_DEPTH_PIX:
                     continue
 
                 mean_depth = float(obj_depth.mean())
                 if mean_depth >= DEPTH_MAX:
-                    continue  # cap by depth
+                    continue
 
-                valid_target_ids.add(uid)
+                local_valid_target_ids.add(uid)
 
-                # annotate
                 cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 0, 255), 1)
                 label = f"ID:{uid} z~{mean_depth:.2f}m"
                 font, fs, th = cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1
@@ -879,8 +878,22 @@ def _detect_objects(query_cls: List[str]):
                 tx = max(0, min(x, img_w - tw - 1))
                 cv2.putText(vis, label, (tx, ty), font, fs, (0, 0, 255), th, cv2.LINE_AA)
 
-        cv2.imwrite(f"../../outputs/seg_debug_view_{i}.png", vis)
-        ros_images.append(opencv_to_ros_image(vis))
+        return local_valid_target_ids, opencv_to_ros_image(vis)
+
+    valid_target_ids: set[str] = set()
+    ros_images = []
+    view_data = [(i, rgb_img, inst_img, cls_img, d)
+                 for i, (rgb_img, inst_img, cls_img, d)
+                 in enumerate(zip(rgb_imgs, inst_imgs, cls_imgs, depth_imgs))]
+
+    if not view_data:
+        return (set(), [])
+
+    max_workers = min(6, len(view_data))
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        for local_ids, ros_img in pool.map(_process_view, view_data):
+            valid_target_ids.update(local_ids)
+            ros_images.append(ros_img)
         
     return (valid_target_ids, ros_images)
 
@@ -940,6 +953,9 @@ def handle_virtualhome_scene_request(req):
     first_person_pano_camera_select = cameras_select[8:14]
     tall_pano_camera_select = cameras_select[14:20]
     
+    rospy.loginfo(
+        f"VirtualHome scene updated (scene_id={req.scene_id}). "
+    )
     return ChangeVirtualHomeGraphSrvResponse(success=success)
 
 if __name__ == "__main__":
@@ -961,20 +977,20 @@ if __name__ == "__main__":
     change_virtualhome_graph_service = get_moma_service_name(args.port, 'change_virtualhome_graph', args.parallel)
     
     rospy.Service(navigate_service, GetImageAtPoseSrv, handle_navigate_request)
-    rospy.loginfo("Ready to navigate")
+    rospy.loginfo(f"Ready to navigate: {navigate_service}")
     rospy.Service(observe_service, GetImageSrv, handle_observe_request)
-    rospy.loginfo("Ready to observe")
+    rospy.loginfo(f"Ready to observe: {observe_service}")
     rospy.Service(visible_objects_service, GetVisibleObjectsSrv, handle_visible_objects_request)
-    rospy.loginfo("Ready to return visible objects")
+    rospy.loginfo(f"Ready to return visible objects: {visible_objects_service}")
     rospy.Service(find_object_service, FindObjectSrv, handle_find_request)
-    rospy.loginfo("Ready to find objects")
+    rospy.loginfo(f"Ready to find objects: {find_object_service}")
     rospy.Service(pick_object_service, PickObjectSrv, handle_pick_request)
-    rospy.loginfo("Ready to pick objects")
+    rospy.loginfo(f"Ready to pick objects: {pick_object_service}")
     rospy.Service(open_object_service, OpenVirtualHomeObjectSrv, handle_open_request)
-    rospy.loginfo("Ready to open virtual home objects")
+    rospy.loginfo(f"Ready to open virtual home objects: {open_object_service}")
     rospy.Service(detect_virtual_home_object_service, DetectVirtualHomeObjectSrv, handle_detect_virtualhome_request)
-    rospy.loginfo("Ready to detect virtual home objects")
+    rospy.loginfo(f"Ready to detect virtual home objects: {detect_virtual_home_object_service}")
     rospy.Service(change_virtualhome_graph_service, ChangeVirtualHomeGraphSrv, handle_virtualhome_scene_request)
-    rospy.loginfo("Ready to change virtual home graph")
+    rospy.loginfo(f"Ready to change virtual home graph: {change_virtualhome_graph_service}")
     
     rospy.spin()
