@@ -519,10 +519,11 @@ class UnityCommunication(object):
         
 def _decode_image(img_string):
     img_bytes = base64.b64decode(img_string)
-    if 'PNG' == img_bytes[1:4]:
-        img_file = cv2.imdecode(np.fromstring(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+    img_arr = np.frombuffer(img_bytes, dtype=np.uint8)
+    if b'PNG' == img_bytes[1:4]:
+        img_file = cv2.imdecode(img_arr, cv2.IMREAD_COLOR)
     else:
-        img_file = cv2.imdecode(np.fromstring(img_bytes, np.uint8), cv2.IMREAD_ANYDEPTH+cv2.IMREAD_ANYCOLOR)
+        img_file = cv2.imdecode(img_arr, cv2.IMREAD_ANYDEPTH+cv2.IMREAD_ANYCOLOR)
     return img_file
 
 
