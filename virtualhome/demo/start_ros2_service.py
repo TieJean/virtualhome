@@ -959,9 +959,12 @@ def handle_virtualhome_scene_request(req):
     return ChangeVirtualHomeGraphSrvResponse(success=success)
 
 if __name__ == "__main__":
-    rospy.init_node('virtualhome_ros', anonymous=True)
-    
     args = parse_args()
+    if args.parallel:
+        rospy.init_node(f'virtualhome_ros_{args.port}', anonymous=True)
+    else:
+        rospy.init_node('virtualhome_ros', anonymous=True)
+    
     prefab_classes, class_list = load_prefab_metadata("../resources/PrefabClass.json")
     
     comm = UnityCommunication(port=args.port)
