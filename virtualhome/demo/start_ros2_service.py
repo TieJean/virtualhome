@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+import time
 from PIL import ImageDraw
 import copy
 import numpy as np
@@ -8,7 +9,7 @@ import cv2
 
 # Simulation
 sys.path.append('../simulation')
-from unity_simulator.comm_unity import UnityCommunication
+from unity_simulator.comm_unity import UnityCommunication, UnityEngineException
 from unity_simulator import utils_viz
 from ros_utils import *
 from utils_demo import *
@@ -194,8 +195,8 @@ def handle_navigate_request(req):
     except Exception as e:
         rospy.logerr(f"Error in navigate request: {e}")
         import traceback; traceback.print_exc()
-        import pdb; pdb.set_trace()
-        
+        return GetImageAtPoseSrvResponse(success=False)
+
 
 def handle_observe_request(req):
     global comm
@@ -920,43 +921,77 @@ def handle_detect_virtualhome_request(req):
             images=ros_images
         )
     except Exception as e:
+        rospy.logerr(f"Error in detect_virtual_home_object request: {e}")
+        import traceback; traceback.print_exc()
         return DetectVirtualHomeObjectSrvResponse(success=False)
-        import pdb; pdb.set_trace()
-    
+
+
+CHANGE_SCENE_MAX_ATTEMPTS = 2
+CHANGE_SCENE_RETRY_BACKOFF_S = 5.0
+
+
 def handle_virtualhome_scene_request(req):
     global comm, cameras_select, pano_camera_select, tall_pano_camera_select, first_person_pano_camera_select
     rospy.loginfo(f"Received change virtual home graph request: {req.graph_path}")
-    
+
     with open(req.graph_path, "r") as f:
         graph = json.load(f)
-    
+
     if graph is None:
-        import pdb; pdb.set_trace()
+        rospy.logerr(
+            f"change_virtualhome_graph: graph JSON at {req.graph_path} parsed to None"
+        )
         return ChangeVirtualHomeGraphSrvResponse(success=False)
-    
-    if req.scene_id is not None:
-        comm.reset(req.scene_id)
-    else:
-        comm.reset()
-    success, message = comm.expand_scene(graph)
-    if not success:
-        import pdb; pdb.set_trace()
-        return ChangeVirtualHomeGraphSrvResponse(success=False)
-    
-    s, nc_before = comm.camera_count()
-    prepare_pano_character_camera(comm)
-    prepare_tall_pano_character_camera(comm)
-    comm.add_character('chars/Female2', initial_room='bathroom')
-    s, nc_after = comm.camera_count()
-    cameras_select = list(range(nc_before, nc_after))
-    pano_camera_select = cameras_select[8:14]
-    first_person_pano_camera_select = cameras_select[8:14]
-    tall_pano_camera_select = cameras_select[14:20]
-    
-    rospy.loginfo(
-        f"VirtualHome scene updated (scene_id={req.scene_id}). "
-    )
-    return ChangeVirtualHomeGraphSrvResponse(success=success)
+
+    for attempt in range(1, CHANGE_SCENE_MAX_ATTEMPTS + 1):
+        try:
+            if req.scene_id is not None:
+                comm.reset(req.scene_id)
+            else:
+                comm.reset()
+            success, message = comm.expand_scene(graph)
+            if not success:
+                rospy.logerr(
+                    f"change_virtualhome_graph (scene_id={req.scene_id}): "
+                    f"comm.expand_scene failed: {message}"
+                )
+                return ChangeVirtualHomeGraphSrvResponse(success=False)
+
+            s, nc_before = comm.camera_count()
+            prepare_pano_character_camera(comm)
+            prepare_tall_pano_character_camera(comm)
+            comm.add_character('chars/Female2', initial_room='bathroom')
+            s, nc_after = comm.camera_count()
+            cameras_select = list(range(nc_before, nc_after))
+            pano_camera_select = cameras_select[8:14]
+            first_person_pano_camera_select = cameras_select[8:14]
+            tall_pano_camera_select = cameras_select[14:20]
+
+            rospy.loginfo(
+                f"VirtualHome scene updated (scene_id={req.scene_id}). "
+            )
+            return ChangeVirtualHomeGraphSrvResponse(success=success)
+        except UnityEngineException as e:
+            status_code = e.args[0] if e.args else None
+            if status_code != 408:
+                rospy.logwarn(
+                    f"change_virtualhome_graph (scene_id={req.scene_id}) failed with non-408 "
+                    f"UnityEngineException — not retrying: {e.message}"
+                )
+                return ChangeVirtualHomeGraphSrvResponse(success=False)
+            if attempt >= CHANGE_SCENE_MAX_ATTEMPTS:
+                rospy.logwarn(
+                    f"change_virtualhome_graph (scene_id={req.scene_id}) hit Unity 408 on "
+                    f"attempt {attempt}/{CHANGE_SCENE_MAX_ATTEMPTS} — giving up: {e.message}"
+                )
+                return ChangeVirtualHomeGraphSrvResponse(success=False)
+            rospy.logwarn(
+                f"change_virtualhome_graph (scene_id={req.scene_id}) hit Unity 408 on "
+                f"attempt {attempt}/{CHANGE_SCENE_MAX_ATTEMPTS} — sleeping "
+                f"{CHANGE_SCENE_RETRY_BACKOFF_S:.1f}s and retrying."
+            )
+            time.sleep(CHANGE_SCENE_RETRY_BACKOFF_S)
+    return ChangeVirtualHomeGraphSrvResponse(success=False)
 
 if __name__ == "__main__":
     args = parse_args()
