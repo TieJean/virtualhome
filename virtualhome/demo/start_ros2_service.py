@@ -129,12 +129,89 @@ pano_camera_select = None
 first_person_pano_camera_select = None
 tall_pano_camera_select = None
 
+# --- Pano observation snapshot cache (off unless --snapshot_obs) ----------
+# When enabled, every successful scene_set / navigate snapshots the four
+# pano modes (normal, depth, seg_class, seg_inst) into _snapshot_obs_cache.
+# Subsequent observe / detect / find / pick reads consult the cache instead
+# of calling comm.camera_image again, so RGB/depth/seg used by a single
+# request are mutually pixel-consistent. Open invalidates; lazy populate
+# on first miss. Off by default — service is bit-for-bit unchanged.
+SNAPSHOT_OBS_MODES = ("normal", "depth", "seg_class", "seg_inst")
+_snapshot_obs_enabled = False
+_snapshot_obs_cache = None  # None | dict[str, list of np.ndarray]
+
+# --- Long-range detect flag -----------------------------------------------
+# When enabled, detection (_detect_instance and _detect_objects) extends its
+# DEPTH_MAX from 2m to 5m, so the agent can perceive farther objects. Pick
+# and open keep their own 2m gate: if the target instance's mean masked
+# depth is farther than 2m, they fail immediately. Off by default —
+# detection, pick, and open all behave bit-for-bit like before.
+_long_range_detect_enabled = False
+PICK_OPEN_DEPTH_MAX = 2.0
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Virtual Home ROS Service')
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
     parser.add_argument('--parallel', action='store_true', help='Namespace services as /moma_{port}/... for parallel runs')
+    parser.add_argument('--snapshot_obs', action='store_true',
+                        help='Cache pano camera images (normal/depth/seg_class/seg_inst) at '
+                             'the character pose after each successful scene set / navigate. '
+                             'observe/detect/find/pick read from the cache; open invalidates. '
+                             'Default off — service behaves bit-for-bit like before.')
+    parser.add_argument('--long_range_detect', action='store_true',
+                        help='Extend detection DEPTH_MAX from 2m to 5m for _detect_instance '
+                             'and _detect_objects. Pick and open keep their own 2m gate and '
+                             'fail when the target instance is farther than 2m. Default off — '
+                             'detection/pick/open behave bit-for-bit like before.')
     # parser.add_argument("--graph_path", type=str, required=True, help="Path to the scene graph")
     return parser.parse_args()
+
+
+def _snapshot_obs_populate() -> bool:
+    """Fetch all four pano modes on the current pano_camera_select and replace
+    the snapshot cache. Returns True only if all four fetches succeeded."""
+    global _snapshot_obs_cache, comm, pano_camera_select
+    if pano_camera_select is None:
+        rospy.logwarn("snapshot_obs: pano_camera_select is None; skipping populate")
+        return False
+    new_cache = {}
+    for mode in SNAPSHOT_OBS_MODES:
+        ok, imgs = comm.camera_image(pano_camera_select, mode=mode)
+        if not ok:
+            rospy.logwarn(f"snapshot_obs: camera_image(mode={mode}) failed; cache cleared")
+            _snapshot_obs_cache = None
+            return False
+        new_cache[mode] = imgs
+    _snapshot_obs_cache = new_cache
+    rospy.loginfo(
+        f"snapshot_obs: cached {len(new_cache['normal'])} pano frames x "
+        f"{len(SNAPSHOT_OBS_MODES)} modes"
+    )
+    return True
+
+
+def _snapshot_obs_invalidate() -> None:
+    global _snapshot_obs_cache
+    if _snapshot_obs_cache is not None:
+        rospy.loginfo("snapshot_obs: cache invalidated")
+    _snapshot_obs_cache = None
+
+
+def _get_pano_images(mode: str):
+    """Drop-in replacement for `comm.camera_image(pano_camera_select, mode=...)`.
+    When --snapshot_obs is enabled, serves the requested mode from the cache,
+    lazily populating all four modes on a miss. When the flag is off, forwards
+    straight to comm.camera_image (preserving historical semantics).
+
+    Returns (success: bool, imgs: list)."""
+    global _snapshot_obs_enabled, _snapshot_obs_cache, comm, pano_camera_select
+    if not _snapshot_obs_enabled:
+        return comm.camera_image(pano_camera_select, mode=mode)
+    if _snapshot_obs_cache is None:
+        if not _snapshot_obs_populate() or _snapshot_obs_cache is None:
+            return False, []
+    return True, _snapshot_obs_cache[mode]
 
 
 def get_moma_service_name(port: str, service: str, parallel: bool) -> str:
@@ -160,17 +237,17 @@ def detect_objects_owlv2(query_image: Image, query_cls: str) -> SemanticObjectDe
 
 def observe():
     global comm, pano_camera_select
-    
-    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
+
+    (ok_img, imgs) = _get_pano_images("normal")
     if ok_img:
         view_pil = display_grid_img(imgs, nrows=2)
         view_pil.save("../../outputs/debug_observe.png")
-    
+
     ros_images = []
     for img in imgs:
         ros_img = opencv_to_ros_image(img)
         ros_images.append(ros_img)
-    
+
     return ros_images
 
 ### Handle Service Requests ###
@@ -190,6 +267,8 @@ def handle_navigate_request(req):
             pano_camera_select = copy.deepcopy(tall_pano_camera_select)
         else:
             pano_camera_select = copy.deepcopy(first_person_pano_camera_select)
+        if _snapshot_obs_enabled:
+            _snapshot_obs_populate()
         pano_images = observe()
         return GetImageAtPoseSrvResponse(success=success, pano_images=pano_images)
     except Exception as e:
@@ -233,10 +312,20 @@ def handle_visible_objects_request(req):
     )
     
 def find_target_node_id(query_text):
+    # NOTE: As of the --snapshot_obs change, this function was intentionally
+    # left untouched. It is stale: in current usage `handle_find_request` always
+    # supplies a `ref_image` (taking the `_find_instance` path) and
+    # `handle_pick_request` always supplies an `instance_id` (taking the
+    # `_detect_instance` path), so this fallback is unreachable. It also
+    # rotates the character via `comm.render_script([TurnRight])`, which would
+    # require per-iteration cache invalidation to integrate cleanly with the
+    # snapshot cache. If a future caller starts hitting this function with
+    # --snapshot_obs enabled, plumb cache invalidation into the TurnRight
+    # branch and switch the camera_image calls below to a cache-aware helper.
     depth_thresh = 3.0
-    
+
     target_node_id = None
-    
+
     for _ in range(6):
         ok_img, normal_imgs = comm.camera_image(cameras_select[2:3], mode="normal")
         ok_img, cls_imgs = comm.camera_image(cameras_select[2:3], mode="seg_class")
@@ -338,9 +427,9 @@ def _find_instance(query_text: str, query_cls: str, ref_image):
     messages += [HumanMessage(content=ref_img_msg)]
     
     # Step 2: Get images from simulator
-    (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
-    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
-    (ok_img, inst_imgs) = comm.camera_image(pano_camera_select, mode="seg_inst")
+    (ok_img, imgs) = _get_pano_images("normal")
+    (ok_img, cls_imgs) = _get_pano_images("seg_class")
+    (ok_img, inst_imgs) = _get_pano_images("seg_inst")
 
     # Step 3: Save for debug
     view_pil = display_grid_img(imgs + cls_imgs + inst_imgs, nrows=3)
@@ -473,9 +562,9 @@ def _find_instance(query_text: str, query_cls: str, ref_image):
     return instance_id
 
 def _get_visible_instances(class_list: dict) -> set[str]:  # NEW: pass class_list explicitly
-    (ok_img, imgs)     = comm.camera_image(pano_camera_select, mode="normal")
-    (ok_img, cls_imgs) = comm.camera_image(pano_camera_select, mode="seg_class")
-    (ok_img, inst_imgs)= comm.camera_image(pano_camera_select, mode="seg_inst")
+    (ok_img, imgs)     = _get_pano_images("normal")
+    (ok_img, cls_imgs) = _get_pano_images("seg_class")
+    (ok_img, inst_imgs)= _get_pano_images("seg_inst")
 
     view_pil = display_grid_img(imgs + cls_imgs + inst_imgs, nrows=3)
     view_pil.save("../../outputs/debug_get_visible_instances.png")
@@ -559,7 +648,7 @@ def handle_find_request(req):
     success, graph = comm.environment_graph()
     
     if target_node_id is None:
-        (ok_img, imgs) = comm.camera_image(pano_camera_select, mode="normal")
+        (ok_img, imgs) = _get_pano_images("normal")
         view_pil = display_grid_img(imgs, nrows=2)
         view_pil.save("../../outputs/debug_find.png")
         rospy.logwarn(f"Object '{query_cls}' not found in visible objects.")
@@ -606,7 +695,15 @@ def handle_pick_request(req):
     if target_node_id is None:
         rospy.logwarn(f"Object '{query_text}' not found in visible objects.")
         return PickObjectSrvResponse(success=False)
-    
+
+    if _long_range_detect_enabled:
+        if not _detect_instance(target_node_id, max_depth=PICK_OPEN_DEPTH_MAX):
+            rospy.logwarn(
+                f"Pick gated: object '{query_text}' (id={target_node_id}) is "
+                f"farther than {PICK_OPEN_DEPTH_MAX}m or not visible."
+            )
+            return PickObjectSrvResponse(success=False)
+
     if pano_camera_select == first_person_pano_camera_select:
         script = [f"<char0> [Grab] <{query_text}> ({target_node_id})"]
         success, message = comm.render_script(script=script,
@@ -643,7 +740,19 @@ def handle_open_request(req):
         )
     target_node = target_node[0]
     query_text = target_node["class_name"]
-    
+
+    if _long_range_detect_enabled:
+        if not _detect_instance(target_node_id, max_depth=PICK_OPEN_DEPTH_MAX):
+            rospy.logwarn(
+                f"Open gated: object '{query_text}' (id={target_node_id}) is "
+                f"farther than {PICK_OPEN_DEPTH_MAX}m or not visible."
+            )
+            return OpenVirtualHomeObjectSrvResponse(
+                success=False,
+                instance_uid=target_node.get("prefab_name", ""),
+                message=f"object farther than {PICK_OPEN_DEPTH_MAX}m",
+            )
+
     script = [f"<char0> [Open] <{query_text}> ({target_node_id})"]
     success, message = comm.render_script(script=script,
                                         processing_time_limit=60,
@@ -653,21 +762,30 @@ def handle_open_request(req):
                                         skip_animation=True,
                                         recording=False,
                                         save_pose_data=False)
-    
+
+    # Opening a container/door changes scene state — any cached pano snapshot
+    # is now stale. Force a fresh fetch on the next observe/detect.
+    if success and _snapshot_obs_enabled:
+        _snapshot_obs_invalidate()
+
     _, graph = comm.environment_graph()
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])[0]
     instance_uid = target_node["prefab_name"]
-    
+
     return OpenVirtualHomeObjectSrvResponse(
         success=success,
         instance_uid=instance_uid,
         message=str(message)
     )
 
-def _detect_instance(query_id: int) -> bool:
+def _detect_instance(query_id: int, max_depth: float = None) -> bool:
     """
     Return True iff the specific instance (by node/uid) is visible in any pano view,
     AND its mean masked depth (ignoring zeros) is < DEPTH_MAX.
+
+    If `max_depth` is None, DEPTH_MAX follows the --long_range_detect flag
+    (5m when set, else 2m). Callers (pick/open gates) pass an explicit value
+    to maintain their own depth cap regardless of the flag.
     """
     import numpy as np
     import cv2
@@ -678,19 +796,22 @@ def _detect_instance(query_id: int) -> bool:
     MIN_PIX = 32
     MIN_W, MIN_H = 12, 12
     ATOL = 0            # palette tolerance for inst seg
-    DEPTH_MAX = 2     # meters (cap)
+    if max_depth is None:
+        DEPTH_MAX = 5 if _long_range_detect_enabled else 2
+    else:
+        DEPTH_MAX = max_depth
     MIN_DEPTH_PIX = 20  # require at least this many valid (>0) depth pixels
 
     # 1) Fetch views
-    ok_rgb,  rgb_imgs   = comm.camera_image(pano_camera_select, mode="normal")
-    ok_inst, inst_imgs  = comm.camera_image(pano_camera_select, mode="seg_inst")
-    ok_depth, depth_imgs= comm.camera_image(pano_camera_select, mode="depth")
+    ok_rgb,  rgb_imgs   = _get_pano_images("normal")
+    ok_inst, inst_imgs  = _get_pano_images("seg_inst")
+    ok_depth, depth_imgs= _get_pano_images("depth")
     if not (ok_rgb and ok_inst and ok_depth) or not rgb_imgs:
         return False
 
     # 2) Debug montage (best-effort)
     try:
-        ok_cls, cls_imgs = comm.camera_image(pano_camera_select, mode="seg_class")
+        ok_cls, cls_imgs = _get_pano_images("seg_class")
         view_pil = display_grid_img(rgb_imgs + (cls_imgs if ok_cls else []) + inst_imgs, nrows=3 if ok_cls else 2)
         view_pil.save("../../outputs/debug_detect_instance.png")
     except Exception:
@@ -769,16 +890,16 @@ def _detect_objects(query_cls: List[str]):
     MIN_PIX = 32
     MIN_W, MIN_H = 12, 12
     ATOL = 0            # palette tolerance
-    DEPTH_MAX = 2     # meters
+    DEPTH_MAX = 5 if _long_range_detect_enabled else 2
     MIN_DEPTH_PIX = 20  # require some valid depth pixels
 
     # 1) Fetch views
     start_time = time.perf_counter()
 
-    ok_rgb,  rgb_imgs   = comm.camera_image(pano_camera_select, mode="normal")
-    ok_cls,  cls_imgs   = comm.camera_image(pano_camera_select, mode="seg_class")
-    ok_inst, inst_imgs  = comm.camera_image(pano_camera_select, mode="seg_inst")
-    ok_depth, depth_imgs= comm.camera_image(pano_camera_select, mode="depth")
+    ok_rgb,  rgb_imgs   = _get_pano_images("normal")
+    ok_cls,  cls_imgs   = _get_pano_images("seg_class")
+    ok_inst, inst_imgs  = _get_pano_images("seg_inst")
+    ok_depth, depth_imgs= _get_pano_images("depth")
 
     end_time = time.perf_counter()
     rospy.loginfo(f"Camera image fetch time: {(end_time - start_time):.2f} s")
@@ -870,9 +991,9 @@ def _detect_objects(query_cls: List[str]):
 
                 local_valid_target_ids.add(uid)
 
-                cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 0, 255), 1)
+                cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 0, 255), 2)
                 label = f"ID:{uid} z~{mean_depth:.2f}m"
-                font, fs, th = cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1
+                font, fs, th = cv2.FONT_HERSHEY_SIMPLEX, 0.7, 1
                 (tw, th_text), _ = cv2.getTextSize(label, font, fs, th)
                 img_h, img_w = vis.shape[:2]
                 ty = y - 10 if (y - 10 - th_text) >= 0 else min(y + h + th_text + 2, img_h - th_text - 1)
@@ -900,8 +1021,19 @@ def _detect_objects(query_cls: List[str]):
 
 
 def handle_detect_virtualhome_request(req):
-    global comm, class_list
+    global comm, class_list, pano_camera_select
     rospy.loginfo(f"Received detect virtual home object request: {req.query_text}")
+
+    def _fetch_input_panos():
+        # Fallback for failure paths: un-annotated RGB panos so the agent
+        # still sees the current view rather than nothing.
+        try:
+            ok, rgb_imgs = _get_pano_images("normal")
+            if not ok or not rgb_imgs:
+                return []
+            return [opencv_to_ros_image(img) for img in rgb_imgs]
+        except Exception:
+            return []
 
     try:
         query_cls = _get_query_text(req.query_text.lower())
@@ -911,11 +1043,14 @@ def handle_detect_virtualhome_request(req):
             query_cls = [query_cls]
         instance_ids, ros_images = _detect_objects(query_cls)
         instance_ids = [int(id) for id in instance_ids]
-        
+
         # visible_instances = _get_visible_instances(class_list)
-        
+
+        success = len(instance_ids) > 0
+        if not ros_images:
+            ros_images = _fetch_input_panos()
         return DetectVirtualHomeObjectSrvResponse(
-            success=len(instance_ids) > 0,
+            success=success,
             ids=instance_ids,
             # visible_instances=list(visible_instances),
             images=ros_images
@@ -923,7 +1058,10 @@ def handle_detect_virtualhome_request(req):
     except Exception as e:
         rospy.logerr(f"Error in detect_virtual_home_object request: {e}")
         import traceback; traceback.print_exc()
-        return DetectVirtualHomeObjectSrvResponse(success=False)
+        return DetectVirtualHomeObjectSrvResponse(
+            success=False,
+            images=_fetch_input_panos(),
+        )
 
 
 CHANGE_SCENE_MAX_ATTEMPTS = 2
@@ -970,6 +1108,9 @@ def handle_virtualhome_scene_request(req):
             rospy.loginfo(
                 f"VirtualHome scene updated (scene_id={req.scene_id}). "
             )
+            if _snapshot_obs_enabled:
+                _snapshot_obs_invalidate()
+                _snapshot_obs_populate()
             return ChangeVirtualHomeGraphSrvResponse(success=success)
         except UnityEngineException as e:
             status_code = e.args[0] if e.args else None
@@ -999,9 +1140,20 @@ if __name__ == "__main__":
         rospy.init_node(f'virtualhome_ros_{args.port}', anonymous=True)
     else:
         rospy.init_node('virtualhome_ros', anonymous=True)
-    
+
+    _snapshot_obs_enabled = bool(args.snapshot_obs)
+    if _snapshot_obs_enabled:
+        rospy.loginfo("snapshot_obs: ENABLED (pano cache active for observe/detect/find/pick)")
+
+    _long_range_detect_enabled = bool(args.long_range_detect)
+    if _long_range_detect_enabled:
+        rospy.loginfo(
+            f"long_range_detect: ENABLED (detection DEPTH_MAX=5m; "
+            f"pick/open gated at {PICK_OPEN_DEPTH_MAX}m)"
+        )
+
     prefab_classes, class_list = load_prefab_metadata("../resources/PrefabClass.json")
-    
+
     comm = UnityCommunication(port=args.port)
     comm.timeout_wait = 300
 
