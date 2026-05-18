@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 import time
 from PIL import ImageDraw
@@ -149,6 +150,9 @@ _snapshot_obs_cache = None  # None | dict[str, list of np.ndarray]
 _long_range_detect_enabled = False
 PICK_OPEN_DEPTH_MAX = 2.0
 
+# When enabled, observe() saves a debug pano grid to ../../outputs/debug_observe.png.
+_verbose_enabled = False
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Virtual Home ROS Service')
@@ -164,6 +168,9 @@ def parse_args():
                              'and _detect_objects. Pick and open keep their own 2m gate and '
                              'fail when the target instance is farther than 2m. Default off — '
                              'detection/pick/open behave bit-for-bit like before.')
+    parser.add_argument('--verbose', action='store_true',
+                        help='Save debug artifacts (e.g. observe() pano grid to '
+                             '../../outputs/debug_observe.png). Default off.')
     # parser.add_argument("--graph_path", type=str, required=True, help="Path to the scene graph")
     return parser.parse_args()
 
@@ -239,9 +246,11 @@ def observe():
     global comm, pano_camera_select
 
     (ok_img, imgs) = _get_pano_images("normal")
-    if ok_img:
+    if ok_img and _verbose_enabled:
         view_pil = display_grid_img(imgs, nrows=2)
-        view_pil.save("../../outputs/debug_observe.png")
+        debug_path = "../../outputs/debug_observe.png"
+        os.makedirs(os.path.dirname(debug_path), exist_ok=True)
+        view_pil.save(debug_path)
 
     ros_images = []
     for img in imgs:
@@ -1153,6 +1162,10 @@ if __name__ == "__main__":
             f"long_range_detect: ENABLED (detection DEPTH_MAX=5m; "
             f"pick/open gated at {PICK_OPEN_DEPTH_MAX}m)"
         )
+
+    _verbose_enabled = bool(args.verbose)
+    if _verbose_enabled:
+        rospy.loginfo("verbose: ENABLED (observe() saves debug pano grid to ../../outputs/debug_observe.png)")
 
     prefab_classes, class_list = load_prefab_metadata("../resources/PrefabClass.json")
 
