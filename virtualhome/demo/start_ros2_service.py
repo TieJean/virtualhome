@@ -735,8 +735,10 @@ def handle_open_request(req):
     target_node = extract_nodes_by_ids(graph["nodes"], [target_node_id])
     if len(target_node) < 1:
         rospy.logwarn(f"Object not found in visible objects with instance ID {target_node_id}")
-        return PickObjectSrvResponse(
+        return OpenVirtualHomeObjectSrvResponse(
             success=False,
+            instance_uid="",
+            message=f"object with instance ID {target_node_id} not found in scene graph",
         )
     target_node = target_node[0]
     query_text = target_node["class_name"]

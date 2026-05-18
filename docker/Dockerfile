@@ -1,5 +1,5 @@
 # Based off of python:3.6-slim, except that we are using ubuntu instead of debian.
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -29,16 +29,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		mesa-utils \
 		&& rm -rf /var/lib/apt/lists/*
 
-# Use Ubuntu 20.04's system Python 3.8 (focal ships 3.8.10) instead of compiling from source
 RUN apt-get update && apt-get install -y --no-install-recommends \
-		python3.8 \
-		python3.8-dev \
-		python3.8-distutils \
+		python3 \
+		python3-dev \
 		python3-pip \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& ln -sf /usr/bin/python3.8 /usr/local/bin/python3 \
-	&& ln -sf /usr/bin/python3.8 /usr/local/bin/python \
-	&& ln -sf /usr/bin/pip3 /usr/local/bin/pip
+		python-is-python3 \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Manually fix missing OpenGL library symlink
 # RUN ln -s /usr/lib/x86_64-linux-gnu/mesa/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so.1
