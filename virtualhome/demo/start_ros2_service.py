@@ -10,7 +10,11 @@ import cv2
 
 # Simulation
 sys.path.append('../simulation')
-from unity_simulator.comm_unity import UnityCommunication, UnityEngineException
+from unity_simulator.comm_unity import (
+    UnityCommunication,
+    UnityEngineException,
+    UnityCommunicationException,
+)
 from unity_simulator import utils_viz
 from ros_utils import *
 from utils_demo import *
@@ -175,6 +179,29 @@ def parse_args():
     return parser.parse_args()
 
 
+def _camera_image_with_retry(camera_select, mode, attempts=2):
+    """``comm.camera_image`` with one retry on a Unity communication failure.
+
+    A wedged Unity render surfaces as ``UnityCommunicationException`` (the HTTP
+    request read-times-out). An occasional GPU/render hiccup clears on a second
+    try; a genuine renderer deadlock will not — the retry just confirms the
+    sim is dead so the caller can fail fast (and the start_sims watchdog can
+    restart it). Re-raises the last exception when every attempt fails."""
+    global comm
+    last_exc = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return comm.camera_image(camera_select, mode=mode)
+        except UnityCommunicationException as e:
+            last_exc = e
+            tail = "retrying" if attempt < attempts else "giving up"
+            rospy.logwarn(
+                f"snapshot_obs: camera_image(mode={mode}) attempt "
+                f"{attempt}/{attempts} failed ({e}); {tail}"
+            )
+    raise last_exc
+
+
 def _snapshot_obs_populate() -> bool:
     """Fetch all four pano modes on the current pano_camera_select and replace
     the snapshot cache. Returns True only if all four fetches succeeded."""
@@ -184,7 +211,15 @@ def _snapshot_obs_populate() -> bool:
         return False
     new_cache = {}
     for mode in SNAPSHOT_OBS_MODES:
-        ok, imgs = comm.camera_image(pano_camera_select, mode=mode)
+        try:
+            ok, imgs = _camera_image_with_retry(pano_camera_select, mode)
+        except UnityCommunicationException as e:
+            rospy.logerr(
+                f"snapshot_obs: camera_image(mode={mode}) failed after retry "
+                f"({e}); cache cleared"
+            )
+            _snapshot_obs_cache = None
+            return False
         if not ok:
             rospy.logwarn(f"snapshot_obs: camera_image(mode={mode}) failed; cache cleared")
             _snapshot_obs_cache = None
@@ -1170,7 +1205,11 @@ if __name__ == "__main__":
     prefab_classes, class_list = load_prefab_metadata("../resources/PrefabClass.json")
 
     comm = UnityCommunication(port=args.port)
-    comm.timeout_wait = 300
+    # A healthy pano render is seconds; a wedged Unity renderer never returns.
+    # 150s is long enough to ride out a contended-GPU slow render but short
+    # enough that a true wedge is detected (and the sim restarted) in ~2.5min
+    # instead of 5. See start_sims.py watchdog.
+    comm.timeout_wait = 150
 
     navigate_service = get_moma_service_name(args.port, 'navigate', args.parallel)
     observe_service = get_moma_service_name(args.port, 'observe', args.parallel)
