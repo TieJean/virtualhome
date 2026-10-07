@@ -1,0 +1,105 @@
+# VirtualHome sim image with Mesa 25.1.9 llvmpipe replacing the distro's 23.2.1.
+#
+# WHY: Mesa 23.2.1's llvmpipe anisotropic filter scans an ellipse bounding box
+# computed as box_u = 2/d * sqrt(d*C*F) with d = 4AC-B^2 and NO clamp
+# (lp_bld_sample_soa.c, lp_build_sample_aniso). When the ellipse degenerates
+# d -> 0 and the sample count explodes: we measured a live loop bound of
+# 3926-7918 against a max_aniso of 9, which is the ~400 s single-thread stall
+# that trips Unity's 500 s HTTP timeout. Mesa 25.1 rewrote that function to loop
+# on a bounded rate instead. 24.x is NOT fixed -- verified identical to 23.2.1.
+#
+# Bootstraps from the existing validated image and only overlays Mesa, so Unity,
+# python and every other dependency are untouched.
+#
+# Build (no root needed; fakeroot works on this node):
+#   APPTAINER_CONFIGDIR=/tmp/<you>/apptainer \
+#   apptainer build /scratch/.../virtualhome_ubuntu22.04_mesa251.sif \
+#       /scratch/.../virtualhome/docker/Apptainer.mesa251.def
+#
+# The Mesa tree must exist at the %files source path below; it is built by
+# docker/README.mesa251.md. LLVM 19 is statically linked in, so there is no
+# libLLVM to ship.
+Bootstrap: localimage
+From: /scratch/10638/tc34887/star/virtualhome_ubuntu22.04.sif
+
+%files
+    # Shipped as a TARBALL on purpose. Apptainer's %files DEREFERENCES symlinks:
+    # copying the tree directly turned all 8 symlinks
+    # (libGLX_mesa.so.0 -> .so.0.0.0, swrast_dri.so -> libdril_dri.so, ...) into
+    # independent file copies, so the image was not a faithful copy of the
+    # validated tree. Unpacking a tar in %post preserves them exactly.
+    /tmp/mesa251.tar.gz /tmp/mesa251.tar.gz
+
+%post
+    mkdir -p /opt
+    # --no-same-owner: this node has no real root (fakeroot degrades to a
+    # root-mapped namespace), so restoring the original uid/gid fails.
+    tar xzf /tmp/mesa251.tar.gz -C /opt --no-same-owner
+    rm -f /tmp/mesa251.tar.gz
+    test -L /opt/mesa251/lib/libGLX_mesa.so.0 || { echo "FATAL: symlinks not preserved"; exit 1; }
+
+%environment
+    # ---- why the libraries are STAGED instead of used in place ----------
+    # Unity cannot load its GL driver directly out of the squashfs image.
+    # With LD_LIBRARY_PATH pointing at /opt/mesa251 (inside the image) Unity
+    # prints "Vulkan detection: 0" and then spins forever in PlayerMain --
+    # 150+ s of 100% CPU on the main thread, 139 other threads parked on
+    # futexes, and NOT ONE mesa/GLX/dri library mapped into the process. It
+    # never reaches "Waiting for request" (reproduced 4/4, incl. a 900 s
+    # patience run). The exact same bytes on a normal filesystem work 4/4
+    # (md5 of libgallium verified identical), and `glxinfo` succeeds from
+    # /opt either way -- only Unity's multi-threaded startup trips it.
+    # The image is mounted by squashfuse_ll (userspace FUSE, unprivileged
+    # apptainer), and a 70 MB statically-linked-LLVM library being paged in
+    # through FUSE by many threads at once is what Unity cannot survive.
+    #
+    # So: copy the tree once onto node-local /tmp and load from there.
+    # Staged in 10 s on first use, then it is a single stat. An atomic rename
+    # keeps concurrent sims on the same node safe. /tmp is the right home
+    # for it: node-local and regenerable.
+    # NOTE: no flock, and NO file-descriptor redirects. Apptainer evaluates
+    # these env scripts with its EMBEDDED Go shell (mvdan.cc/sh), which
+    # supports only fds 0-2. An earlier version locked with `{ ... } 9>LOCK`
+    # and that made `apptainer instance start` die with
+    #   panic: unsupported redirect fd: 9   (mvdan.cc/sh v3.10.0)
+    # so NO sim could start. It only bit on a node where staging had not run
+    # yet (the branch below is skipped once staged), i.e. every FRESH node --
+    # which is why it survived a whole day of testing on one node before
+    # surfacing. Reproduced and fixed 2026-10-07. Keep this block
+    # redirect-free.
+    #
+    # Race safety without a lock: stage into a private temp dir, then rename
+    # it into place. rename(2) is atomic, so the marker file can never be
+    # visible as a partial copy. If another process won the race the rename
+    # fails harmlessly and we use theirs.
+    MESA251_LOCAL="${MESA251_LOCAL:-/tmp/mesa251_local}"
+    MESA251_MARK="$MESA251_LOCAL/lib/libgallium-25.1.9.so"
+    if [ ! -f "$MESA251_MARK" ]; then
+        MESA251_TMP="$MESA251_LOCAL.staging.$$"
+        mkdir -p "$MESA251_TMP" 2>/dev/null
+        cp -a /opt/mesa251/. "$MESA251_TMP"/ 2>/dev/null
+        mv -T "$MESA251_TMP" "$MESA251_LOCAL" 2>/dev/null
+        [ -d "$MESA251_TMP" ] && rm -rf "$MESA251_TMP" 2>/dev/null
+    fi
+    if [ -f "$MESA251_MARK" ]; then
+        export LD_LIBRARY_PATH="$MESA251_LOCAL/lib:$MESA251_LOCAL/lib/dri${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        export LIBGL_DRIVERS_PATH="$MESA251_LOCAL/lib/dri"
+        export __GLX_VENDOR_LIBRARY_NAME=mesa
+    else
+        # Fail loudly rather than silently falling back to the broken 23.2.1
+        # that this image exists to replace.
+        echo "[mesa251] WARNING: could not stage /opt/mesa251 to $MESA251_LOCAL; GL will be the stock 23.2.1" >&2
+    fi
+    # Deliberately NOT setting __EGL_VENDOR_LIBRARY_FILENAMES: Unity renders
+    # through GLX here, and the EGL path needs a DRM render node that a
+    # CPU-only node does not have.
+
+%test
+    # Fail the build if the image did not actually pick up 25.1.
+    . /opt/mesa251/../mesa251/mesa251-env.sh 2>/dev/null || true
+    echo "[test] mesa tree: $(ls /opt/mesa251/lib/libgallium-*.so 2>/dev/null | head -1)"
+
+%labels
+    mesa.version 25.1.9
+    mesa.llvm 19.1.7 (static)
+    purpose fixes llvmpipe aniso unbounded ellipse-box scan (~400s stall)

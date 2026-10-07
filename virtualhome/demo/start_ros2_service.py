@@ -135,24 +135,27 @@ first_person_pano_camera_select = None
 tall_pano_camera_select = None
 
 # --- Pano observation snapshot cache (off unless --snapshot_obs) ----------
-# When enabled, every successful scene_set / navigate snapshots the four
-# pano modes (normal, depth, seg_class, seg_inst) into _snapshot_obs_cache.
+# When enabled, every successful scene_set / navigate snapshots the three
+# pano modes used for observations and instance detection (normal, depth,
+# seg_inst) into _snapshot_obs_cache.  seg_class is fetched only on demand:
+# the instance mask plus scene graph already identifies an object's class, so
+# eagerly rendering it here is unnecessary work.
 # Subsequent observe / detect / find / pick reads consult the cache instead
 # of calling comm.camera_image again, so RGB/depth/seg used by a single
 # request are mutually pixel-consistent. Open invalidates; lazy populate
 # on first miss. Off by default — service is bit-for-bit unchanged.
-SNAPSHOT_OBS_MODES = ("normal", "depth", "seg_class", "seg_inst")
+SNAPSHOT_OBS_MODES = ("normal", "depth", "seg_inst")
 _snapshot_obs_enabled = False
 _snapshot_obs_cache = None  # None | dict[str, list of np.ndarray]
 
 # --- Long-range detect flag -----------------------------------------------
 # When enabled, detection (_detect_instance and _detect_objects) extends its
-# DEPTH_MAX from 2m to 5m, so the agent can perceive farther objects. Pick
-# and open keep their own 2m gate: if the target instance's mean masked
-# depth is farther than 2m, they fail immediately. Off by default —
+# DEPTH_MAX from 2.5m to 5m, so the agent can perceive farther objects. Pick
+# and open keep their own 2.5m gate: if the target instance's mean masked
+# depth is farther than 2.5m, they fail immediately. Off by default —
 # detection, pick, and open all behave bit-for-bit like before.
 _long_range_detect_enabled = False
-PICK_OPEN_DEPTH_MAX = 2.0
+PICK_OPEN_DEPTH_MAX = 2
 
 # When enabled, observe() saves a debug pano grid to ../../outputs/debug_observe.png.
 _verbose_enabled = False
@@ -163,14 +166,14 @@ def parse_args():
     parser.add_argument('--port', type=str, required=True, help='Port for Unity communication')
     parser.add_argument('--parallel', action='store_true', help='Namespace services as /moma_{port}/... for parallel runs')
     parser.add_argument('--snapshot_obs', action='store_true',
-                        help='Cache pano camera images (normal/depth/seg_class/seg_inst) at '
+                        help='Cache pano camera images (normal/depth/seg_inst) at '
                              'the character pose after each successful scene set / navigate. '
-                             'observe/detect/find/pick read from the cache; open invalidates. '
+                             'seg_class remains on-demand; open invalidates the cache. '
                              'Default off — service behaves bit-for-bit like before.')
     parser.add_argument('--long_range_detect', action='store_true',
-                        help='Extend detection DEPTH_MAX from 2m to 5m for _detect_instance '
-                             'and _detect_objects. Pick and open keep their own 2m gate and '
-                             'fail when the target instance is farther than 2m. Default off — '
+                        help='Extend detection DEPTH_MAX from 2.5m to 5m for _detect_instance '
+                             'and _detect_objects. Pick and open keep their own 2.5m gate and '
+                             'fail when the target instance is farther than 2.5m. Default off — '
                              'detection/pick/open behave bit-for-bit like before.')
     parser.add_argument('--verbose', action='store_true',
                         help='Save debug artifacts (e.g. observe() pano grid to '
@@ -185,8 +188,9 @@ def _camera_image_with_retry(camera_select, mode, attempts=2):
     A wedged Unity render surfaces as ``UnityCommunicationException`` (the HTTP
     request read-times-out). An occasional GPU/render hiccup clears on a second
     try; a genuine renderer deadlock will not — the retry just confirms the
-    sim is dead so the caller can fail fast (and the start_sims watchdog can
-    restart it). Re-raises the last exception when every attempt fails."""
+    sim is dead so the caller can fail fast (there is no watchdog; a dead
+    port must be restarted manually). Re-raises the last exception when every
+    attempt fails."""
     global comm
     last_exc = None
     for attempt in range(1, attempts + 1):
@@ -203,8 +207,8 @@ def _camera_image_with_retry(camera_select, mode, attempts=2):
 
 
 def _snapshot_obs_populate() -> bool:
-    """Fetch all four pano modes on the current pano_camera_select and replace
-    the snapshot cache. Returns True only if all four fetches succeeded."""
+    """Fetch the configured pano modes on the current pano_camera_select and replace
+    the snapshot cache. Returns True only if every configured fetch succeeded."""
     global _snapshot_obs_cache, comm, pano_camera_select
     if pano_camera_select is None:
         rospy.logwarn("snapshot_obs: pano_camera_select is None; skipping populate")
@@ -242,13 +246,14 @@ def _snapshot_obs_invalidate() -> None:
 
 def _get_pano_images(mode: str):
     """Drop-in replacement for `comm.camera_image(pano_camera_select, mode=...)`.
-    When --snapshot_obs is enabled, serves the requested mode from the cache,
-    lazily populating all four modes on a miss. When the flag is off, forwards
-    straight to comm.camera_image (preserving historical semantics).
+    When --snapshot_obs is enabled, serves configured snapshot modes from the
+    cache, lazily populating them on a miss. Modes excluded from the snapshot
+    (currently seg_class) and all modes when the flag is off are fetched
+    directly from Unity.
 
     Returns (success: bool, imgs: list)."""
     global _snapshot_obs_enabled, _snapshot_obs_cache, comm, pano_camera_select
-    if not _snapshot_obs_enabled:
+    if not _snapshot_obs_enabled or mode not in SNAPSHOT_OBS_MODES:
         return comm.camera_image(pano_camera_select, mode=mode)
     if _snapshot_obs_cache is None:
         if not _snapshot_obs_populate() or _snapshot_obs_cache is None:
@@ -830,7 +835,7 @@ def _detect_instance(query_id: int, max_depth: float = None) -> bool:
     AND its mean masked depth (ignoring zeros) is < DEPTH_MAX.
 
     If `max_depth` is None, DEPTH_MAX follows the --long_range_detect flag
-    (5m when set, else 2m). Callers (pick/open gates) pass an explicit value
+    (5m when set, else 2.5m). Callers (pick/open gates) pass an explicit value
     to maintain their own depth cap regardless of the flag.
     """
     import numpy as np
@@ -843,7 +848,7 @@ def _detect_instance(query_id: int, max_depth: float = None) -> bool:
     MIN_W, MIN_H = 12, 12
     ATOL = 0            # palette tolerance for inst seg
     if max_depth is None:
-        DEPTH_MAX = 5 if _long_range_detect_enabled else 2
+        DEPTH_MAX = 5 if _long_range_detect_enabled else 2.5
     else:
         DEPTH_MAX = max_depth
     MIN_DEPTH_PIX = 20  # require at least this many valid (>0) depth pixels
@@ -1176,6 +1181,24 @@ def handle_virtualhome_scene_request(req):
                 f"change_virtualhome_graph (scene_id={req.scene_id}) hit Unity 408 on "
                 f"attempt {attempt}/{CHANGE_SCENE_MAX_ATTEMPTS} — sleeping "
                 f"{CHANGE_SCENE_RETRY_BACKOFF_S:.1f}s and retrying."
+            )
+            time.sleep(CHANGE_SCENE_RETRY_BACKOFF_S)
+        except UnityCommunicationException as e:
+            # A node-wide stall can push comm.reset past its 150s HTTP read
+            # timeout. Unity recovers minutes later; letting this propagate
+            # killed the ROS2 node and left a zombie LISTEN port (2026-08-31).
+            if attempt >= CHANGE_SCENE_MAX_ATTEMPTS:
+                rospy.logwarn(
+                    f"change_virtualhome_graph (scene_id={req.scene_id}) hit "
+                    f"UnityCommunicationException on attempt "
+                    f"{attempt}/{CHANGE_SCENE_MAX_ATTEMPTS} — giving up: {e.message}"
+                )
+                return ChangeVirtualHomeGraphSrvResponse(success=False)
+            rospy.logwarn(
+                f"change_virtualhome_graph (scene_id={req.scene_id}) hit "
+                f"UnityCommunicationException on attempt "
+                f"{attempt}/{CHANGE_SCENE_MAX_ATTEMPTS} — sleeping "
+                f"{CHANGE_SCENE_RETRY_BACKOFF_S:.1f}s and retrying: {e.message}"
             )
             time.sleep(CHANGE_SCENE_RETRY_BACKOFF_S)
     return ChangeVirtualHomeGraphSrvResponse(success=False)

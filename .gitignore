@@ -4,8 +4,13 @@ virtualhome/demo/archive/
 */__MACOSX/*
 outputs
 unity_vol
+unity_vol_v2/
 unity_output
 virtualhome/dataset
+# local working copies / backups that live beside the checkout
+virtualhome_v2/
+.git.broken/
+Assembly-CSharp.dll.pristine-*
 
 .DS_Store
 # Byte-compiled / optimized / DLL files
